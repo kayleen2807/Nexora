@@ -125,14 +125,13 @@ El proyecto se encuentra en su **etapa inicial**: se ha definido el problema, el
 ---
 
 ## ✒️ Integrantes del equipo
-
 | Nombre | GitHub |
+|---|---|
 | Kayleen Avendano Reguera | [@kayleen2807](https://github.com/kayleen2807) |
 | Josue Felipe Cruz Espinosa | [@jcruz31-hue](https://github.com/jcruz31-hue) |
 | Abril Azucena Diaz Ruelas | [@adiaz108](https://github.com/adiaz108) |
 | Carolina Molina Pimentel | [@Carolina234184](https://github.com/Carolina234184) |
 | Maximiliano Tejeda Figueroa | [@mtejeda4](https://github.com/mtejeda4) |
-
 ---
 
 ## 📄 Licencia
