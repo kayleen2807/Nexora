@@ -23,7 +23,7 @@ Centraliza ventas, inventario y personal de todas tus sucursales en una sola pla
 
 ## 📖 Descripción
 
-**FeliShop** es un sistema de punto de venta (POS) pensado para negocios que operan con más de una sucursal —tiendas de conveniencia, minisúpers, negocios de comida, etc.—. Actualmente, este tipo de negocios suele gestionar sus ventas e inventario de forma independiente en cada sucursal, usando métodos manuales (cuadernos, hojas de cálculo) o sistemas de punto de venta aislados que no se comunican entre sí.
+**Nexora** es un sistema de punto de venta (POS) pensado para negocios que operan con más de una sucursal —tiendas de conveniencia, minisúpers, negocios de comida, etc.—. Actualmente, este tipo de negocios suele gestionar sus ventas e inventario de forma independiente en cada sucursal, usando métodos manuales (cuadernos, hojas de cálculo) o sistemas de punto de venta aislados que no se comunican entre sí.
 
 Esta desconexión genera problemas como:
 
@@ -32,13 +32,13 @@ Esta desconexión genera problemas como:
 - Ausencia de control centralizado de usuarios y roles, permitiendo que cualquier persona con acceso modifique precios o inventario sin un registro claro de quién lo hizo.
 - Cortes de caja y control de compras a proveedores hechos manualmente, lo que aumenta el riesgo de errores o pérdidas no detectadas.
 
-**FeliShop** busca resolver esto centralizando la operación de todas las sucursales bajo un mismo sistema: cada sucursal mantiene su propio inventario, mientras un administrador central tiene visibilidad y control total sobre sucursales, usuarios, proveedores e inventario.
+**Nexora** busca resolver esto centralizando la operación de todas las sucursales bajo un mismo sistema: cada sucursal mantiene su propio inventario, mientras un administrador central tiene visibilidad y control total sobre sucursales, usuarios, proveedores e inventario.
 
 ---
 
 ## 🎯 Objetivo general
 
-Desarrollar un sistema de punto de venta (FeliShop) que permita centralizar la administración de ventas, inventario, usuarios y proveedores de un negocio con múltiples sucursales, brindando al administrador visibilidad y control en tiempo real sobre la operación de cada punto de venta, y facilitando a cada sucursal la gestión de su propio inventario mediante roles de usuario diferenciados (administrador, gerente, cajero).
+Desarrollar un sistema de punto de venta (Nexora) que permita centralizar la administración de ventas, inventario, usuarios y proveedores de un negocio con múltiples sucursales, brindando al administrador visibilidad y control en tiempo real sobre la operación de cada punto de venta, y facilitando a cada sucursal la gestión de su propio inventario mediante roles de usuario diferenciados (administrador, gerente, cajero).
 
 ---
 
