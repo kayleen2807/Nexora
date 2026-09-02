@@ -96,7 +96,7 @@ Realiza ventas y consulta inventario dentro de su sucursal.
 ## 📁 Estructura del proyecto (propuesta)
 
 ```
-FeliShop/
+Nexora/
 ├── assets/
 │   ├── css/
 │   ├── js/
@@ -104,7 +104,7 @@ FeliShop/
 ├── config/
 │   └── db.php
 ├── database/
-│   └── felishop.sql
+│   └── nexora.sql
 ├── pages/
 │   ├── login.php
 │   ├── dashboard.php
