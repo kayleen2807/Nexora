@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛒 FeliShop
+# 🛒 Nexora
 
 **Sistema de punto de venta multisucursal**
 
