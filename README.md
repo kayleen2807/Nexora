@@ -14,6 +14,7 @@ Centraliza ventas, inventario y personal de todas tus sucursales en una sola pla
 [![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/es/docs/Web/JavaScript)
 [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
 </div>
 
@@ -145,6 +146,6 @@ Este proyecto está bajo la Licencia [MIT](LICENSE.md). Puedes usarlo, modificar
 
 <div align="center">
 
-Hecho con ❤️ por el equipo de FeliShop
+Hecho con ❤️ por el equipo de Nexora 
 
 </div>
