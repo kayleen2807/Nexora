@@ -14,8 +14,9 @@
 | apellido |
 | correo |
 | contrasena |
+| remember_token |
 | id_rol |
-| id-sucursal |
+| id_sucursal |
 
 ## Tabla: Sucursal
 | Sucursal |

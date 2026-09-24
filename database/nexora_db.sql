@@ -402,6 +402,7 @@ CREATE TABLE public.usuario (
     apellido character varying(150) NOT NULL,
     correo character varying(150) NOT NULL,
     contrasena character varying(255) NOT NULL,
+    remember_token character varying(100),
     id_rol integer NOT NULL,
     id_sucursal integer
 );

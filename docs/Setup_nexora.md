@@ -106,7 +106,7 @@ Mediante la Terminal:
 
 ## Instalar dependencias Laravel
 Entrar en Nexora/backend : cd Nexora/backend
-En la terminar ejecutar composer install
+En la terminar ejecutar: composer install
 
 
 ## Crear archivo .env (para entorno local)
