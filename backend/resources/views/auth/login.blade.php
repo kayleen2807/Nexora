@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar sesión | Nexora</title>
+    <title>{{ __('Login') }} | Nexora</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -13,34 +13,48 @@
     <main class="login-page">
         <section class="login-shell" aria-label="Inicio de sesión Nexora">
             <aside class="brand-panel">
+                @php
+                    $idiomas = [
+                        'es' => '🇪🇸',
+                        'en' => '🇬🇧',
+                    ];
+                @endphp
+                <div class="language-switcher">
+                    @foreach ($idiomas as $lang => $emoji)
+                        <a href="{{ route('lang.switch', $lang) }}"
+                        class="{{ app()->getLocale() === $lang ? 'active' : '' }}">
+                            {{ $emoji }} {{ strtoupper($lang) }}
+                        </a>
+                    @endforeach
+                </div>
                 <div class="brand-mark" aria-label="Nexora">
                     <div class="logo-badge">
                         <img src="{{ asset('img/nexora-logo-cropped.png') }}" alt="Nexora - Sistema de punto de venta">
                     </div>
                     <div class="brand-wordmark">
                         <p>NEXORA</p>
-                        <span>Sistema de punto de venta</span>
+                        <span>{{ __('Point of Sale System') }}</span>
                     </div>
                 </div>
 
                 <div class="panel-copy">
-                    <p class="eyebrow">Gestión centralizada</p>
-                    <h1>Punto de venta para crecer con orden.</h1>
-                    <p>Administra ventas, inventario y sucursales desde una experiencia clara y rápida.</p>
+                    <p class="eyebrow">{{ __('Centralized Management') }}</p>
+                    <h1>{{ __('POS to grow with organization.') }}</h1>
+                    <p>{{ __('Manage sales, inventory and branches from a clear and fast experience.') }}</p>
                 </div>
 
                 <div class="stats-row" aria-label="Beneficios">
-                    <span>Ventas</span>
-                    <span>Inventario</span>
-                    <span>Sucursales</span>
+                    <span>{{ __('Sales') }}</span>
+                    <span>{{ __('Inventory') }}</span>
+                    <span>{{ __('Branches') }}</span>
                 </div>
             </aside>
 
             <section class="form-panel">
                 <div class="form-card">
-                    <p class="form-kicker">Acceso al sistema</p>
-                    <h2>Iniciar sesión</h2>
-                    <p class="form-intro">Ingresa tus credenciales para entrar al panel de Nexora.</p>
+                    <p class="form-kicker">{{ __('System Access') }}</p>
+                    <h2>{{ __('Login') }}</h2>
+                    <p class="form-intro">{{ __('Enter your credentials to access the Nexora panel.') }}</p>
 
                     @if ($errors->any())
                         <div class="login-alert" role="alert">
@@ -53,21 +67,21 @@
                     <form action="{{ route('login') }}" method="post">
                         @csrf
 
-                        <label for="usuario">Usuario</label>
-                        <input type="text" id="usuario" name="usuario" value="{{ old('usuario') }}" placeholder="Usuario" autocomplete="username" required autofocus>
+                        <label for="usuario">{{ __('User') }}</label>
+                        <input type="text" id="usuario" name="usuario" value="{{ old('usuario') }}" placeholder="{{ __('User') }}" autocomplete="username" required autofocus>
 
-                        <label for="password">Contraseña</label>
-                        <input type="password" id="password" name="password" placeholder="Contraseña" autocomplete="current-password" required>
+                        <label for="password">{{ __('Password') }}</label>
+                        <input type="password" id="password" name="password" placeholder="{{ __('Password') }}" autocomplete="current-password" required>
 
                         <div class="form-options">
                             <label class="remember-option" for="remember">
                                 <input type="checkbox" id="remember" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}>
-                                Recordarme
+                                {{ __('Remember me') }}
                             </label>
-                            <a href="#">Olvidé mi contraseña</a>
+                            <a href="#">{{ __('Forgot my password') }}</a>
                         </div>
 
-                        <button type="submit">Entrar</button>
+                        <button type="submit">{{ __('Login') }}</button>
                     </form>
                 </div>
             </section>
