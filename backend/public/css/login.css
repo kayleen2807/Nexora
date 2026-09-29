@@ -63,6 +63,35 @@ body {
     display: none;
 }
 
+.language-switcher{
+position:absolute;
+top:20px;
+right:30px;
+display:flex;
+gap:10px;
+z-index:10;
+}
+
+.language-switcher a{
+padding:8px 14px;
+border-radius:999px;
+background:rgba(255,255,255,0.15);
+color:#ffffff;
+font-size:13px;
+font-weight:700;
+text-decoration:none;
+backdrop-filter:blur(4px);
+transition:all .2s ease;
+}
+
+.language-switcher a:hover{
+background:rgba(255,255,255,0.25);
+text-decoration:none;
+}
+
+.language-switcher a { opacity: .6; text-decoration: none; }
+.language-switcher a.active { opacity: 1; font-weight: bold; }
+
 .brand-mark {
     position: relative;
     z-index: 1;
