@@ -84,7 +84,7 @@
                                 <input type="checkbox" id="remember" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}>
                                 {{ __('Remember me') }}
                             </label>
-                            <a href="#">{{ __('Forgot my password') }}</a>
+                            <a href="/password.html">{{ __('Forgot my password') }}</a>
                         </div>
 
                         <button type="submit">{{ __('Login') }}</button>
