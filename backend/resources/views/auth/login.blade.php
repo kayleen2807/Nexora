@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/login.css') }}">
 </head>
 <body>
@@ -71,7 +72,12 @@
                         <input type="text" id="usuario" name="usuario" value="{{ old('usuario') }}" placeholder="{{ __('User') }}" autocomplete="username" required autofocus>
 
                         <label for="password">{{ __('Password') }}</label>
-                        <input type="password" id="password" name="password" placeholder="{{ __('Password') }}" autocomplete="current-password" required>
+                        <div class="password-field">
+                            <input type="password" id="password" name="password" placeholder="{{ __('Password') }}" autocomplete="current-password" required>
+                            <button type="button" class="password-toggle" data-target="password" aria-label="{{ __('Show password') }}">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
 
                         <div class="form-options">
                             <label class="remember-option" for="remember">
@@ -83,9 +89,30 @@
 
                         <button type="submit">{{ __('Login') }}</button>
                     </form>
+
+                    <p class="form-footer">
+                        ¿No tienes cuenta?
+                        <a class="link-register" href="{{ route('register') }}">Registrarme</a>
+                    </p>
                 </div>
             </section>
         </section>
     </main>
+
+    <script>
+        // Alterna type="password"/"text" y el icono del ojito para cada campo marcado.
+        document.querySelectorAll('.password-toggle').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var input = document.getElementById(button.dataset.target);
+                var icon = button.querySelector('i');
+                var isHidden = input.type === 'password';
+
+                input.type = isHidden ? 'text' : 'password';
+                icon.classList.toggle('bi-eye', !isHidden);
+                icon.classList.toggle('bi-eye-slash', isHidden);
+                button.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            });
+        });
+    </script>
 </body>
 </html>
