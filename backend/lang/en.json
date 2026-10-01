@@ -2,7 +2,7 @@
     "Login": "Login",
     "Point of Sale System": "Point of Sale System",
     "Centralized Management": "Centralized Management",
-    "POS to grow with organization.": "POS to grow whit organization.",
+    "POS to grow with organization.": "POS to grow with organization.",
     "Manage sales, inventory and branches from a clear and fast experience.":
     "Manage sales, inventory and branches from a clear and fast experience.",
     "Sales": "Sales",
@@ -13,5 +13,6 @@
     "User": "User",
     "Password": "Password",
     "Remember me": "Remember me",
-    "Forgot my password": "Forgot my password"
+    "Forgot my password": "Forgot my password",
+    "Email" : "Email"
 }

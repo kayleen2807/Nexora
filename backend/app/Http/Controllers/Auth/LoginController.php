@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Cookie;
 
 class LoginController extends Controller
 {
@@ -27,7 +29,7 @@ class LoginController extends Controller
          * Credenciales requeridos para el login (usuario y contra) y se compruebam si estan vacios
          */
         $credentials = $request->validate([
-            'usuario' => ['required', 'string'],
+            'correo' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
 
@@ -37,7 +39,7 @@ class LoginController extends Controller
 
         $authenticated = Auth::attempt(
             [
-                'correo' => $credentials['usuario'],
+                'correo' => $credentials['correo'],
                 'password' => $credentials['password'],
             ],
             /**Boton de recuerdame para evitar pedir las credenciales cada vez (se guarda el token) */
@@ -48,15 +50,24 @@ class LoginController extends Controller
         if (! $authenticated) {
             return back()
                 ->withErrors([
-                    'usuario' => 'Las credenciales no coinciden con nuestros registros.',
+                    'correo' => 'Las credenciales no coinciden con nuestros registros.',
                 ])
-                ->onlyInput('usuario');
+                ->onlyInput('correo');
         }
 
         /** Si funciona crea una nueva sesion y lo redirige a la sesion correcta (depende del rol */
         $request->session()->regenerate();
 
-        return redirect()->intended('/dashboard');
+        $idiomaActual = $request->cookie('idioma') ?? config('app.locale');
+
+        Session::put('locale', $idiomaActual);
+        Cookie::queue('idioma', $idiomaActual, 525600);
+
+        if ($idiomaActual !== auth()->user()->idioma) {
+            auth()->user()->update(['idioma' => $idiomaActual]);
+        }
+
+        return redirect()->route('dashboard');
     }
 
     /**

@@ -67,8 +67,8 @@
                     <form action="{{ route('login') }}" method="post">
                         @csrf
 
-                        <label for="usuario">{{ __('User') }}</label>
-                        <input type="text" id="usuario" name="usuario" value="{{ old('usuario') }}" placeholder="{{ __('User') }}" autocomplete="username" required autofocus>
+                        <label for="correo">{{ __('Email') }}</label>
+                        <input type="email" id="correo" name="correo" value="{{ old('correo') }}" placeholder="{{ __('Email') }}" autocomplete="email" required autofocus>
 
                         <label for="password">{{ __('Password') }}</label>
                         <input type="password" id="password" name="password" placeholder="{{ __('Password') }}" autocomplete="current-password" required>

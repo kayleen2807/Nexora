@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Nexora - Panel de Gerente</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -106,17 +107,60 @@
   .diferencia-row.sobrante { color: var(--success-text); font-weight: 700; }
   .diferencia-row.faltante { color: var(--danger-text); font-weight: 700; }
   .diferencia-row.cuadrado { color: var(--muted); font-weight: 700; }
+    /* ---------- TOASTS ---------- */
+  #toastContainer {
+    position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1000;
+    display: flex; flex-direction: column; gap: 0.6rem;
+  }
+  .toast {
+    padding: 0.8rem 1.1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+    box-shadow: 0 4px 16px var(--shadow); min-width: 220px;
+    animation: toastIn 0.25s ease-out;
+  }
+  .toast.exito { background: var(--success-bg); color: var(--success-text); }
+  .toast.error { background: var(--danger-bg); color: var(--danger-text); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  .toast.saliendo { animation: toastOut 0.2s ease-in forwards; }
+  @keyframes toastOut { to { opacity: 0; transform: translateX(20px); } }
+
+  /* ---------- MODAL DE CONFIRMACIÓN ---------- */
+  #modalOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    align-items: center; justify-content: center; z-index: 1001;
+  }
+  #modalOverlay.activo { display: flex; }
+  .modal-box {
+    background: var(--card-bg); color: var(--text); border-radius: 14px; padding: 1.5rem;
+    width: 320px; box-shadow: 0 10px 40px var(--shadow);
+  }
+  .modal-box p { font-size: 0.9rem; margin-bottom: 1.25rem; }
+  .modal-acciones { display: flex; justify-content: flex-end; gap: 0.6rem; }
+
 </style>
 </head>
 <body>
+<form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display:none">
+    @csrf
+</form>
+<div id="toastContainer"></div>
 
+<div id="modalOverlay">
+  <div class="modal-box">
+    <p id="modalMensaje"></p>
+    <div class="modal-acciones">
+      <button class="btn" onclick="cerrarModal(false)" data-i18n="btnCancelar">Cancelar</button>
+      <button class="btn btn-peligro" onclick="cerrarModal(true)" data-i18n="btnEliminar">Eliminar</button>
+    </div>
+  </div>
+</div>
 <div class="panel-view" id="panelView">
   <div class="topbar">
-    <div class="brand"><span class="logo-sm">N</span> Nexora <span class="sucursal" data-i18n="topbarSucursal">— Panel de Gerente · Sucursal Centro</span></div>
+    <div class="brand"><span class="logo-sm">N</span> Nexora <span class="sucursal">— <span data-i18n="topbarPanelGerente">Panel de Gerente</span> · {{ auth()->user()->sucursal->nombre ?? __('Sin sucursal asignada') }}</span></div>
     <div class="topbar-derecha">
       <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
       <div class="esquina-superior">
-        <button class="idioma-toggle" id="idiomaTogglePanel" onclick="toggleIdioma()" title="Change language">ES</button>
+        @php $otroIdioma = app()->getLocale() === 'es' ? 'en' : 'es'; @endphp
+        <a class="idioma-toggle" id="idiomaTogglePanel" href="{{ route('lang.switch', $otroIdioma) }}" title="Change language">{{ strtoupper($otroIdioma) }}</a>
         <button class="tema-toggle" id="temaTogglePanel" onclick="toggleTema()" title="Cambiar tema">🌙</button>
       </div>
     </div>
@@ -124,6 +168,29 @@
   <div class="layout">
     <div class="sidebar" id="sidebar"></div>
     <div class="content">
+      <div class="seccion" id="sec-mi-sucursal">
+        <h2 data-i18n="miSucursalHeading">Mi sucursal</h2>
+        <p class="desc" data-i18n="miSucursalDesc">Información general de tu sucursal.</p>
+
+        <div class="resumen-grid">
+          <div class="resumen-card"><div class="label" data-i18n="labelEmpleados">Empleados</div><div class="valor" id="msEmpleados">0</div></div>
+          <div class="resumen-card"><div class="label" data-i18n="labelProductosInv">Productos en inventario</div><div class="valor" id="msProductos">0</div></div>
+          <div class="resumen-card"><div class="label" data-i18n="labelStockBajo">Stock bajo</div><div class="valor" id="msStockBajo">0</div></div>
+        </div>
+        <div class="resumen-grid">
+          <div class="resumen-card"><div class="label" data-i18n="labelVentasHoy">Ventas de hoy</div><div class="valor" id="msVentasHoy">$0.00</div></div>
+          <div class="resumen-card"><div class="label" data-i18n="labelVentasMes">Ventas del mes</div><div class="valor" id="msVentasMes">$0.00</div></div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="labelDatosSucursal">Datos de la sucursal</h3>
+          <table>
+            <tr><td data-i18n="labelDireccion">Dirección</td><td id="msDireccion">—</td></tr>
+            <tr><td data-i18n="labelContacto">Contacto</td><td id="msContacto">—</td></tr>
+            <tr><td data-i18n="labelEstado">Estado</td><td id="msEstado">—</td></tr>
+          </table>
+        </div>
+      </div>
 
       <div class="seccion" id="sec-inventario">
         <h2 data-i18n="invHeading">Inventario</h2>
@@ -191,20 +258,9 @@
         </div>
       </div>
 
-      <div class="seccion" id="sec-precios">
-        <h2 data-i18n="preciosHeading">Precios e IVA</h2>
-        <p class="desc" data-i18n="preciosDesc">Modifica el precio base y el porcentaje de IVA de cada producto.</p>
-        <div class="card">
-          <table>
-            <tr><th data-i18n="thProducto">Producto</th><th data-i18n="thPrecioBase">Precio base</th><th data-i18n="thIva">IVA %</th><th data-i18n="thPrecioFinal">Precio final</th><th></th></tr>
-            <tbody id="tablaPrecios"></tbody>
-          </table>
-        </div>
-      </div>
-
       <div class="seccion" id="sec-productos">
-        <h2 data-i18n="productosHeading">Alta / baja de productos</h2>
-        <p class="desc" data-i18n="productosDesc">Agrega nuevos productos al catálogo o desactiva los que ya no se venden.</p>
+        <h2 data-i18n="productosHeading">Productos</h2>
+        <p class="desc" data-i18n="productosDesc">Agrega productos, ajusta su precio e IVA, o actívalos/desactívalos.</p>
         <div class="card">
           <div class="fila-form">
             <div class="campo"><label data-i18n="labelNombre">Nombre</label><input type="text" id="nuevoNombre" data-i18n-placeholder="placeholderProducto" placeholder="Producto"></div>
@@ -216,7 +272,15 @@
         </div>
         <div class="card">
           <table>
-            <tr><th data-i18n="thProducto">Producto</th><th data-i18n="thPrecio">Precio</th><th data-i18n="thEstado">Estado</th><th></th></tr>
+            <tr>
+              <th data-i18n="thProducto">Producto</th>
+              <th data-i18n="thPrecioBase">Precio base</th>
+              <th data-i18n="thIva">IVA %</th>
+              <th data-i18n="thPrecioFinal">Precio final</th>
+              <th data-i18n="thEstado">Estado</th>
+              <th></th>
+              <th></th>
+            </tr>
             <tbody id="tablaProductos"></tbody>
           </table>
         </div>
@@ -238,14 +302,17 @@
 </div>
 
 <script>
-  let productos = [
-    { id: 1, nombre: 'Refresco 600ml', precio: 18, iva: 16, stock: 12, activo: true },
-    { id: 2, nombre: 'Botana 150g', precio: 25.5, iva: 16, stock: 8, activo: true },
-    { id: 3, nombre: 'Agua 1L', precio: 12, iva: 16, stock: 20, activo: true },
-    { id: 4, nombre: 'Café americano', precio: 32, iva: 16, stock: 15, activo: true },
-    { id: 5, nombre: 'Sandwich jamón', precio: 45, iva: 16, stock: 6, activo: true },
-    { id: 6, nombre: 'Chicles', precio: 8, iva: 0, stock: 30, activo: true },
-  ];
+  let productos = [];
+
+  async function cargarProductos() {
+    try {
+      const resp = await fetch('/gerente/productos');
+      productos = await resp.json();
+    } catch (e) {
+      mostrarToast(t('errorCargarProductos'), 'error');
+    }
+  }
+
   let compras = [];
   let historial = [
     { fecha: '25/08/2026 09:14', cajero: 'Cajero 1', metodo: 'efectivo', total: 55.5 },
@@ -257,6 +324,8 @@
     { id: 1, nombre: 'Caja 1', abierta: true },
     { id: 2, nombre: 'Caja 2', abierta: false },
   ];
+
+  let miSucursal = null;
 
   /* ---------- IDIOMA ---------- */
   const textos = {
@@ -291,6 +360,14 @@
       historialHeading: 'Historial de ventas', historialDesc: 'Todas las ventas registradas en esta sucursal.',
       thCajero: 'Cajero', thMetodo: 'Método', badgeEfectivo: 'Efectivo', badgeTarjeta: 'Tarjeta',
       alertCompletaCompra: 'Completa producto, cantidad y costo.',
+      navMiSucursal: 'Mi sucursal', topbarPanelGerente: 'Panel de Gerente',
+      miSucursalHeading: 'Mi sucursal', miSucursalDesc: 'Información general de tu sucursal.',
+      labelEmpleados: 'Empleados', labelProductosInv: 'Productos en inventario', labelStockBajo: 'Stock bajo',
+      labelVentasHoy: 'Ventas de hoy', labelVentasMes: 'Ventas del mes', labelDatosSucursal: 'Datos de la sucursal',
+      labelDireccion: 'Dirección', labelContacto: 'Contacto', labelEstado: 'Estado',
+      errorCargarSucursal: 'No se pudo cargar la información de tu sucursal.',
+      labelEstado: 'Estado', thEstado: 'Estado', estadoActiva: 'Activa', estadoInactiva: 'Inactiva',
+      errorCargarProductos: 'No se pudieron cargar los productos.',
     },
     en: {
       tagline: 'Manager panel', placeholderUsuario: 'Username', placeholderClave: 'Password',
@@ -323,21 +400,29 @@
       historialHeading: 'Sales history', historialDesc: 'All sales recorded at this branch.',
       thCajero: 'Cashier', thMetodo: 'Method', badgeEfectivo: 'Cash', badgeTarjeta: 'Card',
       alertCompletaCompra: 'Fill in product, quantity, and cost.',
+      navMiSucursal: 'My branch', topbarPanelGerente: 'Manager Panel',
+      miSucursalHeading: 'My branch', miSucursalDesc: 'General information about your branch.',
+      labelEmpleados: 'Employees', labelProductosInv: 'Products in inventory', labelStockBajo: 'Low stock',
+      labelVentasHoy: "Today's sales", labelVentasMes: "This month's sales", labelDatosSucursal: 'Branch info',
+      labelDireccion: 'Address', labelContacto: 'Contact', labelEstado: 'Status',
+      errorCargarSucursal: 'Could not load your branch information.',
+      labelEstado: 'Status', thEstado: 'Status', estadoActiva: 'Active', estadoInactiva: 'Inactive',
+      errorCargarProductos: 'Could not load the products.',
     }
   };
-  let idioma = 'es';
+  let idioma = '{{ app()->getLocale() }}';
   function t(clave) { return textos[idioma][clave] || clave; }
 
   const secciones = [
+    { id: 'mi-sucursal', key: 'navMiSucursal'},
     { id: 'inventario', key: 'navInventario' },
     { id: 'compras', key: 'navCompras' },
     { id: 'corte', key: 'navCorte' },
     { id: 'cajas', key: 'navCajas' },
-    { id: 'precios', key: 'navPrecios' },
     { id: 'productos', key: 'navProductos' },
     { id: 'historial', key: 'navHistorial' },
   ];
-  let seccionActual = 'inventario';
+  let seccionActual = 'mi-sucursal';
 
   /* ---------- TEMA CLARO / OSCURO ---------- */
   function aplicarTema(tema) {
@@ -365,38 +450,26 @@
   })();
 
   /* ---------- IDIOMA ---------- */
-  function toggleIdioma() {
-    idioma = idioma === 'es' ? 'en' : 'es';
-    try { localStorage.setItem('nexora-idioma', idioma); } catch (e) {}
-    aplicarIdioma();
-  }
-
   function aplicarIdioma() {
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
-    const etiqueta = idioma === 'es' ? 'EN' : 'ES';
-    const bLogin = document.getElementById('idiomaToggleLogin');
-    const bPanel = document.getElementById('idiomaTogglePanel');
-    if (bLogin) bLogin.textContent = etiqueta;
-    if (bPanel) bPanel.textContent = etiqueta;
     document.documentElement.lang = idioma;
     renderSidebar();
     mostrarSeccion(seccionActual);
   }
 
-  (function inicializarIdioma() {
-    let guardado = null;
-    try { guardado = localStorage.getItem('nexora-idioma'); } catch (e) {}
-    idioma = (guardado === 'en' || guardado === 'es') ? guardado : 'es';
-    aplicarIdioma();
-  })();
+  aplicarIdioma();
 
   function cerrarSesion() {
-    // TODO: conectar con la ruta real de logout de Laravel (auth)
+    document.getElementById('logoutForm').submit();
   }
 
   renderSidebar();
-  mostrarSeccion('inventario');
+  (async () => {
+    await cargarMiSucursal();
+    await cargarProductos();
+    mostrarSeccion('mi-sucursal');
+  })();
 
   function renderSidebar() {
     document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${t(s.key)}</button>`).join('');
@@ -409,13 +482,41 @@
       document.getElementById('sec-' + s.id).classList.toggle('activa', s.id === id);
       document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === id);
     });
+    if (id === 'mi-sucursal') renderMiSucursal();
     if (id === 'inventario') renderInventario();
     if (id === 'compras') renderCompras();
     if (id === 'corte') renderCorte();
     if (id === 'cajas') renderCajas();
-    if (id === 'precios') renderPrecios();
-    if (id === 'productos') renderProductosAdmin();
+    if (id === 'productos') renderProductos();
     if (id === 'historial') renderHistorial();
+  }
+
+  /* ---------- MI SUCURSAL ---------- */
+
+  async function cargarMiSucursal() {
+    try {
+      const resp = await fetch('/gerente/mi-sucursal');
+      const data = await resp.json();
+      if (!resp.ok) {
+        mostrarToast(data.message || t('errorCargarSucursal'), 'error');
+        return;
+      }
+      miSucursal = data;
+    } catch (e) {
+      mostrarToast(t('errorCargarSucursal'), 'error');
+    }
+  }
+
+  function renderMiSucursal() {
+    if (!miSucursal) return;
+    document.getElementById('msEmpleados').textContent = miSucursal.empleados;
+    document.getElementById('msProductos').textContent = miSucursal.productos;
+    document.getElementById('msStockBajo').textContent = miSucursal.stock_bajo;
+    document.getElementById('msVentasHoy').textContent = '$' + Number(miSucursal.ventas_hoy).toFixed(2);
+    document.getElementById('msVentasMes').textContent = '$' + Number(miSucursal.ventas_mes).toFixed(2);
+    document.getElementById('msDireccion').textContent = miSucursal.direccion || '—';
+    document.getElementById('msContacto').textContent = miSucursal.contacto || '—';
+    document.getElementById('msEstado').textContent = miSucursal.estado || '—';
   }
 
   /* ---------- INVENTARIO ---------- */
@@ -530,56 +631,78 @@
     renderCajas();
   }
 
-  /* ---------- PRECIOS E IVA ---------- */
-  function renderPrecios() {
-    document.getElementById('tablaPrecios').innerHTML = productos.filter(p => p.activo).map(p => `
+    /* ---------- PRODUCTOS ---------- */
+  function renderProductos() {
+    document.getElementById('tablaProductos').innerHTML = productos.map(p => `
       <tr>
         <td>${p.nombre}</td>
         <td><input type="number" id="precio-${p.id}" value="${p.precio}" step="0.01"></td>
         <td><input type="number" id="iva-${p.id}" value="${p.iva}" step="0.01"></td>
         <td id="final-${p.id}">$${(p.precio * (1 + p.iva / 100)).toFixed(2)}</td>
-        <td><button class="btn btn-primario btn-sm" onclick="guardarPrecio(${p.id})">${t('btnGuardar')}</button></td>
-      </tr>`).join('');
-  }
-
-  function guardarPrecio(id) {
-    const p = productos.find(x => x.id === id);
-    p.precio = parseFloat(document.getElementById('precio-' + id).value) || p.precio;
-    p.iva = parseFloat(document.getElementById('iva-' + id).value) ?? p.iva;
-    document.getElementById('final-' + id).textContent = '$' + (p.precio * (1 + p.iva / 100)).toFixed(2);
-  }
-
-  /* ---------- ALTA / BAJA PRODUCTOS ---------- */
-  function renderProductosAdmin() {
-    document.getElementById('tablaProductos').innerHTML = productos.map(p => `
-      <tr>
-        <td>${p.nombre}</td>
-        <td>$${p.precio.toFixed(2)}</td>
         <td><span class="badge ${p.activo ? 'badge-activo' : 'badge-inactivo'}">${p.activo ? t('badgeActivo') : t('badgeInactivo')}</span></td>
+        <td><button class="btn btn-primario btn-sm" onclick="guardarProducto(${p.id})">${t('btnGuardar')}</button></td>
         <td><button class="btn btn-sm ${p.activo ? 'btn-peligro' : 'btn-exito'}" onclick="toggleActivo(${p.id})">${p.activo ? t('btnDarBaja') : t('btnReactivar')}</button></td>
       </tr>`).join('');
   }
 
-  function toggleActivo(id) {
-    const p = productos.find(x => x.id === id);
-    p.activo = !p.activo;
-    renderProductosAdmin();
+  async function guardarProducto(id) {
+    const precio = parseFloat(document.getElementById('precio-' + id).value);
+    const iva = parseFloat(document.getElementById('iva-' + id).value);
+
+    const res = await fetch('/gerente/productos/' + id, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
+      body: JSON.stringify({ precio, iva }),
+    });
+
+    if (!res.ok) { mostrarToast('No se pudo actualizar el producto.', 'error'); return; }
+    await cargarProductos();
+    renderProductos();
+    mostrarToast('Producto actualizado', 'exito');
   }
 
-  function darDeAlta() {
+  async function toggleActivo(id) {
+    const res = await fetch('/gerente/productos/' + id + '/toggle', {
+      method: 'PUT',
+      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+    });
+
+    if (!res.ok) { mostrarToast('No se pudo cambiar el estado del producto.', 'error'); return; }
+    await cargarProductos();
+    renderProductos();
+  }
+
+  async function darDeAlta() {
     const nombre = document.getElementById('nuevoNombre').value.trim();
     const precio = parseFloat(document.getElementById('nuevoPrecio').value);
     const iva = parseFloat(document.getElementById('nuevoIva').value) || 0;
     const stock = parseInt(document.getElementById('nuevoStock').value) || 0;
-    if (!nombre || !precio) { alert(t('alertCompletaProducto')); return; }
+    if (!nombre || !precio) { mostrarToast(t('alertCompletaProducto'), 'error'); return; }
 
-    const nuevoId = Math.max(...productos.map(p => p.id)) + 1;
-    productos.push({ id: nuevoId, nombre, precio, iva, stock, activo: true });
+    const res = await fetch('/gerente/productos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
+      body: JSON.stringify({ nombre, precio, iva, stock }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      mostrarToast(err?.message ?? 'No se pudo dar de alta el producto.', 'error');
+      return;
+    }
 
     document.getElementById('nuevoNombre').value = '';
     document.getElementById('nuevoPrecio').value = '';
     document.getElementById('nuevoStock').value = '';
-    renderProductosAdmin();
+    await cargarProductos();
+    renderProductos();
+    mostrarToast('Producto agregado', 'exito');
   }
 
   /* ---------- HISTORIAL ---------- */
@@ -591,6 +714,30 @@
         <td>$${v.total.toFixed(2)}</td>
       </tr>`).join('');
   }
+
+  function mostrarToast(mensaje, tipo = 'exito') {
+    const cont = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    toast.textContent = mensaje;
+    cont.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('saliendo');
+      setTimeout(() => toast.remove(), 200);
+    }, 3000);
+  }
+
+  let _resolverModal = null;
+  function confirmar(mensaje) {
+    document.getElementById('modalMensaje').textContent = mensaje;
+    document.getElementById('modalOverlay').classList.add('activo');
+    return new Promise(resolve => { _resolverModal = resolve; });
+  }
+  function cerrarModal(resultado) {
+    document.getElementById('modalOverlay').classList.remove('activo');
+    if (_resolverModal) _resolverModal(resultado);
+  }
+
 </script>
 
 </body>
