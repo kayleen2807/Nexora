@@ -54,7 +54,7 @@
                                 <input type="checkbox" id="remember" name="remember">
                                 Recordarme
                             </label>
-                            <a href="#">Olvidé mi contraseña</a>
+                            <a href="../password.html">Olvidé mi contraseña</a>
                         </div>
 
                         <button type="submit">Entrar</button>
