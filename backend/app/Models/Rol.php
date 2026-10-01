@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id_rol
+ * @property string $nombre
+ */
 class Rol extends Model
 {
     protected $table = 'rol';

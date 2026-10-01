@@ -32,11 +32,12 @@ class MiSucursalController extends Controller
             'productos'   => Inventario::where('id_sucursal', $idSucursal)->count(),
             'stock_bajo'  => Inventario::where('id_sucursal', $idSucursal)
                                 ->whereColumn('existencias', '<=', 'stock_minimo')->count(),
-            'ventas_hoy'  => (float) Venta::where('id_sucursal', $idSucursal)
-                                ->whereDate('fecha_hora', now()->toDateString())->sum('total'),
-            'ventas_mes'  => (float) Venta::where('id_sucursal', $idSucursal)
+            // Netas: se resta lo devuelto/cancelado
+            'ventas_hoy'  => Venta::totalNeto(Venta::where('id_sucursal', $idSucursal)
+                                ->whereDate('fecha_hora', now()->toDateString())),
+            'ventas_mes'  => Venta::totalNeto(Venta::where('id_sucursal', $idSucursal)
                                 ->whereMonth('fecha_hora', now()->month)
-                                ->whereYear('fecha_hora', now()->year)->sum('total'),
+                                ->whereYear('fecha_hora', now()->year)),
         ];
     }
 }

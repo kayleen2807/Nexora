@@ -257,7 +257,25 @@
         </div>
         <p class="desc">Total en esta sucursal: <strong id="totalVentasSucursal">$0.00</strong></p>
         <div class="card">
-          <table><tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thCajero">Cajero</th><th data-i18n="thMetodoPago">Método de pago</th><th data-i18n="thTotal">Total</th></tr><tbody id="tablaVentas"></tbody></table>
+          <table><tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thCajero">Cajero</th><th data-i18n="thMetodoPago">Método de pago</th><th data-i18n="thTotal">Total</th><th data-i18n="thEstado">Estado</th></tr><tbody id="tablaVentas"></tbody></table>
+        </div>
+      </div>
+
+      <div class="seccion" id="sec-cortes">
+        <h2 data-i18n="cortesHeading">Cortes de caja por sucursal</h2>
+        <p class="desc" data-i18n="cortesDesc">Consulta los turnos de caja de cualquier sucursal: lo vendido contra el efectivo contado.</p>
+        <div class="filtro-sucursal">
+          <select id="filtroSucursalCortes" onchange="renderCortes()"></select>
+        </div>
+        <div class="card">
+          <table>
+            <tr>
+              <th data-i18n="thCajero">Cajero</th><th data-i18n="thCaja">Caja</th><th data-i18n="thApertura">Apertura</th><th data-i18n="thCierre">Cierre</th>
+              <th data-i18n="thFondo">Fondo</th><th data-i18n="thVentas">Ventas</th><th data-i18n="thEsperado">Esperado</th>
+              <th data-i18n="thContado">Contado</th><th data-i18n="thDiferencia">Diferencia</th>
+            </tr>
+            <tbody id="tablaCortes"></tbody>
+          </table>
         </div>
       </div>
 
@@ -324,6 +342,13 @@
     ventas = await res.json();
   }
 
+  let cortes = [];
+
+  async function cargarCortes() {
+    const res = await fetch('/administrador/cortes');
+    cortes = await res.json();
+  }
+
   /* ---------- IDIOMA ---------- */
   const textos = {
     es: {
@@ -352,6 +377,12 @@
       navVentas: 'Ventas',
       ventasHeading: 'Ventas por sucursal', ventasDesc: 'Consulta las ventas registradas en cualquier sucursal.',
       thFecha: 'Fecha', thCajero: 'Cajero', thMetodoPago: 'Método de pago', thTotal: 'Total',
+      estadoCompletada: 'Completada', estadoCancelada: 'Cancelada', estadoDevParcial: 'Con devolución',
+      navCortes: 'Cortes de caja', cortesHeading: 'Cortes de caja por sucursal',
+      cortesDesc: 'Consulta los turnos de caja de cualquier sucursal: lo vendido contra el efectivo contado.',
+      thCaja: 'Caja', thApertura: 'Apertura', thCierre: 'Cierre', thFondo: 'Fondo', thVentas: 'Ventas',
+      thEsperado: 'Esperado', thContado: 'Contado', thDiferencia: 'Diferencia',
+      enTurno: 'En turno', sobrante: 'Sobrante', faltante: 'Faltante', cajaCuadrada: 'Cuadrada',
       navSistema: 'Información general',
       sistemaHeading: 'Información general del sistema', sistemaDesc: 'Resumen general de sucursales, usuarios, ventas e inventario.',
       statSucursales: 'Sucursales', statUsuarios: 'Usuarios totales', statGerentes: 'Gerentes', statCajeros: 'Cajeros',
@@ -366,7 +397,7 @@
       navProveedores: 'Suppliers', navInventario: 'Inventory',
       sucursalesHeading: 'Branch registry', sucursalesDesc: 'Add new branches or edit existing ones.',
       labelNombre: 'Name', labelDireccion: 'Address', labelApellido: 'Last name', labelCorreo: 'Email', btnAgregar: 'Add',
-      thNombre: 'Name', thDireccion: 'Address', btnGuardar: 'Save', btnEliminar: 'Delete', btnGuardar: 'Cancel',
+      thNombre: 'Name', thDireccion: 'Address', btnGuardar: 'Save', btnEliminar: 'Delete', btnCancelar: 'Cancel',
       alertNombreSucursal: 'Enter the branch name.', confirmEliminarSucursal: 'Delete this branch? Assigned users will be left without a branch.',
       rolesHeading: 'Assign roles', rolesDesc: 'Change the role and assigned branch for each user.', thGerente: 'Manager',
       thUsuario: 'User', thRol: 'Role', thSucursal: 'Branch', sinAsignar: '— Unassigned —',
@@ -384,6 +415,12 @@
       navVentas: 'Sales',
       ventasHeading: 'Sales by branch', ventasDesc: 'Check the sales recorded at any branch.',
       thFecha: 'Date', thCajero: 'Cashier', thMetodoPago: 'Payment method', thTotal: 'Total',
+      estadoCompletada: 'Completed', estadoCancelada: 'Cancelled', estadoDevParcial: 'With return',
+      navCortes: 'Cash counts', cortesHeading: 'Cash counts by branch',
+      cortesDesc: 'Check the register shifts at any branch: sales vs. the cash counted.',
+      thCaja: 'Register', thApertura: 'Opened', thCierre: 'Closed', thFondo: 'Fund', thVentas: 'Sales',
+      thEsperado: 'Expected', thContado: 'Counted', thDiferencia: 'Difference',
+      enTurno: 'In shift', sobrante: 'Overage', faltante: 'Shortage', cajaCuadrada: 'Balanced',
       navSistema: 'Overview',
       sistemaHeading: 'System overview', sistemaDesc: 'General summary of branches, users, sales and inventory.',
       statSucursales: 'Branches', statUsuarios: 'Total users', statGerentes: 'Managers', statCajeros: 'Cashiers',
@@ -402,6 +439,7 @@
     //{ id: 'proveedores', key: 'navProveedores' }, //pendiente en la bd y conexion
     { id: 'inventario', key: 'navInventario' },
     { id: 'ventas', key: 'navVentas'},
+    { id: 'cortes', key: 'navCortes' },
   ];
 
   let seccionActual = 'sistema';
@@ -460,6 +498,7 @@
     await cargarSucursales();
     await cargarInventario();
     await cargarVentas();
+    await cargarCortes();
     await cargarResumen();
     mostrarSeccion('sistema');
   })();
@@ -482,6 +521,7 @@
     //if (id === 'proveedores') renderProveedores();
     if (id === 'inventario') renderInventarioGlobal();
     if (id === 'ventas') renderVentas();
+    if (id === 'cortes') renderCortes();
   }
 
   function opcionesSucursal(seleccionId) {
@@ -776,8 +816,38 @@
           <td>${v.cajero}</td>
           <td>${v.metodo_pago}</td>
           <td>$${Number(v.total).toFixed(2)}</td>
+          <td>${v.estado === 'cancelada' ? t('estadoCancelada') : (v.devuelto > 0 ? t('estadoDevParcial') : t('estadoCompletada'))}</td>
         </tr>`).join('')
-      : `<tr><td colspan="4" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+      : `<tr><td colspan="5" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+  }
+
+  /* ---------- Consultar cortes de caja (solo lectura) ---------- */
+  function renderCortes() {
+    const filtro = document.getElementById('filtroSucursalCortes');
+    if (!filtro.options.length) {
+      filtro.innerHTML = opcionesSucursal();
+    }
+    const sucId = parseInt(filtro.value) || sucursales[0]?.id_sucursal;
+    const items = cortes.filter(c => c.id_sucursal === sucId);
+    const dinero = n => '$' + Number(n).toFixed(2);
+
+    const diferencia = c => {
+      if (c.diferencia === null) return t('enTurno');
+      if (c.diferencia > 0) return `<span style="color:var(--success-text); font-weight:600;">${t('sobrante')} ${dinero(c.diferencia)}</span>`;
+      if (c.diferencia < 0) return `<span style="color:var(--danger-text); font-weight:600;">${t('faltante')} ${dinero(-c.diferencia)}</span>`;
+      return t('cajaCuadrada');
+    };
+
+    document.getElementById('tablaCortes').innerHTML = items.length
+      ? items.map(c => `
+        <tr>
+          <td>${c.cajero ?? '—'}</td><td>${c.caja ?? '—'}</td>
+          <td>${new Date(c.apertura).toLocaleString()}</td><td>${c.cierre ? new Date(c.cierre).toLocaleString() : '—'}</td>
+          <td>${dinero(c.monto_inicial)}</td><td>${c.num_ventas} · ${dinero(c.total)}</td>
+          <td>${dinero(c.efectivo_esperado)}</td><td>${c.efectivo_contado === null ? '—' : dinero(c.efectivo_contado)}</td>
+          <td>${diferencia(c)}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="9" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
   }
 
   function mostrarToast(mensaje, tipo = 'exito') {

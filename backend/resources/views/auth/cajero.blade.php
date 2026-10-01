@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Nexora - Punto de Venta</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -186,6 +187,32 @@
   .btn-imprimir { background: var(--accent); color: #fff; }
   .btn-imprimir:hover { background: var(--accent-hover); }
 
+  /* ---------- CORTE DE CAJA (mismos estilos que el panel de Gerente) ---------- */
+  .resumen-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+  .resumen-card { background: var(--card-bg); border-radius: 12px; padding: 1rem; box-shadow: 0 1px 4px var(--shadow); }
+  .resumen-card .label { font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+  .resumen-card .valor { font-size: 1.4rem; font-weight: 700; }
+  .diferencia-row { display: flex; justify-content: space-between; padding: 0.6rem 0; font-size: 0.95rem; }
+  .diferencia-row.sobrante { color: var(--success-text); font-weight: 700; }
+  .diferencia-row.faltante { color: var(--danger-text); font-weight: 700; }
+  .diferencia-row.cuadrado { color: var(--muted); font-weight: 700; }
+
+  /* ---------- TOASTS (mismos estilos que el panel de Gerente) ---------- */
+  #toastContainer { position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1002; display: flex; flex-direction: column; gap: 0.6rem; }
+  .toast { padding: 0.8rem 1.1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 16px var(--shadow); min-width: 220px; animation: toastIn 0.25s ease-out; }
+  .toast.exito { background: var(--success-bg); color: var(--success-text); }
+  .toast.error { background: var(--danger-bg); color: var(--danger-text); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  .toast.saliendo { animation: toastOut 0.2s ease-in forwards; }
+  @keyframes toastOut { to { opacity: 0; transform: translateX(20px); } }
+
+  /* ---------- MODAL DE CONFIRMACIÓN (mismos estilos que el panel de Gerente) ---------- */
+  #modalOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); align-items: center; justify-content: center; z-index: 1001; }
+  #modalOverlay.activo { display: flex; }
+  .modal-box { background: var(--card-bg); color: var(--text); border-radius: 14px; padding: 1.5rem; width: 320px; box-shadow: 0 10px 40px var(--shadow); }
+  .modal-box p { font-size: 0.9rem; margin-bottom: 1.25rem; }
+  .modal-acciones { display: flex; justify-content: flex-end; gap: 0.6rem; }
+
   @media print {
     body * { visibility: hidden; }
     #ticketContenido, #ticketContenido * { visibility: visible; }
@@ -207,14 +234,14 @@
     <p id="modalMensaje"></p>
     <div class="modal-acciones">
       <button class="btn" onclick="cerrarModal(false)" data-i18n="btnCancelar">Cancelar</button>
-      <button class="btn btn-peligro" onclick="cerrarModal(true)" data-i18n="btnEliminar">Eliminar</button>
+      <button class="btn btn-peligro" id="modalConfirmarBtn" onclick="cerrarModal(true)" data-i18n="btnEliminar">Eliminar</button>
     </div>
   </div>
 </div>
 
 <div class="pos-view" id="posView">
   <div class="topbar">
-    <div class="brand"><span class="logo-sm">N</span> Nexora <span class="sucursal" data-i18n="sucursalCentro">— Sucursal Centro</span></div>
+    <div class="brand"><span class="logo-sm">N</span> Nexora <span class="sucursal">— <span data-i18n="topbarPanelCajero">Punto de venta</span> · {{ auth()->user()->sucursal->nombre ?? __('Sin sucursal asignada') }}</span></div>
     <div class="topbar-derecha">
       <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
       <div class="esquina-superior">
@@ -231,9 +258,24 @@
 
       <!-- ---------- VENDER ---------- -->
       <div class="seccion" id="sec-vender">
-        <div class="main">
+        <!-- Sin turno abierto: primero se elige caja y fondo inicial -->
+        <div class="card" id="aperturaBox" style="display:none">
+          <h3 data-i18n="aperturaHeading">Abrir caja</h3>
+          <p class="desc" data-i18n="aperturaDesc">Elige tu caja y cuenta el fondo inicial antes de empezar a vender.</p>
+          <div class="fila-form">
+            <div class="campo"><label data-i18n="labelCaja">Caja</label><select id="aperturaCaja"></select></div>
+            <div class="campo"><label data-i18n="fondoInicialLabel">Fondo inicial de caja</label><input type="number" id="aperturaFondo" min="0" step="0.01" value="500"></div>
+            <button class="btn btn-primario" onclick="abrirTurno()" data-i18n="btnAbrirCaja">Abrir caja</button>
+          </div>
+        </div>
+
+        <div class="main" id="ventaBox" style="display:none">
           <div>
             <h2 data-i18n="productosHeading">Productos</h2>
+            <p class="desc" id="turnoInfo"></p>
+            <div class="fila-form">
+              <div class="campo"><input type="search" id="buscarProducto" data-i18n-placeholder="placeholderBuscar" placeholder="Buscar producto..." oninput="renderProductos()"></div>
+            </div>
             <div class="productos-grid" id="productosGrid"></div>
           </div>
           <div class="carrito">
@@ -260,7 +302,39 @@
         </div>
       </div>
 
-      <!-- ---------- REGISTRAR COMPRAS ---------- -->
+      <!-- ---------- CORTE DE CAJA ---------- -->
+      <div class="seccion" id="sec-corte">
+        <h2 data-i18n="corteHeading">Corte de caja</h2>
+        <p class="desc" data-i18n="corteDesc">Compara lo vendido en tu turno contra el efectivo físico contado.</p>
+
+        <p class="desc" id="corteSinTurno" style="display:none" data-i18n="corteSinTurno">No tienes un turno abierto.</p>
+
+        <div id="corteContenido" style="display:none">
+          <div class="resumen-grid">
+            <div class="resumen-card"><div class="label" data-i18n="ventasEfectivo">Ventas en efectivo</div><div class="valor" id="resEfectivo">$0.00</div></div>
+            <div class="resumen-card"><div class="label" data-i18n="ventasTarjeta">Ventas con tarjeta</div><div class="valor" id="resTarjeta">$0.00</div></div>
+            <div class="resumen-card"><div class="label" data-i18n="totalTurno">Total del turno</div><div class="valor" id="resTotal">$0.00</div></div>
+          </div>
+          <div class="card">
+            <table>
+              <tr><td data-i18n="labelCaja">Caja</td><td id="corteCaja">—</td></tr>
+              <tr><td data-i18n="labelApertura">Apertura</td><td id="corteApertura">—</td></tr>
+              <tr><td data-i18n="fondoInicialLabel">Fondo inicial de caja</td><td id="corteFondo">$0.00</td></tr>
+              <tr><td data-i18n="labelNumVentas">Ventas realizadas</td><td id="corteNumVentas">0</td></tr>
+              <tr><td data-i18n="labelDevoluciones">Devoluciones / cancelaciones</td><td id="corteDevoluciones">$0.00</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <div class="fila-form">
+              <div class="campo"><label data-i18n="efectivoContadoLabel">Efectivo contado físicamente</label><input type="number" id="efectivoContado" min="0" step="0.01" placeholder="0.00" oninput="calcularCorte()"></div>
+              <button class="btn btn-peligro" onclick="cerrarTurno()" data-i18n="btnCerrarCaja">Cerrar caja y hacer corte</button>
+            </div>
+            <div id="diferenciaCorte"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- REGISTRAR COMPRAS (oculta: es función del Gerente) ---------- -->
       <div class="seccion" id="sec-compras">
         <h2 data-i18n="comprasHeading">Registrar compras</h2>
         <p class="desc" data-i18n="comprasDesc">Registra las entradas de mercancía recibidas por el cajero o proveedor.</p>
@@ -282,7 +356,7 @@
         </div>
       </div>
 
-      <!-- ---------- PRODUCTOS (ALTA / BAJA) ---------- -->
+      <!-- ---------- PRODUCTOS (ALTA / BAJA) (oculta: es función del Gerente) ---------- -->
       <div class="seccion" id="sec-productos">
         <h2 data-i18n="productosSecHeading">Productos</h2>
         <p class="desc" data-i18n="productosSecDesc">Registra productos nuevos o da de baja los que ya no se venden.</p>
@@ -318,18 +392,45 @@
 </div>
 
 <script>
-  const productos = [
-    { id: 1, nombre: 'Refresco 600ml', precio: 18, stock: 12, activo: true },
-    { id: 2, nombre: 'Botana 150g', precio: 25.5, stock: 8, activo: true },
-    { id: 3, nombre: 'Agua 1L', precio: 12, stock: 20, activo: true },
-    { id: 4, nombre: 'Café americano', precio: 32, stock: 15, activo: true },
-    { id: 5, nombre: 'Sandwich jamón', precio: 45, stock: 6, activo: true },
-    { id: 6, nombre: 'Chicles', precio: 8, stock: 30, activo: true },
-  ];
+  /* ---------- DATOS (declarados antes de cualquier función que los use) ---------- */
+  let productos = [];        // { id, nombre, precio (con IVA), stock } de la sucursal
   let carrito = [];
-  let compras = [];
+  let compras = [];          // solo lo usa la sección oculta "Registrar compras"
   let metodoPago = 'efectivo';
-  let numeroTicket = 1000;
+  let metodosPago = {};      // { efectivo: id_metodo_pago, tarjeta: id_metodo_pago } desde la BD
+  let turno = null;          // turno abierto (corte_caja) o null
+  let cajasLibres = [];
+  let resumenTurno = null;
+  let cobrando = false;      // evita registrar la venta dos veces con doble clic
+  let estadoCargado = false; // hasta que responda /cajero/estado no se muestra apertura ni venta
+
+  /*
+   * fetch con CSRF + JSON. Devuelve el cuerpo ya parseado (o null en 204).
+   * Si el servidor responde error, lanza un Error con su `message` para mostrarlo en un toast.
+   */
+  async function api(url, metodo = 'GET', cuerpo = null) {
+    const opciones = {
+      method: metodo,
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
+    };
+    if (cuerpo !== null) {
+      opciones.headers['Content-Type'] = 'application/json';
+      opciones.body = JSON.stringify(cuerpo);
+    }
+    const resp = await fetch(url, opciones);
+    const data = resp.status === 204 ? null : await resp.json().catch(() => null);
+    if (!resp.ok) throw new Error(data?.message || t('errorGenerico'));
+    return data;
+  }
+
+  function formatearFecha(iso) {
+    return iso ? new Date(iso).toLocaleString(idioma === 'es' ? 'es-MX' : 'en-US') : '—';
+  }
+
+  const dinero = n => '$' + Number(n).toFixed(2);
 
   /* ---------- IDIOMA ---------- */
   const textos = {
@@ -383,6 +484,25 @@
       btnNuevaVenta: 'Nueva venta', btnImprimir: 'Imprimir',
       alertCompletaCompra: 'Completa producto, cantidad y costo.',
       alertCompletaProducto: 'Completa al menos nombre y precio.',
+      topbarPanelCajero: 'Punto de venta', navCorte: 'Corte de caja',
+      errorGenerico: 'Ocurrió un error. Intenta de nuevo.', errorCargar: 'No se pudo cargar la información del punto de venta.',
+      placeholderBuscar: 'Buscar producto...', sinResultados: 'Sin productos que coincidan.',
+      aperturaHeading: 'Abrir caja', aperturaDesc: 'Elige tu caja y cuenta el fondo inicial antes de empezar a vender.',
+      labelCaja: 'Caja', fondoInicialLabel: 'Fondo inicial de caja', btnAbrirCaja: 'Abrir caja',
+      sinCajasLibres: 'No hay cajas disponibles. Pide al gerente que registre o libere una.',
+      turnoAbierto: 'Caja abierta', cajaAbierta: 'Caja abierta. ¡Listo para vender!',
+      faltanMetodos: 'Faltan los métodos de pago en la base de datos (ejecuta php artisan migrate).',
+      ventaRegistrada: 'Venta registrada',
+      corteHeading: 'Corte de caja', corteDesc: 'Compara lo vendido en tu turno contra el efectivo físico contado.',
+      corteSinTurno: 'No tienes un turno abierto.', ventasEfectivo: 'Ventas en efectivo', ventasTarjeta: 'Ventas con tarjeta',
+      totalTurno: 'Total del turno', labelApertura: 'Apertura', labelNumVentas: 'Ventas realizadas',
+      labelDevoluciones: 'Devoluciones / cancelaciones',
+      efectivoContadoLabel: 'Efectivo contado físicamente', btnCerrarCaja: 'Cerrar caja y hacer corte',
+      efectivoEsperado: 'Efectivo esperado en caja', sobrante: 'Sobrante', faltante: 'Faltante', cajaCuadrada: 'Caja cuadrada',
+      alertEfectivoContado: 'Ingresa el efectivo contado.', confirmCerrarCaja: '¿Cerrar tu caja? Después ya no podrás vender en este turno.',
+      btnCerrarConfirm: 'Cerrar caja', corteRealizado: 'Corte realizado. Caja cerrada.',
+      ticketSubtotal: 'Subtotal', ticketIva: 'IVA', ticketCajero: 'Cajero',
+      btnCancelar: 'Cancelar', btnEliminar: 'Eliminar',
     },
     en: {
       tagline: 'Multi-branch point of sale',
@@ -434,6 +554,25 @@
       btnNuevaVenta: 'New sale', btnImprimir: 'Print',
       alertCompletaCompra: 'Fill in product, quantity, and cost.',
       alertCompletaProducto: 'Fill in at least name and price.',
+      topbarPanelCajero: 'Point of sale', navCorte: 'Cash count',
+      errorGenerico: 'Something went wrong. Please try again.', errorCargar: 'Could not load the point of sale information.',
+      placeholderBuscar: 'Search product...', sinResultados: 'No matching products.',
+      aperturaHeading: 'Open register', aperturaDesc: 'Choose your register and count the starting cash before selling.',
+      labelCaja: 'Register', fondoInicialLabel: 'Starting cash fund', btnAbrirCaja: 'Open register',
+      sinCajasLibres: 'No registers available. Ask your manager to add or free one.',
+      turnoAbierto: 'Register open', cajaAbierta: 'Register open. Ready to sell!',
+      faltanMetodos: 'Payment methods are missing in the database (run php artisan migrate).',
+      ventaRegistrada: 'Sale recorded',
+      corteHeading: 'Cash count', corteDesc: 'Compare your shift sales against the physical cash counted.',
+      corteSinTurno: 'You have no open shift.', ventasEfectivo: 'Cash sales', ventasTarjeta: 'Card sales',
+      totalTurno: 'Shift total', labelApertura: 'Opened', labelNumVentas: 'Sales made',
+      labelDevoluciones: 'Returns / cancellations',
+      efectivoContadoLabel: 'Physical cash counted', btnCerrarCaja: 'Close register and count',
+      efectivoEsperado: 'Expected cash in register', sobrante: 'Overage', faltante: 'Shortage', cajaCuadrada: 'Register balanced',
+      alertEfectivoContado: 'Enter the cash counted.', confirmCerrarCaja: 'Close your register? You will not be able to sell in this shift afterwards.',
+      btnCerrarConfirm: 'Close register', corteRealizado: 'Cash count done. Register closed.',
+      ticketSubtotal: 'Subtotal', ticketIva: 'Tax', ticketCajero: 'Cashier',
+      btnCancelar: 'Cancel', btnEliminar: 'Delete',
     }
   };
   let idioma = '{{ app()->getLocale() }}';
@@ -441,8 +580,10 @@
 
   const secciones = [
     { id: 'vender', key: 'navVender' },
-    { id: 'compras', key: 'navCompras' },
-    { id: 'productos', key: 'navProductos' },
+    { id: 'corte', key: 'navCorte' },
+    // Compras y alta/baja de productos son funciones del Gerente; HTML/JS se conservan
+    // { id: 'compras', key: 'navCompras' },
+    // { id: 'productos', key: 'navProductos' },
   ];
   let seccionActual = 'vender';
 
@@ -471,40 +612,25 @@
     else aplicarTema('light');
   })();
 
-  /* ---------- IDIOMA: cambio y aplicación ---------- */
-  function toggleIdioma() {
-    idioma = idioma === 'es' ? 'en' : 'es';
-    try { localStorage.setItem('nexora-idioma', idioma); } catch (e) {}
-    aplicarIdioma();
-  }
-
+  /* ---------- IDIOMA ---------- */
+  // El idioma lo decide el servidor (sesión/cookie) y llega en `idioma`; NO se usa localStorage.
+  // El cambio de idioma es el enlace del topbar (lang.switch), que recarga la página.
   function aplicarIdioma() {
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
-    const etiqueta = idioma === 'es' ? 'EN' : 'ES';
-    const bLogin = document.getElementById('idiomaToggleLogin');
-    const bPos = document.getElementById('idiomaTogglePos');
-    if (bLogin) bLogin.textContent = etiqueta;
-    if (bPos) bPos.textContent = etiqueta;
     document.documentElement.lang = idioma;
     renderSidebar();
     mostrarSeccion(seccionActual, true);
   }
 
-  (function inicializarIdioma() {
-    let guardado = null;
-    try { guardado = localStorage.getItem('nexora-idioma'); } catch (e) {}
-    idioma = (guardado === 'en' || guardado === 'es') ? guardado : 'es';
-    aplicarIdioma();
-  })();
+  aplicarIdioma();
 
   function cerrarSesion() {
     carrito = [];
     document.getElementById('logoutForm').submit();
   }
 
-  renderSidebar();
-  mostrarSeccion('vender');
+  cargarEstado();
 
   /* ---------- NAVEGACIÓN ---------- */
   function renderSidebar() {
@@ -519,9 +645,66 @@
       document.getElementById('sec-' + s.id).classList.toggle('activa', s.id === id);
       document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === id);
     });
-    if (id === 'vender') { renderProductos(); renderCarrito(); }
+    if (id === 'vender') renderVender();
+    if (id === 'corte') { renderCorte(); if (!soloRefrescar) cargarResumen(); }
     if (id === 'compras') renderCompras();
     if (id === 'productos') renderProductosAdmin();
+  }
+
+  /* ---------- TURNO (apertura de caja) ---------- */
+  async function cargarEstado() {
+    try {
+      const estado = await api('/cajero/estado');
+      turno = estado.turno;
+      cajasLibres = estado.cajas;
+      metodosPago = {};
+      estado.metodos_pago.forEach(m => { metodosPago[m.nombre.toLowerCase()] = m.id; });
+      if (turno) await cargarProductos();
+    } catch (e) {
+      mostrarToast(e.message || t('errorCargar'), 'error');
+    }
+    estadoCargado = true;
+    mostrarSeccion(seccionActual);
+  }
+
+  async function cargarProductos() {
+    try { productos = await api('/cajero/productos'); }
+    catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  /* Sin turno: formulario de apertura. Con turno: el punto de venta. */
+  function renderVender() {
+    document.getElementById('aperturaBox').style.display = estadoCargado && !turno ? 'block' : 'none';
+    document.getElementById('ventaBox').style.display = estadoCargado && turno ? 'grid' : 'none';
+    if (!estadoCargado) return;
+
+    if (!turno) {
+      const select = document.getElementById('aperturaCaja');
+      select.innerHTML = cajasLibres.map(c => `<option value="${c.id}">${t('labelCaja')} ${c.numero}</option>`).join('')
+        || `<option value="">${t('sinCajasLibres')}</option>`;
+      return;
+    }
+
+    document.getElementById('turnoInfo').textContent =
+      `${t('turnoAbierto')}: ${t('labelCaja')} ${turno.caja} · ${formatearFecha(turno.apertura)}`;
+    renderProductos();
+    renderCarrito();
+  }
+
+  async function abrirTurno() {
+    const id_caja = parseInt(document.getElementById('aperturaCaja').value);
+    const monto_inicial = parseFloat(document.getElementById('aperturaFondo').value);
+    if (!id_caja) { mostrarToast(t('sinCajasLibres'), 'error'); return; }
+
+    try {
+      turno = await api('/cajero/turno/abrir', 'POST', { id_caja, monto_inicial: isNaN(monto_inicial) ? 0 : monto_inicial });
+      await cargarProductos();
+      renderVender();
+      mostrarToast(t('cajaAbierta'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+      await cargarEstado(); // la caja pudo haber sido tomada por otro cajero
+    }
   }
 
   /* ---------- VENDER ---------- */
@@ -535,7 +718,9 @@
 
   function renderProductos() {
     const grid = document.getElementById('productosGrid');
-    grid.innerHTML = productos.filter(p => p.activo).map(p => {
+    const busqueda = document.getElementById('buscarProducto').value.trim().toLowerCase();
+    // El servidor ya manda solo productos activos con inventario en esta sucursal
+    grid.innerHTML = productos.filter(p => p.nombre.toLowerCase().includes(busqueda)).map(p => {
       const enCarrito = carrito.find(i => i.id === p.id);
       const disponible = p.stock - (enCarrito ? enCarrito.cantidad : 0);
       return `
@@ -547,7 +732,7 @@
             ${disponible <= 0 ? t('sinStock') : t('agregarBtn')}
           </button>
         </div>`;
-    }).join('');
+    }).join('') || `<div class="vacio">${t('sinResultados')}</div>`;
   }
 
   function agregarAlCarrito(id) {
@@ -604,34 +789,43 @@
       cambioRow.innerHTML = '';
     }
 
-    document.getElementById('btnCobrar').disabled = !puedeCobrar;
+    document.getElementById('btnCobrar').disabled = !puedeCobrar || cobrando;
   }
 
-  function cobrar() {
-    if (carrito.length === 0) return;
-    const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  /*
+   * Solo se mandan id_producto + cantidad. El servidor recalcula precios, valida stock,
+   * guarda venta + detalle, descuenta inventario y devuelve los datos del ticket.
+   */
+  async function cobrar() {
+    if (carrito.length === 0 || cobrando) return;
+
+    const id_metodo_pago = metodosPago[metodoPago];
+    if (!id_metodo_pago) { mostrarToast(t('faltanMetodos'), 'error'); return; }
+
     const recibido = metodoPago === 'efectivo' ? (parseFloat(document.getElementById('montoRecibido').value) || 0) : null;
-    const cambio = metodoPago === 'efectivo' ? recibido - total : null;
 
-    numeroTicket++;
-    const ventaTicket = {
-      folio: numeroTicket,
-      fecha: new Date().toLocaleString(idioma === 'es' ? 'es-MX' : 'en-US'),
-      items: carrito.map(i => ({ nombre: i.nombre, cantidad: i.cantidad, precio: i.precio })),
-      total, metodo: metodoPago, recibido, cambio,
-    };
+    cobrando = true;
+    document.getElementById('btnCobrar').disabled = true;
+    try {
+      const ticket = await api('/cajero/ventas', 'POST', {
+        id_metodo_pago,
+        items: carrito.map(i => ({ id_producto: i.id, cantidad: i.cantidad })),
+        recibido,
+      });
 
-    carrito.forEach(item => {
-      const p = productos.find(x => x.id === item.id);
-      p.stock -= item.cantidad;
-    });
-
-    mostrarTicket(ventaTicket);
-    carrito = [];
-    document.getElementById('montoRecibido').value = '';
-    elegirMetodo('efectivo');
-    renderProductos();
-    renderCarrito();
+      mostrarTicket(ticket);
+      carrito = [];
+      document.getElementById('montoRecibido').value = '';
+      elegirMetodo('efectivo');
+      mostrarToast(t('ventaRegistrada'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    } finally {
+      cobrando = false;
+      await cargarProductos(); // stock real después de la venta (o del intento)
+      renderProductos();
+      renderCarrito();
+    }
   }
 
   /* ---------- TICKET ---------- */
@@ -649,11 +843,13 @@
 
     document.getElementById('ticketContenido').innerHTML = `
       <h2>Nexora</h2>
-      <div class="ticket-sub">${t('ticketSucursal')}<br>${t('ticketFolio')}${venta.folio}<br>${venta.fecha}</div>
+      <div class="ticket-sub">${venta.sucursal}<br>${t('ticketFolio')}${venta.folio}<br>${formatearFecha(venta.fecha)}<br>${t('ticketCajero')}: ${venta.cajero} · ${t('labelCaja')} ${venta.caja}</div>
       <div class="linea"></div>
       <table>${filasItems}</table>
       <div class="linea"></div>
       <table>
+        <tr><td>${t('ticketSubtotal')}</td><td style="text-align:right;">$${venta.subtotal.toFixed(2)}</td></tr>
+        <tr><td>${t('ticketIva')}</td><td style="text-align:right;">$${venta.iva.toFixed(2)}</td></tr>
         <tr class="fila-total"><td>${t('ticketTotal')}</td><td style="text-align:right;">$${venta.total.toFixed(2)}</td></tr>
         <tr><td>${t('ticketMetodoPago')}</td><td style="text-align:right;">${venta.metodo === 'efectivo' ? t('ticketEfectivo') : t('ticketTarjeta')}</td></tr>
         ${filasPago}
@@ -666,6 +862,71 @@
 
   function cerrarTicket() { document.getElementById('ticketOverlay').classList.remove('activo'); }
   function imprimirTicket() { window.print(); }
+
+  /* ---------- CORTE DE CAJA ---------- */
+  async function cargarResumen() {
+    if (!turno) { resumenTurno = null; renderCorte(); return; }
+    try {
+      resumenTurno = await api('/cajero/turno/resumen');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
+    renderCorte();
+  }
+
+  function renderCorte() {
+    const hay = !!(turno && resumenTurno);
+    document.getElementById('corteSinTurno').style.display = estadoCargado && !turno ? 'block' : 'none';
+    document.getElementById('corteContenido').style.display = hay ? 'block' : 'none';
+    if (!hay) return;
+
+    // Netos: lo que el gerente devolvió/canceló de ventas de este turno ya no cuenta
+    document.getElementById('resEfectivo').textContent = dinero(resumenTurno.ventas_efectivo - resumenTurno.devoluciones_efectivo);
+    document.getElementById('resTarjeta').textContent = dinero(resumenTurno.ventas_tarjeta - resumenTurno.devoluciones_tarjeta);
+    document.getElementById('corteDevoluciones').textContent = dinero(resumenTurno.devoluciones_efectivo + resumenTurno.devoluciones_tarjeta);
+    document.getElementById('resTotal').textContent = dinero(resumenTurno.total);
+    document.getElementById('corteCaja').textContent = resumenTurno.caja;
+    document.getElementById('corteApertura').textContent = formatearFecha(resumenTurno.apertura);
+    document.getElementById('corteFondo').textContent = dinero(resumenTurno.monto_inicial);
+    document.getElementById('corteNumVentas').textContent = resumenTurno.num_ventas;
+    calcularCorte();
+  }
+
+  /* Vista previa en vivo: fondo inicial + ventas en efectivo vs. lo contado */
+  function calcularCorte() {
+    if (!resumenTurno) return;
+    const esperado = resumenTurno.efectivo_esperado;
+    const contado = parseFloat(document.getElementById('efectivoContado').value);
+    const div = document.getElementById('diferenciaCorte');
+    const filaEsperado = `<div class="diferencia-row"><span>${t('efectivoEsperado')}</span><span>${dinero(esperado)}</span></div>`;
+
+    if (isNaN(contado)) { div.innerHTML = filaEsperado; return; }
+
+    const diferencia = Math.round((contado - esperado) * 100) / 100;
+    let clase = 'cuadrado', texto = t('cajaCuadrada');
+    if (diferencia > 0) { clase = 'sobrante'; texto = t('sobrante'); }
+    if (diferencia < 0) { clase = 'faltante'; texto = t('faltante'); }
+    div.innerHTML = filaEsperado + `<div class="diferencia-row ${clase}"><span>${texto}</span><span>${dinero(Math.abs(diferencia))}</span></div>`;
+  }
+
+  async function cerrarTurno() {
+    const efectivo_contado = parseFloat(document.getElementById('efectivoContado').value);
+    if (isNaN(efectivo_contado)) { mostrarToast(t('alertEfectivoContado'), 'error'); return; }
+    if (!(await confirmar(t('confirmCerrarCaja'), t('btnCerrarConfirm')))) return;
+
+    try {
+      await api('/cajero/turno/cerrar', 'POST', { efectivo_contado });
+      document.getElementById('efectivoContado').value = '';
+      turno = null;
+      resumenTurno = null;
+      carrito = [];
+      mostrarToast(t('corteRealizado'), 'exito');
+      seccionActual = 'vender'; // regresa a "Vender", donde aparece la apertura de caja
+      await cargarEstado();      // recarga las cajas libres
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
+  }
 
   /* ---------- REGISTRAR COMPRAS ---------- */
   function renderCompras() {
@@ -741,8 +1002,9 @@
   }
 
   let _resolverModal = null;
-  function confirmar(mensaje) {
+  function confirmar(mensaje, textoBoton = t('btnEliminar')) {
     document.getElementById('modalMensaje').textContent = mensaje;
+    document.getElementById('modalConfirmarBtn').textContent = textoBoton;
     document.getElementById('modalOverlay').classList.add('activo');
     return new Promise(resolve => { _resolverModal = resolve; });
   }

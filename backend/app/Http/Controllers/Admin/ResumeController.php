@@ -8,7 +8,6 @@ use App\Models\Producto;
 use App\Models\Sucursal;
 use App\Models\User;
 use App\Models\Venta;
-use Illuminate\Http\Request;
 
 class ResumeController extends Controller
 {
@@ -23,8 +22,9 @@ class ResumeController extends Controller
                 'cajeros'         => User::where('id_rol', 3)->count(),
             ],
             'productos'   => Producto::count(),
-            'ventas_hoy'  => (float) Venta::whereDate('fecha_hora', now()->toDateString())->sum('total'),
-            'ventas_mes'  => (float) Venta::whereMonth('fecha_hora', now()->month)->whereYear('fecha_hora', now()->year)->sum('total'),
+            // Netas: se resta lo devuelto/cancelado
+            'ventas_hoy'  => Venta::totalNeto(Venta::whereDate('fecha_hora', now()->toDateString())),
+            'ventas_mes'  => Venta::totalNeto(Venta::whereMonth('fecha_hora', now()->month)->whereYear('fecha_hora', now()->year)),
             'stock_bajo'  => Inventario::whereColumn('existencias', '<=', 'stock_minimo')->count(),
         ];
     }
