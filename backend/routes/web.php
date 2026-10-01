@@ -2,9 +2,9 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Models\Rol;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\Admin\SucursalController;
 use Illuminate\Support\Facades\Cookie;
@@ -14,6 +14,15 @@ use App\Http\Controllers\Admin\VentaController;
 use App\Http\Controllers\Admin\ResumeController;
 use App\Http\Controllers\Gerente\MiSucursalController;
 use App\Http\Controllers\Gerente\ProductoController;
+use App\Http\Controllers\Gerente\InventarioController as GerenteInventarioController;
+use App\Http\Controllers\Gerente\CajaController;
+use App\Http\Controllers\Gerente\CompraController;
+use App\Http\Controllers\Gerente\HistorialController;
+use App\Http\Controllers\Gerente\DevolucionController;
+use App\Http\Controllers\Gerente\CorteController as GerenteCorteController;
+use App\Http\Controllers\Admin\CorteController as AdminCorteController;
+use App\Http\Controllers\Cajero\TurnoController;
+use App\Http\Controllers\Cajero\VentaController as CajeroVentaController;
 
 //Ruta para la funcion del idioma(local)
 Route::get('/lang/{locale}', function ($locale){
@@ -22,8 +31,11 @@ Route::get('/lang/{locale}', function ($locale){
         Session::put('locale', $locale);
         Cookie::queue('idioma', $locale, 525600);
 
-        if(auth()->check()){
-            auth()->user()->update(['idioma' => $locale]);
+        /** @var User|null $usuario */
+        $usuario = Auth::user();
+
+        if($usuario){
+            $usuario->update(['idioma' => $locale]);
         }
     }
 
@@ -42,15 +54,14 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [RegisterController::class, 'showRegisterForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
 
-Route::get('/dashboard', fn () => view('dashboard'))
-    ->middleware('auth')
-    ->name('dashboard');
-
 //Rutas para cada panel dependiendo el rol
 Route::middleware('auth')->group(function (){
     //Redirige a cada rol a su panel
     Route::get('/dashboard', function () {
-        return match (strtolower(auth()->user()->rol->nombre)) {
+        /** @var User $usuario */
+        $usuario = Auth::user();
+
+        return match (strtolower($usuario->rol->nombre)) {
             'administrador' => redirect()->route('panel.administrador'),
             'gerente' => redirect()->route('panel.gerente'),
             'cajero' => redirect()->route('panel.cajero'),
@@ -88,6 +99,8 @@ Route::middleware(['auth', 'rol:administrador'])
 
         Route::get('/resumen', [ResumeController::class, 'index']);
 
+        Route::get('/cortes', [AdminCorteController::class, 'index']);
+
     });
 
 //Gerente
@@ -100,4 +113,34 @@ Route::middleware(['auth', 'rol:gerente'])
         Route::post('/productos', [ProductoController::class, 'store']);
         Route::put('/productos/{producto}', [ProductoController::class, 'update']);
         Route::put('/productos/{producto}/toggle', [ProductoController::class, 'toggleActivo']);
+
+        Route::put('/inventario/{producto}', [GerenteInventarioController::class, 'ajustar']);
+
+        Route::get('/cajas', [CajaController::class, 'index']);
+        Route::post('/cajas', [CajaController::class, 'store']);
+        Route::put('/cajas/{caja}/toggle', [CajaController::class, 'toggle']);
+        Route::delete('/cajas/{caja}', [CajaController::class, 'destroy']);
+
+        Route::get('/compras', [CompraController::class, 'index']);
+        Route::post('/compras', [CompraController::class, 'store']);
+
+        Route::get('/historial', [HistorialController::class, 'index']);
+        Route::get('/ventas/{venta}', [DevolucionController::class, 'show']);
+        Route::post('/ventas/{venta}/devolucion', [DevolucionController::class, 'devolver']);
+        Route::post('/ventas/{venta}/cancelar', [DevolucionController::class, 'cancelar']);
+
+        Route::get('/cortes', [GerenteCorteController::class, 'index']);
+    });
+
+//Cajero
+Route::middleware(['auth', 'rol:cajero'])
+    ->prefix('cajero')
+    ->group(function () {
+        Route::get('/estado', [TurnoController::class, 'estado']);
+        Route::post('/turno/abrir', [TurnoController::class, 'abrir']);
+        Route::get('/turno/resumen', [TurnoController::class, 'resumen']);
+        Route::post('/turno/cerrar', [TurnoController::class, 'cerrar']);
+
+        Route::get('/productos', [CajeroVentaController::class, 'productos']);
+        Route::post('/ventas', [CajeroVentaController::class, 'store']);
     });

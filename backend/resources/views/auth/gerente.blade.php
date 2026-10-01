@@ -149,7 +149,7 @@
     <p id="modalMensaje"></p>
     <div class="modal-acciones">
       <button class="btn" onclick="cerrarModal(false)" data-i18n="btnCancelar">Cancelar</button>
-      <button class="btn btn-peligro" onclick="cerrarModal(true)" data-i18n="btnEliminar">Eliminar</button>
+      <button class="btn btn-peligro" id="modalConfirmarBtn" onclick="cerrarModal(true)" data-i18n="btnEliminar">Eliminar</button>
     </div>
   </div>
 </div>
@@ -225,19 +225,23 @@
       </div>
 
       <div class="seccion" id="sec-corte">
-        <h2 data-i18n="corteHeading">Corte de caja</h2>
-        <p class="desc" data-i18n="corteDesc">Compara lo vendido hoy contra el efectivo físico contado.</p>
+        <h2 data-i18n="corteHeading">Cortes de caja</h2>
+        <p class="desc" data-i18n="corteDesc">Historial de turnos de tus cajas: lo vendido contra el efectivo que contó cada cajero.</p>
+        <!-- Totales de los turnos abiertos hoy (netos de devoluciones) -->
         <div class="resumen-grid">
           <div class="resumen-card"><div class="label" data-i18n="ventasEfectivo">Ventas en efectivo</div><div class="valor" id="resEfectivo">$0.00</div></div>
           <div class="resumen-card"><div class="label" data-i18n="ventasTarjeta">Ventas con tarjeta</div><div class="valor" id="resTarjeta">$0.00</div></div>
           <div class="resumen-card"><div class="label" data-i18n="totalDia">Total del día</div><div class="valor" id="resTotal">$0.00</div></div>
         </div>
         <div class="card">
-          <div class="fila-form">
-            <div class="campo"><label data-i18n="fondoInicialLabel">Fondo inicial de caja</label><input type="number" id="fondoInicial" min="0" step="0.01" value="500" oninput="calcularCorte()"></div>
-            <div class="campo"><label data-i18n="efectivoContadoLabel">Efectivo contado físicamente</label><input type="number" id="efectivoContado" min="0" step="0.01" placeholder="0.00" oninput="calcularCorte()"></div>
-          </div>
-          <div id="diferenciaCorte"></div>
+          <table>
+            <tr>
+              <th data-i18n="thCajero">Cajero</th><th data-i18n="thCaja">Caja</th><th data-i18n="thApertura">Apertura</th><th data-i18n="thCierre">Cierre</th>
+              <th data-i18n="thFondo">Fondo</th><th data-i18n="thVentas">Ventas</th><th data-i18n="thEsperado">Esperado</th>
+              <th data-i18n="thContado">Contado</th><th data-i18n="thDiferencia">Diferencia</th>
+            </tr>
+            <tbody id="tablaCortes"></tbody>
+          </table>
         </div>
       </div>
 
@@ -246,13 +250,13 @@
         <p class="desc" data-i18n="cajasDesc">Administra las cajas registradoras disponibles en esta sucursal.</p>
         <div class="card">
           <div class="fila-form">
-            <div class="campo"><label data-i18n="cajaNombreLabel">Nombre de la caja</label><input type="text" id="cajaNombre" placeholder="Caja 3"></div>
+            <div class="campo"><label data-i18n="cajaNumeroLabel">Número de caja</label><input type="number" id="cajaNumero" min="1" placeholder="3"></div>
             <button class="btn btn-primario" onclick="agregarCaja()" data-i18n="btnAgregarCaja">Agregar caja</button>
           </div>
         </div>
         <div class="card">
           <table>
-            <tr><th data-i18n="thCaja">Caja</th><th data-i18n="thEstado">Estado</th><th></th><th></th></tr>
+            <tr><th data-i18n="thCaja">Caja</th><th data-i18n="thEstado">Estado</th><th data-i18n="thEnTurno">En turno</th><th></th><th></th></tr>
             <tbody id="tablaCajas"></tbody>
           </table>
         </div>
@@ -288,10 +292,10 @@
 
       <div class="seccion" id="sec-historial">
         <h2 data-i18n="historialHeading">Historial de ventas</h2>
-        <p class="desc" data-i18n="historialDesc">Todas las ventas registradas en esta sucursal.</p>
+        <p class="desc" data-i18n="historialDesc">Todas las ventas registradas en esta sucursal. Desde aquí puedes devolver piezas o cancelar una venta.</p>
         <div class="card">
           <table>
-            <tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thCajero">Cajero</th><th data-i18n="thMetodo">Método</th><th data-i18n="thTotal">Total</th></tr>
+            <tr><th data-i18n="thFolio">Folio</th><th data-i18n="thFecha">Fecha</th><th data-i18n="thCajero">Cajero</th><th data-i18n="thCaja">Caja</th><th data-i18n="thMetodo">Método</th><th data-i18n="thTotal">Total</th><th data-i18n="thEstado">Estado</th><th></th></tr>
             <tbody id="tablaHistorial"></tbody>
           </table>
         </div>
@@ -302,30 +306,68 @@
 </div>
 
 <script>
+  /* ---------- DATOS (declarados antes de cualquier función que los use) ---------- */
   let productos = [];
+  let compras = [];
+  let historial = [];
+  let cajas = [];
+  let cortes = [];
+  let miSucursal = null;
+  let ventaAbierta = null;   // folio de la venta cuyo panel de devolución está abierto
+  let detalleVenta = null;   // detalle (líneas + devoluciones) de esa venta
 
-  async function cargarProductos() {
-    try {
-      const resp = await fetch('/gerente/productos');
-      productos = await resp.json();
-    } catch (e) {
-      mostrarToast(t('errorCargarProductos'), 'error');
+  /*
+   * fetch con CSRF + JSON. Devuelve el cuerpo ya parseado (o null en 204).
+   * Si el servidor responde error, lanza un Error con su `message` para mostrarlo en un toast.
+   */
+  async function api(url, metodo = 'GET', cuerpo = null) {
+    const opciones = {
+      method: metodo,
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
+    };
+    if (cuerpo !== null) {
+      opciones.headers['Content-Type'] = 'application/json';
+      opciones.body = JSON.stringify(cuerpo);
     }
+    const resp = await fetch(url, opciones);
+    const data = resp.status === 204 ? null : await resp.json().catch(() => null);
+    if (!resp.ok) throw new Error(data?.message || t('errorGenerico'));
+    return data;
   }
 
-  let compras = [];
-  let historial = [
-    { fecha: '25/08/2026 09:14', cajero: 'Cajero 1', metodo: 'efectivo', total: 55.5 },
-    { fecha: '25/08/2026 10:02', cajero: 'Cajero 1', metodo: 'tarjeta', total: 90.0 },
-    { fecha: '25/08/2026 11:47', cajero: 'Cajero 1', metodo: 'efectivo', total: 32.0 },
-    { fecha: '25/08/2026 13:20', cajero: 'Cajero 1', metodo: 'tarjeta', total: 130.5 },
-  ];
-  let cajas = [
-    { id: 1, nombre: 'Caja 1', abierta: true },
-    { id: 2, nombre: 'Caja 2', abierta: false },
-  ];
+  function formatearFecha(iso) {
+    return iso ? new Date(iso).toLocaleString(idioma === 'es' ? 'es-MX' : 'en-US') : '—';
+  }
 
-  let miSucursal = null;
+  async function cargarProductos() {
+    try { productos = await api('/gerente/productos'); }
+    catch (e) { mostrarToast(t('errorCargarProductos'), 'error'); }
+  }
+
+  async function cargarCompras() {
+    try { compras = await api('/gerente/compras'); }
+    catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  async function cargarCajas() {
+    try { cajas = await api('/gerente/cajas'); }
+    catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  async function cargarHistorial() {
+    try { historial = await api('/gerente/historial'); }
+    catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  async function cargarCortes() {
+    try { cortes = await api('/gerente/cortes'); }
+    catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  const dinero = n => '$' + Number(n).toFixed(2);
 
   /* ---------- IDIOMA ---------- */
   const textos = {
@@ -333,7 +375,7 @@
       tagline: 'Panel de gerente', placeholderUsuario: 'Usuario', placeholderClave: 'Contraseña',
       btnEntrar: 'Entrar', demoNote: 'Demo visual — cualquier dato entra',
       topbarSucursal: '— Panel de Gerente · Sucursal Centro', cerrarSesion: 'Cerrar sesión',
-      navInventario: 'Inventario', navCompras: 'Registrar compras', navCorte: 'Corte de caja',
+      navInventario: 'Inventario', navCompras: 'Registrar compras', navCorte: 'Cortes de caja',
       navCajas: 'Registro de cajas', navPrecios: 'Precios e IVA', navProductos: 'Alta / baja productos',
       navHistorial: 'Historial de ventas',
       invHeading: 'Inventario', invDesc: 'Consulta y ajusta las existencias de tu sucursal.',
@@ -343,21 +385,21 @@
       placeholderNombre: 'Nombre', btnRegistrar: 'Registrar', comprasRegistradasHeading: 'Compras registradas',
       thFecha: 'Fecha', thCantidad: 'Cantidad', thCostoUnit: 'Costo unit.', thTotal: 'Total', thProveedor: 'Proveedor',
       sinCompras: 'Sin compras registradas',
-      corteHeading: 'Corte de caja', corteDesc: 'Compara lo vendido hoy contra el efectivo físico contado.',
+      corteHeading: 'Cortes de caja', corteDesc: 'Historial de turnos de tus cajas: lo vendido contra el efectivo que contó cada cajero.',
       ventasEfectivo: 'Ventas en efectivo', ventasTarjeta: 'Ventas con tarjeta', totalDia: 'Total del día',
       fondoInicialLabel: 'Fondo inicial de caja', efectivoContadoLabel: 'Efectivo contado físicamente',
       efectivoEsperado: 'Efectivo esperado en caja', sobrante: 'Sobrante', faltante: 'Faltante', cajaCuadrada: 'Caja cuadrada',
       cajasHeading: 'Registro de cajas', cajasDesc: 'Administra las cajas registradoras disponibles en esta sucursal.',
       cajaNombreLabel: 'Nombre de la caja', btnAgregarCaja: 'Agregar caja', thCaja: 'Caja', thEstado: 'Estado',
-      badgeAbierta: 'Abierta', badgeCerrada: 'Cerrada', btnAbrir: 'Abrir', btnCerrar: 'Cerrar', btnEliminar: 'Eliminar',
+      badgeAbierta: 'Abierta', badgeCerrada: 'Cerrada', btnAbrir: 'Abrir', btnCerrar: 'Cerrar', btnEliminar: 'Eliminar', btnCancelar: 'Cancelar',
       sinCajas: 'Sin cajas registradas', alertNombreCaja: 'Ingresa el nombre de la caja.', confirmEliminarCaja: '¿Eliminar esta caja?',
       preciosHeading: 'Precios e IVA', preciosDesc: 'Modifica el precio base y el porcentaje de IVA de cada producto.',
       thPrecioBase: 'Precio base', thIva: 'IVA %', thPrecioFinal: 'Precio final', btnGuardar: 'Guardar',
-      productosHeading: 'Alta / baja de productos', productosDesc: 'Agrega nuevos productos al catálogo o desactiva los que ya no se venden.',
+      productosHeading: 'Alta / baja de productos', productosDesc: 'Agrega productos, ajusta su precio e IVA o desactívalos. Los cambios solo aplican a tu sucursal.',
       labelNombre: 'Nombre', labelStockInicial: 'Stock inicial', placeholderProducto: 'Producto',
       btnDarAlta: 'Dar de alta', thPrecio: 'Precio', badgeActivo: 'Activo', badgeInactivo: 'Inactivo',
       btnDarBaja: 'Dar de baja', btnReactivar: 'Reactivar', alertCompletaProducto: 'Completa al menos nombre y precio.',
-      historialHeading: 'Historial de ventas', historialDesc: 'Todas las ventas registradas en esta sucursal.',
+      historialHeading: 'Historial de ventas', historialDesc: 'Todas las ventas registradas en esta sucursal. Desde aquí puedes devolver piezas o cancelar una venta.',
       thCajero: 'Cajero', thMetodo: 'Método', badgeEfectivo: 'Efectivo', badgeTarjeta: 'Tarjeta',
       alertCompletaCompra: 'Completa producto, cantidad y costo.',
       navMiSucursal: 'Mi sucursal', topbarPanelGerente: 'Panel de Gerente',
@@ -368,12 +410,32 @@
       errorCargarSucursal: 'No se pudo cargar la información de tu sucursal.',
       labelEstado: 'Estado', thEstado: 'Estado', estadoActiva: 'Activa', estadoInactiva: 'Inactiva',
       errorCargarProductos: 'No se pudieron cargar los productos.',
+      errorGenerico: 'Ocurrió un error. Intenta de nuevo.',
+      cajaNumeroLabel: 'Número de caja', alertNumeroCaja: 'Ingresa el número de la caja.',
+      thEnTurno: 'En turno', thFolio: 'Folio', libre: 'Libre',
+      btnActivar: 'Activar', btnDesactivar: 'Desactivar',
+      cajaAgregada: 'Caja agregada', cajaEliminada: 'Caja eliminada',
+      productoActualizado: 'Producto actualizado', productoAgregado: 'Producto agregado',
+      stockActualizado: 'Stock actualizado', compraRegistrada: 'Compra registrada; inventario actualizado',
+      sinVentas: 'Sin ventas registradas', sinProductos: 'Sin productos',
+      thApertura: 'Apertura', thCierre: 'Cierre', thFondo: 'Fondo', thVentas: 'Ventas', thEsperado: 'Esperado',
+      thContado: 'Contado', thDiferencia: 'Diferencia', sinCortes: 'Sin cortes registrados', enTurno: 'En turno',
+      estadoCompletada: 'Completada', estadoCancelada: 'Cancelada', estadoDevParcial: 'Con devolución',
+      btnGestionar: 'Devolver / cancelar', btnOcultar: 'Ocultar',
+      thVendidos: 'Vendidos', thDevueltos: 'Devueltos', thPrecioUnit: 'Precio unit.', thDevolver: 'Devolver',
+      labelMotivo: 'Motivo', placeholderMotivo: 'Ej. producto dañado',
+      btnDevolverSel: 'Devolver piezas', btnCancelarVenta: 'Cancelar venta completa',
+      confirmCancelarVenta: '¿Cancelar toda la venta? Se reembolsa lo pendiente y el stock regresa al inventario.',
+      btnConfirmarCancelacion: 'Cancelar venta', alertMotivo: 'Escribe el motivo.', alertPiezas: 'Indica cuántas piezas se devuelven.',
+      devolucionRegistrada: 'Devolución registrada; stock actualizado', ventaCancelada: 'Venta cancelada; stock actualizado',
+      historialDevoluciones: 'Devoluciones registradas', tipoDevolucion: 'Devolución', tipoCancelacion: 'Cancelación',
+      devueltoLabel: 'devuelto', canceladaPor: 'Motivo de cancelación',
     },
     en: {
       tagline: 'Manager panel', placeholderUsuario: 'Username', placeholderClave: 'Password',
       btnEntrar: 'Log in', demoNote: 'Visual demo — any data works',
       topbarSucursal: '— Manager Panel · Centro Branch', cerrarSesion: 'Log out',
-      navInventario: 'Inventory', navCompras: 'Register purchases', navCorte: 'Cash count',
+      navInventario: 'Inventory', navCompras: 'Register purchases', navCorte: 'Cash counts',
       navCajas: 'Cash registers', navPrecios: 'Prices & tax', navProductos: 'Add / remove products',
       navHistorial: 'Sales history',
       invHeading: 'Inventory', invDesc: 'Check and adjust the stock at your branch.',
@@ -383,21 +445,21 @@
       placeholderNombre: 'Name', btnRegistrar: 'Register', comprasRegistradasHeading: 'Registered purchases',
       thFecha: 'Date', thCantidad: 'Quantity', thCostoUnit: 'Unit cost', thTotal: 'Total', thProveedor: 'Supplier',
       sinCompras: 'No purchases registered',
-      corteHeading: 'Cash count', corteDesc: "Compare today's sales against the physical cash counted.",
+      corteHeading: 'Cash counts', corteDesc: 'Shift history for your registers: sales vs. the cash each cashier counted.',
       ventasEfectivo: 'Cash sales', ventasTarjeta: 'Card sales', totalDia: "Today's total",
       fondoInicialLabel: 'Starting cash fund', efectivoContadoLabel: 'Physical cash counted',
       efectivoEsperado: 'Expected cash in register', sobrante: 'Overage', faltante: 'Shortage', cajaCuadrada: 'Register balanced',
       cajasHeading: 'Cash registers', cajasDesc: 'Manage the cash registers available at this branch.',
       cajaNombreLabel: 'Register name', btnAgregarCaja: 'Add register', thCaja: 'Register', thEstado: 'Status',
-      badgeAbierta: 'Open', badgeCerrada: 'Closed', btnAbrir: 'Open', btnCerrar: 'Close', btnEliminar: 'Delete',
+      badgeAbierta: 'Open', badgeCerrada: 'Closed', btnAbrir: 'Open', btnCerrar: 'Close', btnEliminar: 'Delete', btnCancelar: 'Cancel',
       sinCajas: 'No registers added', alertNombreCaja: 'Enter the register name.', confirmEliminarCaja: 'Delete this register?',
       preciosHeading: 'Prices & tax', preciosDesc: 'Edit the base price and tax rate for each product.',
       thPrecioBase: 'Base price', thIva: 'Tax %', thPrecioFinal: 'Final price', btnGuardar: 'Save',
-      productosHeading: 'Add / remove products', productosDesc: 'Add new products to the catalog or deactivate ones no longer sold.',
+      productosHeading: 'Add / remove products', productosDesc: 'Add products, adjust their price and tax or deactivate them. Changes only apply to your branch.',
       labelNombre: 'Name', labelStockInicial: 'Initial stock', placeholderProducto: 'Product',
       btnDarAlta: 'Add product', thPrecio: 'Price', badgeActivo: 'Active', badgeInactivo: 'Inactive',
       btnDarBaja: 'Deactivate', btnReactivar: 'Reactivate', alertCompletaProducto: 'Fill in at least name and price.',
-      historialHeading: 'Sales history', historialDesc: 'All sales recorded at this branch.',
+      historialHeading: 'Sales history', historialDesc: 'All sales recorded at this branch. From here you can return items or cancel a sale.',
       thCajero: 'Cashier', thMetodo: 'Method', badgeEfectivo: 'Cash', badgeTarjeta: 'Card',
       alertCompletaCompra: 'Fill in product, quantity, and cost.',
       navMiSucursal: 'My branch', topbarPanelGerente: 'Manager Panel',
@@ -408,6 +470,26 @@
       errorCargarSucursal: 'Could not load your branch information.',
       labelEstado: 'Status', thEstado: 'Status', estadoActiva: 'Active', estadoInactiva: 'Inactive',
       errorCargarProductos: 'Could not load the products.',
+      errorGenerico: 'Something went wrong. Please try again.',
+      cajaNumeroLabel: 'Register number', alertNumeroCaja: 'Enter the register number.',
+      thEnTurno: 'In shift', thFolio: 'Receipt #', libre: 'Free',
+      btnActivar: 'Activate', btnDesactivar: 'Deactivate',
+      cajaAgregada: 'Register added', cajaEliminada: 'Register deleted',
+      productoActualizado: 'Product updated', productoAgregado: 'Product added',
+      stockActualizado: 'Stock updated', compraRegistrada: 'Purchase registered; inventory updated',
+      sinVentas: 'No sales recorded', sinProductos: 'No products',
+      thApertura: 'Opened', thCierre: 'Closed', thFondo: 'Fund', thVentas: 'Sales', thEsperado: 'Expected',
+      thContado: 'Counted', thDiferencia: 'Difference', sinCortes: 'No cash counts recorded', enTurno: 'In shift',
+      estadoCompletada: 'Completed', estadoCancelada: 'Cancelled', estadoDevParcial: 'With return',
+      btnGestionar: 'Return / cancel', btnOcultar: 'Hide',
+      thVendidos: 'Sold', thDevueltos: 'Returned', thPrecioUnit: 'Unit price', thDevolver: 'Return',
+      labelMotivo: 'Reason', placeholderMotivo: 'e.g. damaged product',
+      btnDevolverSel: 'Return items', btnCancelarVenta: 'Cancel whole sale',
+      confirmCancelarVenta: 'Cancel the whole sale? The pending amount is refunded and stock goes back to inventory.',
+      btnConfirmarCancelacion: 'Cancel sale', alertMotivo: 'Enter the reason.', alertPiezas: 'Enter how many items are returned.',
+      devolucionRegistrada: 'Return recorded; stock updated', ventaCancelada: 'Sale cancelled; stock updated',
+      historialDevoluciones: 'Recorded returns', tipoDevolucion: 'Return', tipoCancelacion: 'Cancellation',
+      devueltoLabel: 'returned', canceladaPor: 'Cancellation reason',
     }
   };
   let idioma = '{{ app()->getLocale() }}';
@@ -417,10 +499,11 @@
     { id: 'mi-sucursal', key: 'navMiSucursal'},
     { id: 'inventario', key: 'navInventario' },
     { id: 'compras', key: 'navCompras' },
-    { id: 'corte', key: 'navCorte' },
     { id: 'cajas', key: 'navCajas' },
     { id: 'productos', key: 'navProductos' },
     { id: 'historial', key: 'navHistorial' },
+    // El cajero hace su corte; aquí el gerente consulta el historial de cortes
+    { id: 'corte', key: 'navCorte' },
   ];
   let seccionActual = 'mi-sucursal';
 
@@ -464,13 +547,6 @@
     document.getElementById('logoutForm').submit();
   }
 
-  renderSidebar();
-  (async () => {
-    await cargarMiSucursal();
-    await cargarProductos();
-    mostrarSeccion('mi-sucursal');
-  })();
-
   function renderSidebar() {
     document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${t(s.key)}</button>`).join('');
     secciones.forEach(s => document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === seccionActual));
@@ -482,29 +558,21 @@
       document.getElementById('sec-' + s.id).classList.toggle('activa', s.id === id);
       document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === id);
     });
-    if (id === 'mi-sucursal') renderMiSucursal();
-    if (id === 'inventario') renderInventario();
-    if (id === 'compras') renderCompras();
-    if (id === 'corte') renderCorte();
-    if (id === 'cajas') renderCajas();
-    if (id === 'productos') renderProductos();
-    if (id === 'historial') renderHistorial();
+    // Se pinta de inmediato con lo que ya hay y luego se refresca con datos del servidor
+    if (id === 'mi-sucursal') { renderMiSucursal(); cargarMiSucursal().then(renderMiSucursal); }
+    if (id === 'inventario') { renderInventario(); cargarProductos().then(renderInventario); }
+    if (id === 'compras') { renderCompras(); Promise.all([cargarProductos(), cargarCompras()]).then(renderCompras); }
+    if (id === 'cajas') { renderCajas(); cargarCajas().then(renderCajas); }
+    if (id === 'productos') { renderProductos(); cargarProductos().then(renderProductos); }
+    if (id === 'historial') { renderHistorial(); cargarHistorial().then(renderHistorial); }
+    if (id === 'corte') { renderCortes(); cargarCortes().then(renderCortes); }
   }
 
   /* ---------- MI SUCURSAL ---------- */
 
   async function cargarMiSucursal() {
-    try {
-      const resp = await fetch('/gerente/mi-sucursal');
-      const data = await resp.json();
-      if (!resp.ok) {
-        mostrarToast(data.message || t('errorCargarSucursal'), 'error');
-        return;
-      }
-      miSucursal = data;
-    } catch (e) {
-      mostrarToast(t('errorCargarSucursal'), 'error');
-    }
+    try { miSucursal = await api('/gerente/mi-sucursal'); }
+    catch (e) { mostrarToast(e.message || t('errorCargarSucursal'), 'error'); }
   }
 
   function renderMiSucursal() {
@@ -530,105 +598,135 @@
       </tr>`).join('');
   }
 
-  function ajustarStock(id) {
+  async function ajustarStock(id) {
     const input = document.getElementById('ajuste-' + id);
-    const valor = parseInt(input.value);
-    if (!valor) return;
-    const p = productos.find(x => x.id === id);
-    p.stock = Math.max(0, p.stock + valor);
-    input.value = '';
-    renderInventario();
+    const ajuste = parseInt(input.value);
+    if (!ajuste) return;
+
+    try {
+      const r = await api('/gerente/inventario/' + id, 'PUT', { ajuste });
+      productos.find(x => x.id === id).stock = r.stock;
+      input.value = '';
+      renderInventario();
+      mostrarToast(t('stockActualizado'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   /* ---------- COMPRAS ---------- */
   function renderCompras() {
     const select = document.getElementById('compraProducto');
+    const seleccionado = select.value;
     select.innerHTML = productos.filter(p => p.activo).map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
-    document.getElementById('tablaCompras').innerHTML = compras.slice().reverse().map(c => `
+    if (seleccionado) select.value = seleccionado; // no perder la selección al refrescar
+
+    // El servidor ya las manda de la más reciente a la más antigua
+    document.getElementById('tablaCompras').innerHTML = compras.map(c => `
       <tr>
-        <td>${c.fecha}</td><td>${c.nombre}</td><td>${c.cantidad}</td>
-        <td>$${c.costo.toFixed(2)}</td><td>$${(c.costo * c.cantidad).toFixed(2)}</td><td>${c.proveedor || '—'}</td>
+        <td>${formatearFecha(c.fecha)}</td><td>${c.producto}</td><td>${c.cantidad}</td>
+        <td>$${c.costo.toFixed(2)}</td><td>$${c.total.toFixed(2)}</td><td>${c.proveedor || '—'}</td>
       </tr>`).join('') || `<tr><td colspan="6" style="color:var(--muted-light);">${t('sinCompras')}</td></tr>`;
   }
 
-  function registrarCompra() {
-    const id = parseInt(document.getElementById('compraProducto').value);
+  async function registrarCompra() {
+    const id_producto = parseInt(document.getElementById('compraProducto').value);
     const cantidad = parseInt(document.getElementById('compraCantidad').value);
-    const costo = parseFloat(document.getElementById('compraCosto').value);
-    const proveedor = document.getElementById('compraProveedor').value;
-    if (!id || !cantidad || !costo) { alert(t('alertCompletaCompra')); return; }
+    const costo_unitario = parseFloat(document.getElementById('compraCosto').value);
+    const proveedor = document.getElementById('compraProveedor').value.trim() || null;
+    if (!id_producto || !cantidad || isNaN(costo_unitario)) { mostrarToast(t('alertCompletaCompra'), 'error'); return; }
 
-    const p = productos.find(x => x.id === id);
-    p.stock += cantidad;
-    compras.push({ fecha: new Date().toLocaleString(idioma === 'es' ? 'es-MX' : 'en-US'), nombre: p.nombre, cantidad, costo, proveedor });
-
-    document.getElementById('compraCantidad').value = '';
-    document.getElementById('compraCosto').value = '';
-    document.getElementById('compraProveedor').value = '';
-    renderCompras();
-  }
-
-  /* ---------- CORTE DE CAJA ---------- */
-  function renderCorte() {
-    const efectivo = historial.filter(v => v.metodo === 'efectivo').reduce((s, v) => s + v.total, 0);
-    const tarjeta = historial.filter(v => v.metodo === 'tarjeta').reduce((s, v) => s + v.total, 0);
-    document.getElementById('resEfectivo').textContent = '$' + efectivo.toFixed(2);
-    document.getElementById('resTarjeta').textContent = '$' + tarjeta.toFixed(2);
-    document.getElementById('resTotal').textContent = '$' + (efectivo + tarjeta).toFixed(2);
-    calcularCorte();
-  }
-
-  function calcularCorte() {
-    const efectivoVentas = historial.filter(v => v.metodo === 'efectivo').reduce((s, v) => s + v.total, 0);
-    const fondo = parseFloat(document.getElementById('fondoInicial').value) || 0;
-    const contado = parseFloat(document.getElementById('efectivoContado').value);
-    const esperado = fondo + efectivoVentas;
-    const div = document.getElementById('diferenciaCorte');
-
-    if (isNaN(contado)) {
-      div.innerHTML = `<div class="diferencia-row"><span>${t('efectivoEsperado')}</span><span>$${esperado.toFixed(2)}</span></div>`;
-      return;
+    try {
+      await api('/gerente/compras', 'POST', { id_producto, cantidad, costo_unitario, proveedor });
+      document.getElementById('compraCantidad').value = '';
+      document.getElementById('compraCosto').value = '';
+      document.getElementById('compraProveedor').value = '';
+      await Promise.all([cargarProductos(), cargarCompras()]);
+      renderCompras();
+      mostrarToast(t('compraRegistrada'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
     }
-    const diferencia = contado - esperado;
-    let clase = 'cuadrado', texto = t('cajaCuadrada');
-    if (diferencia > 0) { clase = 'sobrante'; texto = t('sobrante'); }
-    if (diferencia < 0) { clase = 'faltante'; texto = t('faltante'); }
+  }
 
-    div.innerHTML = `
-      <div class="diferencia-row"><span>${t('efectivoEsperado')}</span><span>$${esperado.toFixed(2)}</span></div>
-      <div class="diferencia-row ${clase}"><span>${texto}</span><span>$${Math.abs(diferencia).toFixed(2)}</span></div>`;
+  /* ---------- CORTES DE CAJA (historial) ---------- */
+  // Sobrante / faltante / cuadrada, con los colores de .diferencia-row del diseño original
+  function celdaDiferencia(c) {
+    if (c.diferencia === null) return `<span class="badge badge-tarjeta">${t('enTurno')}</span>`;
+    let clase = 'cuadrado', texto = t('cajaCuadrada');
+    if (c.diferencia > 0) { clase = 'sobrante'; texto = t('sobrante'); }
+    if (c.diferencia < 0) { clase = 'faltante'; texto = t('faltante'); }
+    return `<span class="diferencia-row ${clase}" style="padding:0;display:inline">${texto} ${dinero(Math.abs(c.diferencia))}</span>`;
+  }
+
+  function renderCortes() {
+    // Tarjetas de resumen: turnos abiertos HOY, netos de devoluciones
+    const hoy = new Date().toDateString();
+    const deHoy = cortes.filter(c => new Date(c.apertura).toDateString() === hoy);
+    const efectivo = deHoy.reduce((s, c) => s + c.ventas_efectivo - c.devoluciones_efectivo, 0);
+    const tarjeta = deHoy.reduce((s, c) => s + c.ventas_tarjeta - c.devoluciones_tarjeta, 0);
+    document.getElementById('resEfectivo').textContent = dinero(efectivo);
+    document.getElementById('resTarjeta').textContent = dinero(tarjeta);
+    document.getElementById('resTotal').textContent = dinero(efectivo + tarjeta);
+
+    document.getElementById('tablaCortes').innerHTML = cortes.map(c => `
+      <tr>
+        <td>${c.cajero ?? '—'}</td><td>${c.caja ?? '—'}</td>
+        <td>${formatearFecha(c.apertura)}</td><td>${c.cierre ? formatearFecha(c.cierre) : '—'}</td>
+        <td>${dinero(c.monto_inicial)}</td><td>${c.num_ventas} · ${dinero(c.total)}</td>
+        <td>${dinero(c.efectivo_esperado)}</td><td>${c.efectivo_contado === null ? '—' : dinero(c.efectivo_contado)}</td>
+        <td>${celdaDiferencia(c)}</td>
+      </tr>`).join('') || `<tr><td colspan="9" style="color:var(--muted-light);">${t('sinCortes')}</td></tr>`;
   }
 
   /* ---------- REGISTRO DE CAJAS ---------- */
   function renderCajas() {
     document.getElementById('tablaCajas').innerHTML = cajas.map(c => `
       <tr>
-        <td>${c.nombre}</td>
-        <td><span class="badge ${c.abierta ? 'badge-activo' : 'badge-inactivo'}">${c.abierta ? t('badgeAbierta') : t('badgeCerrada')}</span></td>
-        <td><button class="btn btn-sm ${c.abierta ? 'btn-peligro' : 'btn-exito'}" onclick="toggleCaja(${c.id})">${c.abierta ? t('btnCerrar') : t('btnAbrir')}</button></td>
+        <td>${t('thCaja')} ${c.numero}</td>
+        <td><span class="badge ${c.activa ? 'badge-activo' : 'badge-inactivo'}">${c.activa ? t('estadoActiva') : t('estadoInactiva')}</span></td>
+        <td>${c.en_turno ? `<span class="badge badge-tarjeta">${t('badgeAbierta')}</span> ${c.cajero ?? ''}` : t('libre')}</td>
+        <td><button class="btn btn-sm ${c.activa ? 'btn-peligro' : 'btn-exito'}" onclick="toggleCaja(${c.id})">${c.activa ? t('btnDesactivar') : t('btnActivar')}</button></td>
         <td><button class="btn btn-peligro btn-sm" onclick="eliminarCaja(${c.id})">${t('btnEliminar')}</button></td>
-      </tr>`).join('') || `<tr><td colspan="4" style="color:var(--muted-light);">${t('sinCajas')}</td></tr>`;
+      </tr>`).join('') || `<tr><td colspan="5" style="color:var(--muted-light);">${t('sinCajas')}</td></tr>`;
   }
 
-  function agregarCaja() {
-    const nombre = document.getElementById('cajaNombre').value.trim();
-    if (!nombre) { alert(t('alertNombreCaja')); return; }
-    const id = Math.max(0, ...cajas.map(c => c.id)) + 1;
-    cajas.push({ id, nombre, abierta: true });
-    document.getElementById('cajaNombre').value = '';
-    renderCajas();
+  async function agregarCaja() {
+    const numero = parseInt(document.getElementById('cajaNumero').value);
+    if (!numero) { mostrarToast(t('alertNumeroCaja'), 'error'); return; }
+
+    try {
+      await api('/gerente/cajas', 'POST', { numero });
+      document.getElementById('cajaNumero').value = '';
+      await cargarCajas();
+      renderCajas();
+      mostrarToast(t('cajaAgregada'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
-  function toggleCaja(id) {
-    const c = cajas.find(x => x.id === id);
-    c.abierta = !c.abierta;
-    renderCajas();
+  async function toggleCaja(id) {
+    try {
+      await api('/gerente/cajas/' + id + '/toggle', 'PUT');
+      await cargarCajas();
+      renderCajas();
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
-  function eliminarCaja(id) {
-    if (!confirm(t('confirmEliminarCaja'))) return;
-    cajas = cajas.filter(c => c.id !== id);
-    renderCajas();
+  async function eliminarCaja(id) {
+    if (!(await confirmar(t('confirmEliminarCaja')))) return;
+
+    try {
+      await api('/gerente/cajas/' + id, 'DELETE');
+      await cargarCajas();
+      renderCajas();
+      mostrarToast(t('cajaEliminada'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
     /* ---------- PRODUCTOS ---------- */
@@ -649,30 +747,24 @@
     const precio = parseFloat(document.getElementById('precio-' + id).value);
     const iva = parseFloat(document.getElementById('iva-' + id).value);
 
-    const res = await fetch('/gerente/productos/' + id, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-      },
-      body: JSON.stringify({ precio, iva }),
-    });
-
-    if (!res.ok) { mostrarToast('No se pudo actualizar el producto.', 'error'); return; }
-    await cargarProductos();
-    renderProductos();
-    mostrarToast('Producto actualizado', 'exito');
+    try {
+      await api('/gerente/productos/' + id, 'PUT', { precio, iva });
+      await cargarProductos();
+      renderProductos();
+      mostrarToast(t('productoActualizado'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   async function toggleActivo(id) {
-    const res = await fetch('/gerente/productos/' + id + '/toggle', {
-      method: 'PUT',
-      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-    });
-
-    if (!res.ok) { mostrarToast('No se pudo cambiar el estado del producto.', 'error'); return; }
-    await cargarProductos();
-    renderProductos();
+    try {
+      await api('/gerente/productos/' + id + '/toggle', 'PUT');
+      await cargarProductos();
+      renderProductos();
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   async function darDeAlta() {
@@ -682,37 +774,126 @@
     const stock = parseInt(document.getElementById('nuevoStock').value) || 0;
     if (!nombre || !precio) { mostrarToast(t('alertCompletaProducto'), 'error'); return; }
 
-    const res = await fetch('/gerente/productos', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-      },
-      body: JSON.stringify({ nombre, precio, iva, stock }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null);
-      mostrarToast(err?.message ?? 'No se pudo dar de alta el producto.', 'error');
-      return;
+    try {
+      await api('/gerente/productos', 'POST', { nombre, precio, iva, stock });
+      document.getElementById('nuevoNombre').value = '';
+      document.getElementById('nuevoPrecio').value = '';
+      document.getElementById('nuevoStock').value = '';
+      await cargarProductos();
+      renderProductos();
+      mostrarToast(t('productoAgregado'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
     }
-
-    document.getElementById('nuevoNombre').value = '';
-    document.getElementById('nuevoPrecio').value = '';
-    document.getElementById('nuevoStock').value = '';
-    await cargarProductos();
-    renderProductos();
-    mostrarToast('Producto agregado', 'exito');
   }
 
   /* ---------- HISTORIAL ---------- */
+  function badgeEstadoVenta(v) {
+    if (v.estado === 'cancelada') return `<span class="badge badge-inactivo">${t('estadoCancelada')}</span>`;
+    if (v.devuelto > 0) return `<span class="badge badge-efectivo">${t('estadoDevParcial')}</span>`;
+    return `<span class="badge badge-activo">${t('estadoCompletada')}</span>`;
+  }
+
   function renderHistorial() {
-    document.getElementById('tablaHistorial').innerHTML = historial.slice().reverse().map(v => `
+    // El servidor ya las manda de la más reciente a la más antigua
+    document.getElementById('tablaHistorial').innerHTML = historial.map(v => {
+      const efectivo = v.metodo.toLowerCase() === 'efectivo';
+      const abierta = ventaAbierta === v.folio;
+      return `
       <tr>
-        <td>${v.fecha}</td><td>${v.cajero}</td>
-        <td><span class="badge ${v.metodo === 'efectivo' ? 'badge-efectivo' : 'badge-tarjeta'}">${v.metodo === 'efectivo' ? t('badgeEfectivo') : t('badgeTarjeta')}</span></td>
-        <td>$${v.total.toFixed(2)}</td>
+        <td>#${v.folio}</td><td>${formatearFecha(v.fecha)}</td><td>${v.cajero}</td><td>${v.caja ?? '—'}</td>
+        <td><span class="badge ${efectivo ? 'badge-efectivo' : 'badge-tarjeta'}">${efectivo ? t('badgeEfectivo') : t('badgeTarjeta')}</span></td>
+        <td>${dinero(v.neto)}${v.devuelto > 0 ? `<br><span style="color:var(--muted);font-size:0.72rem;">${dinero(v.total)} − ${dinero(v.devuelto)} ${t('devueltoLabel')}</span>` : ''}</td>
+        <td>${badgeEstadoVenta(v)}</td>
+        <td><button class="btn btn-sm" onclick="gestionarVenta(${v.folio})">${abierta ? t('btnOcultar') : t('btnGestionar')}</button></td>
+      </tr>
+      ${abierta && detalleVenta ? `<tr><td colspan="8">${panelDevolucion()}</td></tr>` : ''}`;
+    }).join('') || `<tr><td colspan="8" style="color:var(--muted-light);">${t('sinVentas')}</td></tr>`;
+  }
+
+  /* Panel bajo la venta: piezas a devolver por línea, motivo y botones */
+  function panelDevolucion() {
+    const v = detalleVenta;
+    const cancelada = v.estado === 'cancelada';
+    const pendiente = v.items.some(i => i.disponible > 0);
+
+    const filas = v.items.map(i => `
+      <tr>
+        <td>${i.producto}</td><td>${i.cantidad}</td><td>${i.devuelto}</td><td>${dinero(i.precio_unitario)}</td>
+        <td>${!cancelada && i.disponible > 0
+          ? `<input type="number" id="dev-${i.id_detalle}" min="0" max="${i.disponible}" placeholder="0">`
+          : '—'}</td>
       </tr>`).join('');
+
+    const historialDev = v.devoluciones.length ? `
+      <h3 style="margin-top:1rem;">${t('historialDevoluciones')}</h3>
+      <table>${v.devoluciones.map(d => `
+        <tr>
+          <td>${formatearFecha(d.fecha)}</td>
+          <td>${d.tipo === 'cancelacion' ? t('tipoCancelacion') : t('tipoDevolucion')}</td>
+          <td>${d.producto ?? '—'} × ${d.cantidad}</td><td>${dinero(d.monto)}</td>
+          <td>${d.motivo}</td><td>${d.usuario ?? ''}</td>
+        </tr>`).join('')}</table>` : '';
+
+    const acciones = cancelada
+      ? `<p class="desc">${t('canceladaPor')}: ${v.motivo_cancelacion ?? '—'}</p>`
+      : `<div class="fila-form">
+          <div class="campo"><label>${t('labelMotivo')}</label><input type="text" id="devMotivo" maxlength="255" placeholder="${t('placeholderMotivo')}"></div>
+          ${pendiente ? `<button class="btn btn-primario" onclick="devolverPiezas(${v.folio})">${t('btnDevolverSel')}</button>` : ''}
+          <button class="btn btn-peligro" onclick="cancelarVenta(${v.folio})">${t('btnCancelarVenta')}</button>
+        </div>`;
+
+    return `
+      <table>
+        <tr><th>${t('thProducto')}</th><th>${t('thVendidos')}</th><th>${t('thDevueltos')}</th><th>${t('thPrecioUnit')}</th><th>${t('thDevolver')}</th></tr>
+        ${filas}
+      </table>
+      <div style="margin-top:0.75rem;">${acciones}</div>
+      ${historialDev}`;
+  }
+
+  async function gestionarVenta(folio) {
+    if (ventaAbierta === folio) { ventaAbierta = null; detalleVenta = null; renderHistorial(); return; }
+    try {
+      detalleVenta = await api('/gerente/ventas/' + folio);
+      ventaAbierta = folio;
+      renderHistorial();
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
+  }
+
+  async function devolverPiezas(folio) {
+    const motivo = document.getElementById('devMotivo').value.trim();
+    const items = detalleVenta.items
+      .map(i => ({ id_detalle: i.id_detalle, cantidad: parseInt(document.getElementById('dev-' + i.id_detalle)?.value) || 0 }))
+      .filter(i => i.cantidad > 0);
+    if (!items.length) { mostrarToast(t('alertPiezas'), 'error'); return; }
+    if (!motivo) { mostrarToast(t('alertMotivo'), 'error'); return; }
+
+    try {
+      detalleVenta = await api(`/gerente/ventas/${folio}/devolucion`, 'POST', { items, motivo });
+      await cargarHistorial();
+      renderHistorial();
+      mostrarToast(t('devolucionRegistrada'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
+  }
+
+  async function cancelarVenta(folio) {
+    const motivo = document.getElementById('devMotivo').value.trim();
+    if (!motivo) { mostrarToast(t('alertMotivo'), 'error'); return; }
+    if (!(await confirmar(t('confirmCancelarVenta'), t('btnConfirmarCancelacion')))) return;
+
+    try {
+      detalleVenta = await api(`/gerente/ventas/${folio}/cancelar`, 'POST', { motivo });
+      await cargarHistorial();
+      renderHistorial();
+      mostrarToast(t('ventaCancelada'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   function mostrarToast(mensaje, tipo = 'exito') {
@@ -728,8 +909,9 @@
   }
 
   let _resolverModal = null;
-  function confirmar(mensaje) {
+  function confirmar(mensaje, textoBoton = t('btnEliminar')) {
     document.getElementById('modalMensaje').textContent = mensaje;
+    document.getElementById('modalConfirmarBtn').textContent = textoBoton;
     document.getElementById('modalOverlay').classList.add('activo');
     return new Promise(resolve => { _resolverModal = resolve; });
   }

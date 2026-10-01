@@ -9,6 +9,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property int $id_usuario
+ * @property string $nombre
+ * @property string $apellido
+ * @property \Illuminate\Support\Carbon|null $fecha_nacimiento
+ * @property string $correo
+ * @property string $contrasena
+ * @property string|null $remember_token
+ * @property int $id_rol
+ * @property int|null $id_sucursal
+ * @property string $idioma
+ * @property-read Rol|null $rol
+ * @property-read Sucursal|null $sucursal
+ */
 #[Fillable(['nombre', 'apellido', 'fecha_nacimiento', 'correo', 'contrasena', 'id_rol', 'id_sucursal', 'idioma'])]
 #[Hidden(['contrasena', 'remember_token'])]
 class User extends Authenticatable

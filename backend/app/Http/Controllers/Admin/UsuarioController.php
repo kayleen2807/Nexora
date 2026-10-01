@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Sucursal;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class UsuarioController extends Controller
 {
@@ -62,13 +65,13 @@ class UsuarioController extends Controller
     public function destroy(User $usuario)
     {
         try {
-            \DB::transaction(function () use ($usuario) {
-                \App\Models\Sucursal::where('id_gerente', $usuario->id_usuario)
+            DB::transaction(function () use ($usuario) {
+                Sucursal::where('id_gerente', $usuario->id_usuario)
                     ->update(['id_gerente' => null]);
 
                 $usuario->delete();
             });
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             return response()->json([
                 'message' => 'No se puede eliminar: el usuario tiene ventas o cortes de caja registrados.',
             ], 422);

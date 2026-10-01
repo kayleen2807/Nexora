@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sucursal;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SucursalController extends Controller
 {
@@ -32,11 +34,11 @@ class SucursalController extends Controller
             'id_gerente' => ['nullable', 'integer', 'exists:usuario,id_usuario'],
         ]);
 
-        \DB::transaction(function () use ($sucursal, $data) {
+        DB::transaction(function () use ($sucursal, $data) {
             $sucursal->update($data);
 
             if (!empty($data['id_gerente'])) {
-                \App\Models\User::where('id_usuario', $data['id_gerente'])
+                User::where('id_usuario', $data['id_gerente'])
                     ->update(['id_sucursal' => $sucursal->id_sucursal]);
             }
         });
@@ -45,8 +47,8 @@ class SucursalController extends Controller
     }
 
     public function destroy(Sucursal $sucursal){
-        \DB::transaction(function () use ($sucursal) {
-            \App\Models\User::where('id_sucursal', $sucursal->id_sucursal)
+        DB::transaction(function () use ($sucursal) {
+            User::where('id_sucursal', $sucursal->id_sucursal)
                 ->update(['id_sucursal' => null]);
 
             $sucursal->delete();

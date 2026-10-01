@@ -7,7 +7,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-use Illuminate\View\View;
+use App\Models\User;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cookie;
 
 class LoginController extends Controller
@@ -63,8 +64,11 @@ class LoginController extends Controller
         Session::put('locale', $idiomaActual);
         Cookie::queue('idioma', $idiomaActual, 525600);
 
-        if ($idiomaActual !== auth()->user()->idioma) {
-            auth()->user()->update(['idioma' => $idiomaActual]);
+        /** @var User $usuario */
+        $usuario = Auth::user();
+
+        if ($idiomaActual !== $usuario->idioma) {
+            $usuario->update(['idioma' => $idiomaActual]);
         }
 
         return redirect()->route('dashboard');
