@@ -15,12 +15,12 @@ class SetLocale
      *
      * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next)
     {
-        $locale = $request->session()->get('locale');
-
-        if (in_array($locale, ['es', 'en'], true)){
-            App::setLocale($locale);
+        if (Session::has('locale')) {
+            App::setLocale(Session::get('locale'));
+        } elseif ($request->cookie('idioma')) {
+            App::setLocale($request->cookie('idioma'));
         }
 
         return $next($request);

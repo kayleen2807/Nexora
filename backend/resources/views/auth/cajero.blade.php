@@ -196,6 +196,21 @@
 </style>
 </head>
 <body>
+<form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display:none">
+    @csrf
+</form>
+
+<div id="toastContainer"></div>
+
+<div id="modalOverlay">
+  <div class="modal-box">
+    <p id="modalMensaje"></p>
+    <div class="modal-acciones">
+      <button class="btn" onclick="cerrarModal(false)" data-i18n="btnCancelar">Cancelar</button>
+      <button class="btn btn-peligro" onclick="cerrarModal(true)" data-i18n="btnEliminar">Eliminar</button>
+    </div>
+  </div>
+</div>
 
 <div class="pos-view" id="posView">
   <div class="topbar">
@@ -203,7 +218,8 @@
     <div class="topbar-derecha">
       <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
       <div class="esquina-superior">
-        <button class="idioma-toggle" id="idiomaTogglePos" onclick="toggleIdioma()" title="Change language">ES</button>
+        @php $otroIdioma = app()->getLocale() === 'es' ? 'en' : 'es'; @endphp
+        <a class="idioma-toggle" id="idiomaTogglePanel" href="{{ route('lang.switch', $otroIdioma) }}" title="Change language">{{ strtoupper($otroIdioma) }}</a>
         <button class="tema-toggle" id="temaTogglePos" onclick="toggleTema()" title="Cambiar tema">🌙</button>
       </div>
     </div>
@@ -420,7 +436,7 @@
       alertCompletaProducto: 'Fill in at least name and price.',
     }
   };
-  let idioma = 'es';
+  let idioma = '{{ app()->getLocale() }}';
   function t(clave) { return textos[idioma][clave] || clave; }
 
   const secciones = [
@@ -484,7 +500,7 @@
 
   function cerrarSesion() {
     carrito = [];
-    // TODO: conectar con la ruta real de logout de Laravel (auth)
+    document.getElementById('logoutForm').submit();
   }
 
   renderSidebar();
@@ -710,6 +726,29 @@
     document.getElementById('nuevoPrecio').value = '';
     document.getElementById('nuevoStock').value = '';
     renderProductosAdmin();
+  }
+
+  function mostrarToast(mensaje, tipo = 'exito') {
+    const cont = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    toast.textContent = mensaje;
+    cont.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('saliendo');
+      setTimeout(() => toast.remove(), 200);
+    }, 3000);
+  }
+
+  let _resolverModal = null;
+  function confirmar(mensaje) {
+    document.getElementById('modalMensaje').textContent = mensaje;
+    document.getElementById('modalOverlay').classList.add('activo');
+    return new Promise(resolve => { _resolverModal = resolve; });
+  }
+  function cerrarModal(resultado) {
+    document.getElementById('modalOverlay').classList.remove('activo');
+    if (_resolverModal) _resolverModal(resultado);
   }
 </script>
 

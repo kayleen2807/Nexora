@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['nombre', 'apellido', 'fecha_nacimiento', 'correo', 'contrasena', 'id_rol', 'id_sucursal'])]
+#[Fillable(['nombre', 'apellido', 'fecha_nacimiento', 'correo', 'contrasena', 'id_rol', 'id_sucursal', 'idioma'])]
 #[Hidden(['contrasena', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -21,7 +21,7 @@ class User extends Authenticatable
     /** identifica la llave primaria enla tabla usuarios de nuestra bd */
     protected $primaryKey = 'id_usuario';
 
-    /** las timestamp las */
+    /** las timestamp las ponemos en false*/
     public $timestamps = false;
 
     protected $authPasswordName = 'contrasena';

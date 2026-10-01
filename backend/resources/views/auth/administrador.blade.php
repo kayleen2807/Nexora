@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Nexora - Panel de Administrador</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -98,17 +99,66 @@
 
   .filtro-sucursal { margin-bottom: 1rem; }
   .filtro-sucursal select { padding: 0.55rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; min-width: 200px; background: var(--card-bg); color: var(--text); }
+
+  /* ---------- TOASTS ---------- */
+#toastContainer {
+  position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1000;
+  display: flex; flex-direction: column; gap: 0.6rem;
+}
+.toast {
+  padding: 0.8rem 1.1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+  box-shadow: 0 4px 16px var(--shadow); min-width: 220px;
+  animation: toastIn 0.25s ease-out;
+}
+.toast.exito { background: var(--success-bg); color: var(--success-text); }
+.toast.error { background: var(--danger-bg); color: var(--danger-text); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+.toast.saliendo { animation: toastOut 0.2s ease-in forwards; }
+@keyframes toastOut { to { opacity: 0; transform: translateX(20px); } }
+
+/* ---------- MODAL DE CONFIRMACIÓN ---------- */
+#modalOverlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  align-items: center; justify-content: center; z-index: 1001;
+}
+#modalOverlay.activo { display: flex; }
+.modal-box {
+  background: var(--card-bg); color: var(--text); border-radius: 14px; padding: 1.5rem;
+  width: 320px; box-shadow: 0 10px 40px var(--shadow);
+}
+.modal-box p { font-size: 0.9rem; margin-bottom: 1.25rem; }
+.modal-acciones { display: flex; justify-content: flex-end; gap: 0.6rem; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.stat-card { background: var(--card-bg); border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 4px var(--shadow); text-align: center; }
+.stat-card .valor { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+.stat-card .etiqueta { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
 </style>
 </head>
 <body>
+<form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display:none">
+    @csrf
+</form>
 
+<div id="toastContainer"></div>
+
+<div id="modalOverlay">
+  <div class="modal-box">
+    <p id="modalMensaje"></p>
+    <div class="modal-acciones">
+      <button class="btn" onclick="cerrarModal(false)" data-i18n="btnCancelar">Cancelar</button>
+      <button class="btn btn-peligro" onclick="cerrarModal(true)" data-i18n="btnEliminar">Eliminar</button>
+    </div>
+  </div>
+</div>
 <div class="panel-view" id="panelView">
   <div class="topbar">
-    <div class="brand"><span class="logo-sm">N</span> Nexora <span class="sucursal" data-i18n="topbarTitulo">— Panel de Administrador</span></div>
+    <div class="brand"><span class="logo-sm">N</span> Nexora <span class="sucursal" data-i18n="topbarTitulo"> — Panel de Administrador</span></div>
     <div class="topbar-derecha">
       <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
       <div class="esquina-superior">
-        <button class="idioma-toggle" id="idiomaTogglePanel" onclick="toggleIdioma()" title="Change language">ES</button>
+        @php $otroIdioma = app()->getLocale() === 'es' ? 'en' : 'es'; @endphp
+        <a class="idioma-toggle" id="idiomaTogglePanel" href="{{ route('lang.switch', $otroIdioma) }}" title="Change language">{{ strtoupper($otroIdioma) }}</a>
         <button class="tema-toggle" id="temaTogglePanel" onclick="toggleTema()" title="Cambiar tema">🌙</button>
       </div>
     </div>
@@ -124,11 +174,18 @@
           <div class="fila-form">
             <div class="campo"><label data-i18n="labelNombre">Nombre</label><input type="text" id="sucNombre" placeholder="Sucursal Sur"></div>
             <div class="campo"><label data-i18n="labelDireccion">Dirección</label><input type="text" id="sucDireccion" placeholder="Calle 123"></div>
+            <div class="campo"><label data-i18n="labelContacto">Contacto</label><input type="text" id="sucContacto" placeholder="312 000 0000"></div>
+            <div class="campo"><label data-i18n="labelEstado">Estado</label>
+              <select id="sucEstado">
+                <option value="activa" data-i18n="estadoActiva">Activa</option>
+                <option value="inactiva" data-i18n="estadoInactiva">Inactiva</option>
+              </select>
+            </div>
             <button class="btn btn-primario" onclick="agregarSucursal()" data-i18n="btnAgregar">Agregar</button>
           </div>
         </div>
         <div class="card">
-          <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thDireccion">Dirección</th><th></th><th></th></tr><tbody id="tablaSucursales"></tbody></table>
+          <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thDireccion">Dirección</th><th data-i18n="thContacto">Contacto</th><th data-i18n="thEstado">Estado</th><th data-i18n="thGerente">Gerente</th><th></th><th></th></tr><tbody id="tablaSucursales"></tbody></table>
         </div>
       </div>
 
@@ -136,7 +193,7 @@
         <h2 data-i18n="rolesHeading">Asignar roles</h2>
         <p class="desc" data-i18n="rolesDesc">Cambia el rol y la sucursal asignada a cada usuario.</p>
         <div class="card">
-          <table><tr><th data-i18n="thUsuario">Usuario</th><th data-i18n="thRol">Rol</th><th data-i18n="thSucursal">Sucursal</th><th></th></tr><tbody id="tablaRoles"></tbody></table>
+          <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thRol">Rol</th><th data-i18n="thSucursal">Sucursal</th><th></th></tr><tbody id="tablaRoles"></tbody></table>
         </div>
       </div>
 
@@ -145,8 +202,9 @@
         <p class="desc" data-i18n="usuariosDesc">Crea, edita o elimina cuentas de acceso al sistema.</p>
         <div class="card">
           <div class="fila-form">
-            <div class="campo"><label data-i18n="labelNombreCompleto">Nombre completo</label><input type="text" id="usrNombre" data-i18n-placeholder="placeholderNombre" placeholder="Nombre"></div>
-            <div class="campo"><label data-i18n="labelUsuario">Usuario</label><input type="text" id="usrUsuario" placeholder="usuario123"></div>
+            <div class="campo"><label data-i18n="labelNombre">Nombre</label><input type="text" id="usrNombre" placeholder="Nombre"></div>
+            <div class="campo"><label data-i18n="labelApellido">Apellido</label><input type="text" id="usrApellido" placeholder="Apellido"></div>
+            <div class="campo"><label data-i18n="labelCorreo">Correo</label><input type="email" id="usrCorreo" placeholder="correo@nexora.com"></div>
             <div class="campo"><label data-i18n="labelContrasena">Contraseña</label><input type="password" id="usrClave" placeholder="••••••"></div>
             <div class="campo"><label data-i18n="labelRol">Rol</label>
               <select id="usrRol">
@@ -160,7 +218,7 @@
           </div>
         </div>
         <div class="card">
-          <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thUsuario">Usuario</th><th data-i18n="thRol">Rol</th><th data-i18n="thSucursal">Sucursal</th><th></th></tr><tbody id="tablaUsuarios"></tbody></table>
+          <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thRol">Rol</th><th data-i18n="thSucursal">Sucursal</th><th></th></tr><tbody id="tablaUsuarios"></tbody></table>
         </div>
       </div>
 
@@ -191,33 +249,80 @@
         </div>
       </div>
 
+      <div class="seccion" id="sec-ventas">
+        <h2 data-i18n="ventasHeading">Ventas por sucursal</h2>
+        <p class="desc" data-i18n="ventasDesc">Consulta las ventas registradas en cualquier sucursal.</p>
+        <div class="filtro-sucursal">
+          <select id="filtroSucursalVentas" onchange="renderVentas()"></select>
+        </div>
+        <p class="desc">Total en esta sucursal: <strong id="totalVentasSucursal">$0.00</strong></p>
+        <div class="card">
+          <table><tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thCajero">Cajero</th><th data-i18n="thMetodoPago">Método de pago</th><th data-i18n="thTotal">Total</th></tr><tbody id="tablaVentas"></tbody></table>
+        </div>
+      </div>
+
+      <div class="seccion" id="sec-sistema">
+        <h2 data-i18n="sistemaHeading">Información general del sistema</h2>
+        <p class="desc" data-i18n="sistemaDesc">Resumen general de sucursales, usuarios, ventas e inventario.</p>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="valor" id="statSucursales">0</div><div class="etiqueta" data-i18n="statSucursales">Sucursales</div></div>
+          <div class="stat-card"><div class="valor" id="statUsuarios">0</div><div class="etiqueta" data-i18n="statUsuarios">Usuarios totales</div></div>
+          <div class="stat-card"><div class="valor" id="statGerentes">0</div><div class="etiqueta" data-i18n="statGerentes">Gerentes</div></div>
+          <div class="stat-card"><div class="valor" id="statCajeros">0</div><div class="etiqueta" data-i18n="statCajeros">Cajeros</div></div>
+          <div class="stat-card"><div class="valor" id="statProductos">0</div><div class="etiqueta" data-i18n="statProductos">Productos</div></div>
+          <div class="stat-card"><div class="valor" id="statVentasHoy">$0.00</div><div class="etiqueta" data-i18n="statVentasHoy">Ventas de hoy</div></div>
+          <div class="stat-card"><div class="valor" id="statVentasMes">$0.00</div><div class="etiqueta" data-i18n="statVentasMes">Ventas del mes</div></div>
+          <div class="stat-card"><div class="valor" id="statStockBajo">0</div><div class="etiqueta" data-i18n="statStockBajo">Stock bajo</div></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
 <script>
-  let sucursales = [
-    { id: 1, nombre: 'Sucursal Centro', direccion: 'Av. Principal 123' },
-    { id: 2, nombre: 'Sucursal Norte', direccion: 'Blvd. Norte 456' },
-  ];
+  let resumen = {};
 
-  let usuarios = [
-    { id: 1, nombre: 'Administrador General', usuario: 'admin', rol: 'admin', sucursalId: null },
-    { id: 2, nombre: 'Ana Gómez', usuario: 'ana.gerente', rol: 'gerente', sucursalId: 1 },
-    { id: 3, nombre: 'Luis Pérez', usuario: 'luis.cajero', rol: 'cajero', sucursalId: 1 },
-    { id: 4, nombre: 'María Ruiz', usuario: 'maria.cajero', rol: 'cajero', sucursalId: 2 },
-  ];
+  async function cargarResumen() {
+    const res = await fetch('/administrador/resumen');
+    resumen = await res.json();
+  }
+
+  let sucursales = [];
+  
+  async function cargarSucursales() {
+    const res = await fetch('/administrador/sucursales');
+    sucursales = await res.json();
+    renderSucursales();
+  }
+
+  let usuarios = [];
+
+  async function cargarUsuarios(){
+    const res = await fetch('/administrador/usuarios');
+    usuarios = await res.json();
+    renderRoles();
+    renderUsuarios();
+  }
 
   let proveedores = [
     { id: 1, nombre: 'Distribuidora del Pacífico', contacto: 'Jorge Ramírez', telefono: '312 123 4567' },
     { id: 2, nombre: 'Refrescos Colima', contacto: 'Sandra López', telefono: '312 765 4321' },
   ];
 
-  const catalogoProductos = ['Refresco 600ml', 'Botana 150g', 'Agua 1L', 'Café americano', 'Sandwich jamón', 'Chicles'];
-  let inventarioGlobal = {
-    1: { 'Refresco 600ml': 12, 'Botana 150g': 8, 'Agua 1L': 20, 'Café americano': 15, 'Sandwich jamón': 6, 'Chicles': 30 },
-    2: { 'Refresco 600ml': 20, 'Botana 150g': 15, 'Agua 1L': 40, 'Café americano': 10, 'Sandwich jamón': 4, 'Chicles': 18 },
-  };
+  let inventario = [];
+
+  async function cargarInventario(){
+    const res = await fetch('/administrador/inventario');
+    inventario = await res.json();
+  }
+
+  let ventas = [];
+
+  async function cargarVentas() {
+    const res = await fetch('/administrador/ventas');
+    ventas = await res.json();
+  }
 
   /* ---------- IDIOMA ---------- */
   const textos = {
@@ -227,9 +332,9 @@
       topbarTitulo: '— Panel de Administrador', cerrarSesion: 'Cerrar sesión',
       navSucursales: 'Sucursales', navRoles: 'Asignar roles', navUsuarios: 'Usuarios',
       navProveedores: 'Proveedores', navInventario: 'Inventario',
-      sucursalesHeading: 'Registro de sucursales', sucursalesDesc: 'Da de alta nuevas sucursales o edita las existentes.',
-      labelNombre: 'Nombre', labelDireccion: 'Dirección', btnAgregar: 'Agregar',
-      thNombre: 'Nombre', thDireccion: 'Dirección', btnGuardar: 'Guardar', btnEliminar: 'Eliminar',
+      sucursalesHeading: 'Registro de sucursales', sucursalesDesc: 'Da de alta nuevas sucursales o edita las existentes.', thGerente: 'Gerente',
+      labelNombre: 'Nombre', labelDireccion: 'Dirección', labelApellido: 'Apellido', labelCorreo: 'Correo', btnAgregar: 'Agregar',
+      thNombre: 'Nombre', thDireccion: 'Dirección', btnGuardar: 'Guardar', btnEliminar: 'Eliminar', btnCancelar: 'Cancelar',
       alertNombreSucursal: 'Ingresa el nombre de la sucursal.', confirmEliminarSucursal: '¿Eliminar esta sucursal? Los usuarios asignados quedarán sin sucursal.',
       rolesHeading: 'Asignar roles', rolesDesc: 'Cambia el rol y la sucursal asignada a cada usuario.',
       thUsuario: 'Usuario', thRol: 'Rol', thSucursal: 'Sucursal', sinAsignar: '— Sin asignar —',
@@ -244,6 +349,14 @@
       alertNombreProveedor: 'Ingresa el nombre del proveedor.', confirmEliminarProveedor: '¿Eliminar este proveedor?',
       inventarioHeading: 'Inventario por sucursal', inventarioDesc: 'Consulta las existencias de cualquier sucursal.',
       thProducto: 'Producto', thStock: 'Stock', sinDatos: 'Sin datos',
+      navVentas: 'Ventas',
+      ventasHeading: 'Ventas por sucursal', ventasDesc: 'Consulta las ventas registradas en cualquier sucursal.',
+      thFecha: 'Fecha', thCajero: 'Cajero', thMetodoPago: 'Método de pago', thTotal: 'Total',
+      navSistema: 'Información general',
+      sistemaHeading: 'Información general del sistema', sistemaDesc: 'Resumen general de sucursales, usuarios, ventas e inventario.',
+      statSucursales: 'Sucursales', statUsuarios: 'Usuarios totales', statGerentes: 'Gerentes', statCajeros: 'Cajeros',
+      statProductos: 'Productos', statVentasHoy: 'Ventas de hoy', statVentasMes: 'Ventas del mes', statStockBajo: 'Stock bajo',
+      labelEstado: 'Estado', thEstado: 'Estado', estadoActiva: 'Activa', estadoInactiva: 'Inactiva',
     },
     en: {
       tagline: 'Admin panel', placeholderUsuario: 'Username', placeholderClave: 'Password',
@@ -252,10 +365,10 @@
       navSucursales: 'Branches', navRoles: 'Assign roles', navUsuarios: 'Users',
       navProveedores: 'Suppliers', navInventario: 'Inventory',
       sucursalesHeading: 'Branch registry', sucursalesDesc: 'Add new branches or edit existing ones.',
-      labelNombre: 'Name', labelDireccion: 'Address', btnAgregar: 'Add',
-      thNombre: 'Name', thDireccion: 'Address', btnGuardar: 'Save', btnEliminar: 'Delete',
+      labelNombre: 'Name', labelDireccion: 'Address', labelApellido: 'Last name', labelCorreo: 'Email', btnAgregar: 'Add',
+      thNombre: 'Name', thDireccion: 'Address', btnGuardar: 'Save', btnEliminar: 'Delete', btnGuardar: 'Cancel',
       alertNombreSucursal: 'Enter the branch name.', confirmEliminarSucursal: 'Delete this branch? Assigned users will be left without a branch.',
-      rolesHeading: 'Assign roles', rolesDesc: 'Change the role and assigned branch for each user.',
+      rolesHeading: 'Assign roles', rolesDesc: 'Change the role and assigned branch for each user.', thGerente: 'Manager',
       thUsuario: 'User', thRol: 'Role', thSucursal: 'Branch', sinAsignar: '— Unassigned —',
       rolCajero: 'Cashier', rolGerente: 'Manager', rolAdmin: 'Administrator',
       usuariosHeading: 'Users', usuariosDesc: 'Create, edit, or delete system access accounts.',
@@ -268,19 +381,30 @@
       alertNombreProveedor: 'Enter the supplier name.', confirmEliminarProveedor: 'Delete this supplier?',
       inventarioHeading: 'Inventory by branch', inventarioDesc: 'Check the stock at any branch.',
       thProducto: 'Product', thStock: 'Stock', sinDatos: 'No data',
+      navVentas: 'Sales',
+      ventasHeading: 'Sales by branch', ventasDesc: 'Check the sales recorded at any branch.',
+      thFecha: 'Date', thCajero: 'Cashier', thMetodoPago: 'Payment method', thTotal: 'Total',
+      navSistema: 'Overview',
+      sistemaHeading: 'System overview', sistemaDesc: 'General summary of branches, users, sales and inventory.',
+      statSucursales: 'Branches', statUsuarios: 'Total users', statGerentes: 'Managers', statCajeros: 'Cashiers',
+      statProductos: 'Products', statVentasHoy: "Today's sales", statVentasMes: 'Monthly sales', statStockBajo: 'Low stock',
+      labelEstado: 'Status', thEstado: 'Status', estadoActiva: 'Active', estadoInactiva: 'Inactive',
     }
   };
-  let idioma = 'es';
+  let idioma = '{{ app()->getLocale() }}';
   function t(clave) { return textos[idioma][clave] || clave; }
 
   const secciones = [
+    { id: 'sistema', key: 'navSistema' },
     { id: 'sucursales', key: 'navSucursales' },
     { id: 'roles', key: 'navRoles' },
     { id: 'usuarios', key: 'navUsuarios' },
-    { id: 'proveedores', key: 'navProveedores' },
+    //{ id: 'proveedores', key: 'navProveedores' }, //pendiente en la bd y conexion
     { id: 'inventario', key: 'navInventario' },
+    { id: 'ventas', key: 'navVentas'},
   ];
-  let seccionActual = 'sucursales';
+
+  let seccionActual = 'sistema';
 
   /* ---------- TEMA CLARO / OSCURO ---------- */
   function aplicarTema(tema) {
@@ -308,11 +432,6 @@
   })();
 
   /* ---------- IDIOMA ---------- */
-  function toggleIdioma() {
-    idioma = idioma === 'es' ? 'en' : 'es';
-    try { localStorage.setItem('nexora-idioma', idioma); } catch (e) {}
-    aplicarIdioma();
-  }
 
   function aplicarIdioma() {
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
@@ -328,18 +447,22 @@
   }
 
   (function inicializarIdioma() {
-    let guardado = null;
-    try { guardado = localStorage.getItem('nexora-idioma'); } catch (e) {}
-    idioma = (guardado === 'en' || guardado === 'es') ? guardado : 'es';
     aplicarIdioma();
   })();
 
   function cerrarSesion() {
-    // TODO: conectar con la ruta real de logout de Laravel (auth)
+    document.getElementById('logoutForm').submit();
   }
 
   renderSidebar();
-  mostrarSeccion('sucursales');
+  (async () => {
+    await cargarUsuarios();
+    await cargarSucursales();
+    await cargarInventario();
+    await cargarVentas();
+    await cargarResumen();
+    mostrarSeccion('sistema');
+  })();
 
   function renderSidebar() {
     document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${t(s.key)}</button>`).join('');
@@ -352,55 +475,111 @@
       document.getElementById('sec-' + s.id).classList.toggle('activa', s.id === id);
       document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === id);
     });
+    if(id === 'sistema') renderResumen();
     if (id === 'sucursales') renderSucursales();
     if (id === 'roles') renderRoles();
     if (id === 'usuarios') renderUsuarios();
-    if (id === 'proveedores') renderProveedores();
+    //if (id === 'proveedores') renderProveedores();
     if (id === 'inventario') renderInventarioGlobal();
+    if (id === 'ventas') renderVentas();
   }
 
   function opcionesSucursal(seleccionId) {
-    return sucursales.map(s => `<option value="${s.id}" ${s.id === seleccionId ? 'selected' : ''}>${s.nombre}</option>`).join('');
+    return sucursales.map(s => `<option value="${s.id_sucursal}" ${s.id_sucursal === seleccionId ? 'selected' : ''}>${s.nombre}</option>`).join('');
   }
 
   function textoRol(rol) { return rol === 'admin' ? t('rolAdmin') : rol === 'gerente' ? t('rolGerente') : t('rolCajero'); }
+
+  /* ---------- Consulta general del sistema (dashboard) ---------- */
+  function renderResumen() {
+    document.getElementById('statSucursales').textContent = resumen.sucursales ?? 0;
+    document.getElementById('statUsuarios').textContent = resumen.usuarios?.total ?? 0;
+    document.getElementById('statGerentes').textContent = resumen.usuarios?.gerentes ?? 0;
+    document.getElementById('statCajeros').textContent = resumen.usuarios?.cajeros ?? 0;
+    document.getElementById('statProductos').textContent = resumen.productos ?? 0;
+    document.getElementById('statVentasHoy').textContent = `$${Number(resumen.ventas_hoy ?? 0).toFixed(2)}`;
+    document.getElementById('statVentasMes').textContent = `$${Number(resumen.ventas_mes ?? 0).toFixed(2)}`;
+    document.getElementById('statStockBajo').textContent = resumen.stock_bajo ?? 0;
+  }
 
   /* ---------- SUCURSALES ---------- */
   function renderSucursales() {
     document.getElementById('tablaSucursales').innerHTML = sucursales.map(s => `
       <tr>
-        <td><input value="${s.nombre}" id="sucN-${s.id}"></td>
-        <td><input value="${s.direccion}" id="sucD-${s.id}"></td>
-        <td><button class="btn btn-primario btn-sm" onclick="guardarSucursal(${s.id})">${t('btnGuardar')}</button></td>
-        <td><button class="btn btn-peligro btn-sm" onclick="eliminarSucursal(${s.id})">${t('btnEliminar')}</button></td>
+        <td><input value="${s.nombre}" id="sucN-${s.id_sucursal}"></td>
+        <td><input value="${s.direccion}" id="sucD-${s.id_sucursal}"></td>
+        <td><input value="${s.contacto ?? ''}" id="sucC-${s.id_sucursal}"></td>
+        <td>
+          <select id="sucE-${s.id_sucursal}">
+            <option value="activa" ${s.estado === 'activa' ? 'selected' : ''}>${t('estadoActiva')}</option>
+            <option value="inactiva" ${s.estado === 'inactiva' ? 'selected' : ''}>${t('estadoInactiva')}</option>
+          </select>
+        </td>
+        <td><select id="sucGer-${s.id_sucursal}">${opcionesGerente(s.id_gerente)}</select></td>
+        <td><button class="btn btn-primario btn-sm" onclick="guardarSucursal(${s.id_sucursal})">${t('btnGuardar')}</button></td>
+        <td><button class="btn btn-peligro btn-sm" onclick="eliminarSucursal(${s.id_sucursal})">${t('btnEliminar')}</button></td>
       </tr>`).join('');
   }
 
-  function agregarSucursal() {
+  async function agregarSucursal() {
     const nombre = document.getElementById('sucNombre').value.trim();
     const direccion = document.getElementById('sucDireccion').value.trim();
-    if (!nombre) { alert(t('alertNombreSucursal')); return; }
-    const id = Math.max(0, ...sucursales.map(s => s.id)) + 1;
-    sucursales.push({ id, nombre, direccion });
-    inventarioGlobal[id] = Object.fromEntries(catalogoProductos.map(p => [p, 0]));
+    const contacto = document.getElementById('sucContacto').value.trim();
+    const estado = document.getElementById('sucEstado').value;
+    if (!nombre) { mostrarToast(t('alertNombreSucursal'), 'error'); return; }
+
+    const res = await fetch('/administrador/sucursales', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
+      body: JSON.stringify({ nombre, direccion, contacto, estado }),
+    });
+
+    if (!res.ok) { mostrarToast('No se pudo guardar la sucursal.', 'error'); return; }
+
     document.getElementById('sucNombre').value = '';
     document.getElementById('sucDireccion').value = '';
-    renderSucursales();
+    document.getElementById('sucContacto').value = '';
+    await cargarSucursales();
+    mostrarToast('Sucursal agregada', 'exito');
   }
 
-  function guardarSucursal(id) {
-    const s = sucursales.find(x => x.id === id);
-    s.nombre = document.getElementById('sucN-' + id).value;
-    s.direccion = document.getElementById('sucD-' + id).value;
-    renderSucursales();
+  async function guardarSucursal(id) {
+    const nombre = document.getElementById('sucN-' + id).value;
+    const direccion = document.getElementById('sucD-' + id).value;
+    const contacto = document.getElementById('sucC-' + id).value;
+    const estado = document.getElementById('sucE-' + id).value;
+    const gerVal = document.getElementById('sucGer-' + id).value;
+
+    const res = await fetch('/administrador/sucursales/' + id, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
+      body: JSON.stringify({ nombre, direccion, contacto, estado, id_gerente: gerVal ? parseInt(gerVal) : null }),
+    });
+
+    if (!res.ok) { mostrarToast('No se pudo actualizar la sucursal.', 'error'); return; }
+    await cargarSucursales();
+    await cargarUsuarios();
+    mostrarToast('Sucursal actualizada', 'exito');
   }
 
-  function eliminarSucursal(id) {
-    if (!confirm(t('confirmEliminarSucursal'))) return;
-    sucursales = sucursales.filter(s => s.id !== id);
-    usuarios.forEach(u => { if (u.sucursalId === id) u.sucursalId = null; });
-    delete inventarioGlobal[id];
-    renderSucursales();
+  async function eliminarSucursal(id) {
+    const ok = await confirmar(t('confirmEliminarSucursal'));
+    if (!ok) return;
+
+    const res = await fetch('/administrador/sucursales/' + id, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+    });
+
+    if (!res.ok) { mostrarToast('No se pudo eliminar (puede tener usuarios asignados).','error'); return; }
+    mostrarToast('Sucursal eliminada', 'exito');
+    await cargarSucursales();
   }
 
   /* ---------- ROLES ---------- */
@@ -422,24 +601,33 @@
       </tr>`).join('');
   }
 
-  function guardarRol(id) {
-    const u = usuarios.find(x => x.id === id);
-    u.rol = document.getElementById('rol-' + id).value;
+  async function guardarRol(id) {
+    const rol = document.getElementById('rol-' + id).value;
     const sucVal = document.getElementById('sucRol-' + id).value;
-    u.sucursalId = sucVal ? parseInt(sucVal) : null;
-    renderRoles();
+
+    const res = await fetch('/administrador/usuarios/' + id + '/rol', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
+      body: JSON.stringify({ rol, id_sucursal: sucVal ? parseInt(sucVal) : null }),
+    });
+
+    if (!res.ok) { mostrarToast('No se pudo actualizar el rol.', 'error'); return; }
+    mostrarToast('Rol actualizado', 'exito');
+    await cargarUsuarios();
   }
 
   /* ---------- USUARIOS ---------- */
   function renderUsuarios() {
     document.getElementById('usrSucursal').innerHTML = `<option value="">${t('sinAsignar')}</option>${opcionesSucursal()}`;
     document.getElementById('tablaUsuarios').innerHTML = usuarios.map(u => {
-      const sucursal = sucursales.find(s => s.id === u.sucursalId);
+      const sucursal = sucursales.find(s => s.id_sucursal === u.sucursalId);
       const badgeClase = u.rol === 'admin' ? 'badge-admin' : u.rol === 'gerente' ? 'badge-gerente' : 'badge-cajero';
       return `
       <tr>
         <td>${u.nombre}</td>
-        <td>${u.usuario}</td>
         <td><span class="badge ${badgeClase}">${textoRol(u.rol)}</span></td>
         <td>${sucursal ? sucursal.nombre : '—'}</td>
         <td><button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})">${t('btnEliminar')}</button></td>
@@ -447,28 +635,58 @@
     }).join('');
   }
 
-  function crearUsuario() {
+  async function crearUsuario() {
     const nombre = document.getElementById('usrNombre').value.trim();
-    const usuario = document.getElementById('usrUsuario').value.trim();
-    const clave = document.getElementById('usrClave').value;
+    const apellido = document.getElementById('usrApellido').value.trim();
+    const correo = document.getElementById('usrCorreo').value.trim();
+    const contrasena = document.getElementById('usrClave').value;
     const rol = document.getElementById('usrRol').value;
     const sucVal = document.getElementById('usrSucursal').value;
 
-    if (!nombre || !usuario || !clave) { alert(t('alertCompletaUsuario')); return; }
+    if (!nombre || !apellido || !correo || !contrasena) { 
+      mostrarToast(t('alertCompletaUsuario'), 'error'); 
+      return; 
+    }
 
-    const id = Math.max(0, ...usuarios.map(u => u.id)) + 1;
-    usuarios.push({ id, nombre, usuario, rol, sucursalId: sucVal ? parseInt(sucVal) : null });
+    const res = await fetch('/administrador/usuarios', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
+      body: JSON.stringify({ nombre, apellido, correo, contrasena, rol, id_sucursal: sucVal ? parseInt(sucVal) : null }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      mostrarToast(err?.message ?? 'No se pudo crear el usuario.', 'error');
+      return;
+    }
 
     document.getElementById('usrNombre').value = '';
-    document.getElementById('usrUsuario').value = '';
+    document.getElementById('usrApellido').value = '';
+    document.getElementById('usrCorreo').value = '';
     document.getElementById('usrClave').value = '';
-    renderUsuarios();
+    mostrarToast('Usuario creado', 'exito');
+    await cargarUsuarios();
   }
 
-  function eliminarUsuario(id) {
-    if (!confirm(t('confirmEliminarUsuario'))) return;
-    usuarios = usuarios.filter(u => u.id !== id);
-    renderUsuarios();
+  async function eliminarUsuario(id) {
+    const ok = await confirmar(t('confirmEliminarUsuario'));
+    if (!ok) return;
+
+    const res = await fetch('/administrador/usuarios/' + id, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      mostrarToast(err?.message ?? 'No se pudo eliminar el usuario.', 'error');
+      return;
+    }
+    mostrarToast('Usuario eliminado', 'exito');
+    await cargarUsuarios();
   }
 
   /* ---------- PROVEEDORES ---------- */
@@ -518,12 +736,72 @@
     if (!filtro.options.length) {
       filtro.innerHTML = opcionesSucursal();
     }
-    const sucId = parseInt(filtro.value) || sucursales[0]?.id;
-    const inv = inventarioGlobal[sucId] || {};
-    document.getElementById('tablaInventarioGlobal').innerHTML = Object.entries(inv).map(([nombre, cantidad]) => `
-      <tr><td>${nombre}</td><td>${cantidad}</td></tr>`).join('') || `<tr><td colspan="2" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+    const sucId = parseInt(filtro.value) || sucursales[0]?.id_sucursal;
+    const items = inventario.filter(i => i.id_sucursal === sucId);
+
+    document.getElementById('tablaInventarioGlobal').innerHTML = items.length
+      ? items.map(i => {
+          const bajo = i.existencias <= i.stock_minimo;
+          return `<tr>
+            <td>${i.producto}</td>
+            <td style="${bajo ? 'color:var(--danger-text); font-weight:600;' : ''}">${i.existencias}${bajo ? ' ⚠️' : ''}</td>
+          </tr>`;
+        }).join('')
+      : `<tr><td colspan="2" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+  }
+
+  /* ---------- Sekeccion de gerente ---------- */
+  function opcionesGerente(seleccionId) {
+    const gerentes = usuarios.filter(u => u.rol === 'gerente');
+    const opciones = gerentes.map(g => `<option value="${g.id}" ${g.id === seleccionId ? 'selected' : ''}>${g.nombre}</option>`).join('');
+    return `<option value="">${t('sinAsignar')}</option>${opciones}`;
+  }
+
+  /* ---------- Consultar ventas ---------- */
+  function renderVentas() {
+    const filtro = document.getElementById('filtroSucursalVentas');
+    if (!filtro.options.length) {
+      filtro.innerHTML = opcionesSucursal();
+    }
+    const sucId = parseInt(filtro.value) || sucursales[0]?.id_sucursal;
+    const items = ventas.filter(v => v.id_sucursal === sucId);
+    const totalSucursal = items.reduce((acc, v) => acc + Number(v.total), 0);
+
+    document.getElementById('totalVentasSucursal').textContent = `$${totalSucursal.toFixed(2)}`;
+
+    document.getElementById('tablaVentas').innerHTML = items.length
+      ? items.map(v => `
+        <tr>
+          <td>${new Date(v.fecha).toLocaleString()}</td>
+          <td>${v.cajero}</td>
+          <td>${v.metodo_pago}</td>
+          <td>$${Number(v.total).toFixed(2)}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="4" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+  }
+
+  function mostrarToast(mensaje, tipo = 'exito') {
+    const cont = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    toast.textContent = mensaje;
+    cont.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('saliendo');
+      setTimeout(() => toast.remove(), 200);
+    }, 3000);
+  }
+
+  let _resolverModal = null;
+  function confirmar(mensaje) {
+    document.getElementById('modalMensaje').textContent = mensaje;
+    document.getElementById('modalOverlay').classList.add('activo');
+    return new Promise(resolve => { _resolverModal = resolve; });
+  }
+  function cerrarModal(resultado) {
+    document.getElementById('modalOverlay').classList.remove('activo');
+    if (_resolverModal) _resolverModal(resultado);
   }
 </script>
-
 </body>
 </html>

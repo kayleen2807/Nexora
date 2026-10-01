@@ -13,5 +13,6 @@
     "User": "Usuario",
     "Password": "Contraseña",
     "Remember me": "Recordarme",
-    "Forgot my password": "Olvidé mi contraseña"
+    "Forgot my password": "Olvidé mi contraseña",
+    "Email" : "Correo"
 }
