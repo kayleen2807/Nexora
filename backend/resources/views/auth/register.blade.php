@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro | Nexora</title>
+    <title>{{ __('Register') }} | Nexora</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -12,30 +12,44 @@
 </head>
 <body>
     <main class="login-page">
-        <section class="login-shell" aria-label="Registro Nexora">
+        <section class="login-shell" aria-label="{{ __('User registration') }}">
             <aside class="brand-panel">
+                @php
+                    $idiomas = [
+                        'es' => '🇪🇸',
+                        'en' => '🇬🇧',
+                    ];
+                @endphp
+                <div class="language-switcher">
+                    @foreach ($idiomas as $lang => $emoji)
+                        <a href="{{ route('lang.switch', $lang) }}"
+                        class="{{ app()->getLocale() === $lang ? 'active' : '' }}">
+                            {{ $emoji }} {{ strtoupper($lang) }}
+                        </a>
+                    @endforeach
+                </div>
                 <div class="brand-mark" aria-label="Nexora">
                     <div class="logo-badge">
                         <img src="{{ asset('img/nexora-logo-cropped.png') }}" alt="Nexora - Sistema de punto de venta">
                     </div>
                     <div class="brand-wordmark">
                         <p>NEXORA</p>
-                        <span>Sistema de punto de venta</span>
+                        <span>{{ __('Point of Sale System') }}</span>
                     </div>
                 </div>
 
                 <div class="panel-copy">
-                    <p class="eyebrow">Gestión centralizada</p>
-                    <h1>Crea tu cuenta para empezar.</h1>
-                    <p>Registra tus datos para acceder al panel de Nexora según tu rol.</p>
+                    <p class="eyebrow">{{ __('Centralized Management') }}</p>
+                    <h1>{{ __('POS to grow with organization.') }}</h1>
+                    <p>{{ __('Manage sales, inventory and branches from a clear and fast experience.') }}</p>
                 </div>
             </aside>
 
             <section class="form-panel">
                 <div class="form-card">
-                    <p class="form-kicker">Nuevo en Nexora</p>
-                    <h2>Registrarme</h2>
-                    <p class="form-intro">Completa el formulario para crear tu cuenta.</p>
+                    <p class="form-kicker">{{ __('New to Nexora') }}</p>
+                    <h2>{{ __('Register') }}</h2>
+                    <p class="form-intro">{{ __('Complete the form to create your account.') }}</p>
 
                     @if ($errors->any())
                         <div class="login-alert" role="alert">
@@ -46,57 +60,57 @@
                     @endif
 
                     <div id="password-mismatch" class="form-error" role="alert">
-                        Las contraseñas no coinciden.
+                        {{ __('Passwords do not match.') }}
                     </div>
 
                     <form action="{{ route('register') }}" method="post" id="register-form">
                         @csrf
 
-                        <label for="nombre">Nombre</label>
-                        <input type="text" id="nombre" name="nombre" value="{{ old('nombre') }}" placeholder="Nombre" autocomplete="given-name" required autofocus>
+                        <label for="nombre">{{ __('Name') }}</label>
+                        <input type="text" id="nombre" name="nombre" value="{{ old('nombre') }}" placeholder="{{ __('Name') }}" autocomplete="given-name" required autofocus>
 
-                        <label for="apellido">Primer apellido</label>
-                        <input type="text" id="apellido" name="apellido" value="{{ old('apellido') }}" placeholder="Primer apellido" autocomplete="family-name" required>
+                        <label for="apellido">{{ __('First surname') }}</label>
+                        <input type="text" id="apellido" name="apellido" value="{{ old('apellido') }}" placeholder="{{ __('First surname') }}" autocomplete="family-name" required>
 
-                        <label for="fecha_nacimiento">Fecha de nacimiento</label>
+                        <label for="fecha_nacimiento">{{ __('Date of birth') }}</label>
                         <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ old('fecha_nacimiento') }}" max="{{ now()->subYears(18)->toDateString() }}" required>
 
-                        <label for="correo">Correo electrónico</label>
-                        <input type="email" id="correo" name="correo" value="{{ old('correo') }}" placeholder="correo@ejemplo.com" autocomplete="email" required>
+                        <label for="correo">{{ __('Email address') }}</label>
+                        <input type="email" id="correo" name="correo" value="{{ old('correo') }}" placeholder="{{ __('Email address') }}" autocomplete="email" required>
 
-                        <label for="password">Contraseña</label>
+                        <label for="password">{{ __('Password') }}</label>
                         <div class="password-field">
                             <input
                                 type="password"
                                 id="password"
                                 name="password"
-                                placeholder="Contraseña"
+                                placeholder="{{ __('Password') }}"
                                 autocomplete="new-password"
                                 minlength="8"
                                 pattern="(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}"
-                                title="Mínimo 8 caracteres, una mayúscula, un número y por lo menos un carácter especial"
+                                title="{{ __('Password requirements') }}"
                                 required
                             >
-                            <button type="button" class="password-toggle" data-target="password" aria-label="Mostrar contraseña">
+                            <button type="button" class="password-toggle" data-target="password" data-show-label="{{ __('Show password') }}" data-hide-label="{{ __('Hide password') }}" aria-label="{{ __('Show password') }}">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
-                        <small class="password-hint">Mínimo 8 caracteres, una mayúscula, un número y por lo menos un carácter especial.</small>
+                        <small class="password-hint">{{ __('Password requirements') }}</small>
 
-                        <label for="password_confirmation">Confirmar contraseña</label>
+                        <label for="password_confirmation">{{ __('Confirm password') }}</label>
                         <div class="password-field">
-                            <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Confirmar contraseña" autocomplete="new-password" required>
-                            <button type="button" class="password-toggle" data-target="password_confirmation" aria-label="Mostrar contraseña">
+                            <input type="password" id="password_confirmation" name="password_confirmation" placeholder="{{ __('Confirm password') }}" autocomplete="new-password" required>
+                            <button type="button" class="password-toggle" data-target="password_confirmation" data-show-label="{{ __('Show password') }}" data-hide-label="{{ __('Hide password') }}" aria-label="{{ __('Show password') }}">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
 
-                        <button type="submit">Registrar</button>
+                        <button type="submit">{{ __('Register') }}</button>
                     </form>
 
                     <p class="form-footer">
-                        ¿Ya tienes cuenta?
-                        <a class="link-login" href="{{ route('login') }}">Inicia sesión</a>
+                        {{ __('Already have an account?') }}
+                        <a class="link-login" href="{{ route('login') }}">{{ __('Login') }}</a>
                     </p>
                 </div>
             </section>
@@ -114,7 +128,7 @@
                 input.type = isHidden ? 'text' : 'password';
                 icon.classList.toggle('bi-eye', !isHidden);
                 icon.classList.toggle('bi-eye-slash', isHidden);
-                button.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                button.setAttribute('aria-label', isHidden ? button.dataset.hideLabel : button.dataset.showLabel);
             });
         });
 
