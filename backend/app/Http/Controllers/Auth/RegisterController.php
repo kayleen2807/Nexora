@@ -47,21 +47,21 @@ class RegisterController extends Controller
                 'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/',
             ],
         ], [
-            'nombre.required' => 'El nombre es obligatorio.',
-            'nombre.max' => 'El nombre no puede tener más de 150 caracteres.',
-            'apellido.required' => 'El primer apellido es obligatorio.',
-            'apellido.max' => 'El apellido no puede tener más de 150 caracteres.',
-            'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
-            'fecha_nacimiento.date' => 'La fecha de nacimiento no es válida.',
-            'fecha_nacimiento.before_or_equal' => 'Debes ser mayor de edad (18 años o más) para registrarte.',
-            'correo.required' => 'El correo electrónico es obligatorio.',
-            'correo.email' => 'El correo electrónico no tiene un formato válido.',
-            'correo.max' => 'El correo electrónico no puede tener más de 150 caracteres.',
-            'correo.unique' => 'Este correo ya está registrado.',
-            'password.required' => 'La contraseña es obligatoria.',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
-            'password.confirmed' => 'Las contraseñas no coinciden.',
-            'password.regex' => 'La contraseña debe incluir al menos una mayúscula, un número y un carácter especial.',
+            'nombre.required' => __('Name is required.'),
+            'nombre.max' => __('Name cannot exceed 150 characters.'),
+            'apellido.required' => __('First surname is required.'),
+            'apellido.max' => __('First surname cannot exceed 150 characters.'),
+            'fecha_nacimiento.required' => __('Date of birth is required.'),
+            'fecha_nacimiento.date' => __('Date of birth is invalid.'),
+            'fecha_nacimiento.before_or_equal' => __('You must be at least 18 years old to register.'),
+            'correo.required' => __('Email address is required.'),
+            'correo.email' => __('Email address must be valid.'),
+            'correo.max' => __('Email address cannot exceed 150 characters.'),
+            'correo.unique' => __('This email address is already registered.'),
+            'password.required' => __('Password is required.'),
+            'password.min' => __('Password must be at least 8 characters.'),
+            'password.confirmed' => __('Passwords do not match.'),
+            'password.regex' => __('Password must include an uppercase letter, a number, and a special character.'),
         ]);
 
         /** Rol y usuario se crean en una sola transacción para evitar un rol huérfano si algo falla */
@@ -86,7 +86,7 @@ class RegisterController extends Controller
             }
 
             throw ValidationException::withMessages([
-                'correo' => 'Este correo ya está registrado.',
+                'correo' => __('This email address is already registered.'),
             ]);
         }
 
