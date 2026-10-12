@@ -57,6 +57,10 @@
                     <h2>{{ __('Login') }}</h2>
                     <p class="form-intro">{{ __('Enter your credentials to access the Nexora panel.') }}</p>
 
+                    @if (session('status'))
+                        <div class="login-status" role="status">{{ session('status') }}</div>
+                    @endif
+
                     @if ($errors->any())
                         <div class="login-alert" role="alert">
                             @foreach ($errors->all() as $error)
@@ -84,7 +88,7 @@
                                 <input type="checkbox" id="remember" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}>
                                 {{ __('Remember me') }}
                             </label>
-                            <a href="/password.html">{{ __('Forgot my password') }}</a>
+                            <a href="{{ route('password.request') }}">{{ __('Forgot my password') }}</a>
                         </div>
 
                         <button type="submit">{{ __('Login') }}</button>
