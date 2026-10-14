@@ -26,16 +26,17 @@ body {
 }
 
 .login-page {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: grid;
     place-items: center;
     padding: 14px;
+    overflow-y: auto;
 }
 
 .login-shell {
     width: min(1354px, 100%);
-    height: min(746px, calc(100vh - 30px));
-    min-height: 0;
+    height: auto;
+    min-height: min(746px, calc(100dvh - 30px));
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
     overflow: hidden;
@@ -420,6 +421,16 @@ button:hover {
     }
 }
 
+@media (max-height: 850px) and (min-width: 861px) {
+    .login-page {
+        place-items: start center;
+    }
+
+    .form-panel {
+        align-items: start;
+    }
+}
+
 @media (max-width: 520px) {
     .brand-panel {
         min-height: 360px;
@@ -453,4 +464,45 @@ button:hover {
         align-items: flex-start;
         flex-direction: column;
     }
+}
+
+/* ---- Botón "Continuar con Google" ---- */
+.google-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0 14px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.google-divider::before,
+.google-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+}
+
+.btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    height: 52px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--white);
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.btn-google:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
 }
