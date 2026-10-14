@@ -3,8 +3,7 @@
     "Point of Sale System": "Sistema de punto de venta",
     "Centralized Management": "Gestión centralizada",
     "POS to grow with organization.": "Punto de venta para crecer con orden.",
-    "Manage sales, inventory and branches from a clear and fast experience.":
-    "Administra ventas, inventario y sucursales desde una experiencia clara y rápida.",
+    "Manage sales, inventory and branches from a clear and fast experience.": "Administra ventas, inventario y sucursales desde una experiencia clara y rápida.",
     "Sales": "Ventas",
     "Inventory": "Inventario",
     "Branches": "Sucursales",
@@ -14,7 +13,7 @@
     "Password": "Contraseña",
     "Remember me": "Recordarme",
     "Forgot my password": "Olvidé mi contraseña",
-    "Email" : "Correo",
+    "Email": "Correo",
     "Register": "Registrarme",
     "User registration": "Registro de usuario",
     "New to Nexora": "Nuevo en Nexora",
@@ -42,5 +41,10 @@
     "This email address is already registered.": "Este correo ya está registrado.",
     "Password is required.": "La contraseña es obligatoria.",
     "Password must be at least 8 characters.": "La contraseña debe tener al menos 8 caracteres.",
-    "Password must include an uppercase letter, a number, and a special character.": "La contraseña debe incluir al menos una mayúscula, un número y un carácter especial."
+    "Password must include an uppercase letter, a number, and a special character.": "La contraseña debe incluir al menos una mayúscula, un número y un carácter especial.",
+    "Continue with Google": "Continuar con Google",
+    "or": "o",
+    "Google sign-in is not configured yet.": "El acceso con Google aún no está configurado.",
+    "Could not sign in with Google. Please try again.": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
+    "Your Google email is not verified.": "Tu correo de Google no está verificado."
 }
