@@ -18,9 +18,9 @@
     --muted-light: #9ca3af;
     --topbar-bg: #1f2933;
     --topbar-text: #ffffff;
-    --accent: #0d9488;
-    --accent-hover: #0b7d73;
-    --accent-bg-light: #e6fffb;
+    --accent: #ea580c;
+    --accent-hover: #c2410c;
+    --accent-bg-light: #fff1e6;
     --sidebar-hover: #f4f5f7;
     --oscuro-btn-bg: #1f2933;
     --oscuro-btn-hover: #111827;
@@ -28,13 +28,13 @@
     --danger-bg: #fee2e2;
     --danger-text: #dc2626;
     --danger-hover: #fecaca;
-    --success-bg: #dcfce7;
-    --success-text: #16a34a;
-    --success-hover: #bbf7d0;
+    --success-bg: #ffedd5;
+    --success-text: #c2410c;
+    --success-hover: #fed7aa;
     --badge-inactivo-bg: #f3f4f6;
     --badge-inactivo-text: #9ca3af;
     --shadow: rgba(0,0,0,0.06);
-    --login-bg: #e0f2f1;
+    --login-bg: #fff3e8;
   }
 
   [data-theme="dark"] {
@@ -47,9 +47,9 @@
     --muted-light: #6b7280;
     --topbar-bg: #0a0e17;
     --topbar-text: #f3f4f6;
-    --accent: #14b8a6;
-    --accent-hover: #2dd4bf;
-    --accent-bg-light: #113a36;
+    --accent: #fb923c;
+    --accent-hover: #fdba74;
+    --accent-bg-light: #3a2210;
     --sidebar-hover: #232c3d;
     --oscuro-btn-bg: #374151;
     --oscuro-btn-hover: #4b5563;
@@ -57,9 +57,9 @@
     --danger-bg: #3f1d1d;
     --danger-text: #f87171;
     --danger-hover: #522525;
-    --success-bg: #143621;
-    --success-text: #4ade80;
-    --success-hover: #1c4a2c;
+    --success-bg: #3b2410;
+    --success-text: #fb923c;
+    --success-hover: #4d2f14;
     --badge-inactivo-bg: #2b3444;
     --badge-inactivo-text: #9ca3af;
     --shadow: rgba(0,0,0,0.4);
@@ -144,8 +144,8 @@
   .producto-card .nombre { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
   .producto-card .precio { color: var(--accent); font-weight: 700; margin-bottom: 4px; }
   .producto-card .stock { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.6rem; }
-  .producto-card button { width: 100%; padding: 0.5rem; background: var(--oscuro-btn-bg); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
-  .producto-card button:hover { background: var(--oscuro-btn-hover); }
+  .producto-card button { width: 100%; padding: 0.5rem; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+  .producto-card button:hover { background: var(--accent-hover); }
   .producto-card button:disabled { background: var(--disabled-bg); cursor: not-allowed; }
 
   .carrito { background: var(--card-bg); border-radius: 12px; padding: 1.25rem; height: fit-content; }
@@ -166,8 +166,8 @@
   .cambio-row.insuficiente { color: var(--danger-text); font-weight: 600; }
   .cambio-row.ok { color: var(--success-text); font-weight: 600; }
 
-  .btn-cobrar { width: 100%; margin-top: 1rem; padding: 0.85rem; background: #16a34a; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
-  .btn-cobrar:hover { background: #128a3e; }
+  .btn-cobrar { width: 100%; margin-top: 1rem; padding: 0.85rem; background: #ea580c; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+  .btn-cobrar:hover { background: #c2410c; }
   .btn-cobrar:disabled { background: var(--disabled-bg); cursor: not-allowed; }
 
   /* ---------- TICKET ---------- */
@@ -212,6 +212,10 @@
   .modal-box { background: var(--card-bg); color: var(--text); border-radius: 14px; padding: 1.5rem; width: 320px; box-shadow: 0 10px 40px var(--shadow); }
   .modal-box p { font-size: 0.9rem; margin-bottom: 1.25rem; }
   .modal-acciones { display: flex; justify-content: flex-end; gap: 0.6rem; }
+
+  .ico { width: 1.15em; height: 1.15em; vertical-align: -0.2em; margin-right: 6px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .btn-solo-icono .ico { margin-right: 0; width: 1.5em; height: 1.5em; vertical-align: middle; }
 
   @media print {
     body * { visibility: hidden; }
@@ -265,7 +269,7 @@
           <div class="fila-form">
             <div class="campo"><label data-i18n="labelCaja">Caja</label><select id="aperturaCaja"></select></div>
             <div class="campo"><label data-i18n="fondoInicialLabel">Fondo inicial de caja</label><input type="number" id="aperturaFondo" min="0" step="0.01" value="500"></div>
-            <button class="btn btn-primario" onclick="abrirTurno()" data-i18n="btnAbrirCaja">Abrir caja</button>
+            <button class="btn btn-primario btn-solo-icono" onclick="abrirTurno()" data-i18n="btnAbrirCaja">Abrir caja</button>
           </div>
         </div>
 
@@ -327,7 +331,7 @@
           <div class="card">
             <div class="fila-form">
               <div class="campo"><label data-i18n="efectivoContadoLabel">Efectivo contado físicamente</label><input type="number" id="efectivoContado" min="0" step="0.01" placeholder="0.00" oninput="calcularCorte()"></div>
-              <button class="btn btn-peligro" onclick="cerrarTurno()" data-i18n="btnCerrarCaja">Cerrar caja y hacer corte</button>
+              <button class="btn btn-peligro btn-solo-icono" onclick="cerrarTurno()" data-i18n="btnCerrarCaja">Cerrar caja y hacer corte</button>
             </div>
             <div id="diferenciaCorte"></div>
           </div>
@@ -578,6 +582,21 @@
   let idioma = '{{ app()->getLocale() }}';
   function t(clave) { return textos[idioma][clave] || clave; }
 
+  /* ---------- ICONOS SVG ---------- */
+  const svg = d => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+  const CARRITO = '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>';
+  const ICONOS = {
+    carritoHeading: svg(CARRITO),
+    navVender: svg(CARRITO),
+    navCorte: svg('<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>'),
+    metodoPagoHeading: svg('<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>'),
+    btnEfectivo: svg('<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>'),
+    btnTarjeta: svg('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'),
+    btnCerrarCaja: svg('<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88"/><path d="M14.47 14.48 20 20"/><path d="M8.12 8.12 12 12"/>'),
+    btnAbrirCaja: svg('<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>'),
+    agregarBtn: svg(CARRITO + '<path d="M13 6v5M10.5 8.5h5"/>'),
+  };
+
   const secciones = [
     { id: 'vender', key: 'navVender' },
     { id: 'corte', key: 'navCorte' },
@@ -616,7 +635,8 @@
   // El idioma lo decide el servidor (sesión/cookie) y llega en `idioma`; NO se usa localStorage.
   // El cambio de idioma es el enlace del topbar (lang.switch), que recarga la página.
   function aplicarIdioma() {
-    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+    document.querySelectorAll('[data-i18n]').forEach(el => { const k = el.getAttribute('data-i18n'); if (k === 'btnCerrarCaja' || k === 'btnAbrirCaja') { el.innerHTML = ICONOS[k]; el.title = t(k); el.setAttribute('aria-label', t(k)); return; }
+    el.innerHTML = (ICONOS[k] || '') + t(k); });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
     document.documentElement.lang = idioma;
     renderSidebar();
@@ -635,7 +655,7 @@
   /* ---------- NAVEGACIÓN ---------- */
   function renderSidebar() {
     const sb = document.getElementById('sidebar');
-    sb.innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${t(s.key)}</button>`).join('');
+    sb.innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${(ICONOS[s.key] || '') + t(s.key)}</button>`).join('');
     secciones.forEach(s => document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === seccionActual));
   }
 
@@ -729,7 +749,7 @@
           <div class="precio">$${p.precio.toFixed(2)}</div>
           <div class="stock">${t('stockLabel')}${disponible}</div>
           <button onclick="agregarAlCarrito(${p.id})" ${disponible <= 0 ? 'disabled' : ''}>
-            ${disponible <= 0 ? t('sinStock') : t('agregarBtn')}
+            ${disponible <= 0 ? t('sinStock') : ICONOS.agregarBtn + t('agregarBtn')}
           </button>
         </div>`;
     }).join('') || `<div class="vacio">${t('sinResultados')}</div>`;
