@@ -1,16 +1,51 @@
 :root {
-    --ink: #151515;
-    --muted: #6f766f;
+    color-scheme: light;
     --orange: #ef8e19;
     --orange-dark: #cf7110;
-    --green: #2d6f51;
-    --green-dark: #174831;
-    --line: #d7ded5;
-    --paper: #f6f7f3;
-    --white: #ffffff;
     --error: #c0392b;
+    --white: #ffffff;
+ 
+    --brand-bg: linear-gradient(135deg, #f1f4f8 0%, #e2e7ee 100%);
+    --brand-stripe: rgba(255, 255, 255, 0.55);
+    --form-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --card-border: #e3e8ee;
+    --card-shadow: 0 16px 38px rgba(20, 36, 58, 0.08);
+ 
+    --title: #14243a;
+    --text: #3f4b5d;
+    --muted: #6b7686;
+    --line: #d9e0e8;
+    --input-bg: #ffffff;
+    --pill-bg: rgba(20, 36, 58, 0.08);
+    --pill-text: #14243a;
+ 
+    --toggle-bg: #ffffff;
+    --toggle-border: #d9e0e8;
 }
 
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --error: #ff7b6b;
+ 
+    --brand-bg: linear-gradient(135deg, #20252c 0%, #15181d 100%);
+    --brand-stripe: rgba(255, 255, 255, 0.04);
+    --form-bg: #1a1e24;
+    --card-bg: #232830;
+    --card-border: #323843;
+    --card-shadow: 0 16px 38px rgba(0, 0, 0, 0.35);
+ 
+    --title: #ffffff;
+    --text: #d6dbe3;
+    --muted: #9ba5b3;
+    --line: #343b46;
+    --input-bg: #2a303a;
+    --pill-bg: rgba(255, 255, 255, 0.1);
+    --pill-text: #ffffff;
+ 
+    --toggle-bg: #1f242b;
+    --toggle-border: rgba(255, 255, 255, 0.18);
+}
 * {
     box-sizing: border-box;
 }
@@ -19,31 +54,27 @@ body {
     margin: 0;
     min-height: 100vh;
     font-family: "Montserrat", "Arial Black", Arial, sans-serif;
-    color: var(--ink);
-    background:
-        radial-gradient(circle at 18% 16%, rgba(239, 142, 25, 0.16), transparent 28%),
-        radial-gradient(circle at 86% 76%, rgba(45, 111, 81, 0.18), transparent 30%),
-        linear-gradient(135deg, #fbfbf8 0%, #e9eee7 100%);
+    color: var(--text);
+    background: var(--form-bg)
 }
 
 .login-page {
     min-height: 100vh;
     display: grid;
     place-items: center;
-    padding: 14px;
+    padding: 0;
 }
 
 .login-shell {
-    width: min(1354px, 100%);
-    height: min(820px, calc(100vh - 30px));
-    min-height: 0;
+    width: 100%;
+    min-height: 100dvh;
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
     overflow: hidden;
-    border: 1px solid rgba(45, 111, 81, 0.18);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.84);
-    box-shadow: 0 24px 70px rgba(21, 21, 21, 0.12);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .brand-panel {
@@ -54,10 +85,10 @@ body {
     justify-content: flex-start;
     gap: 12px;
     padding: 42px 58px 48px;
-    color: var(--white);
+    color: var(--title);
     background:
-        linear-gradient(145deg, rgba(23, 72, 49, 0.96), rgba(45, 111, 81, 0.9)),
-        url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.08' stroke-width='2'%3E%3Cpath d='M20 130h140M45 40h70l20 38H66zM72 78h82M82 108h42'/%3E%3Ccircle cx='76' cy='132' r='8'/%3E%3Ccircle cx='132' cy='132' r='8'/%3E%3C/g%3E%3C/svg%3E");
+        repeating-linear-gradient(115deg, transparent 0 140px, var(--brand-stripe) 140px 280px),
+        var(--brand-bg);
 }
 
 .language-switcher {
@@ -72,8 +103,8 @@ body {
 .language-switcher a {
     padding: 8px 14px;
     border-radius: 999px;
-    color: var(--white);
-    background: rgba(255, 255, 255, 0.15);
+    color: var(--pill-text);
+    background: var(--pill-bg);
     font-size: 13px;
     font-weight: 700;
     text-decoration: none;
@@ -83,7 +114,8 @@ body {
 }
 
 .language-switcher a:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--pill-bg);
+    opacity: 1;
     text-decoration: none;
 }
 
@@ -123,7 +155,7 @@ body {
 
 .brand-wordmark p {
     margin: 0;
-    color: var(--white);
+    color: var(--title);
     font-size: clamp(3rem, 4vw, 4.5rem);
     font-weight: 900;
     line-height: 0.88;
@@ -135,7 +167,7 @@ body {
 .brand-wordmark span {
     display: block;
     margin-top: 10px;
-    color: rgba(255, 255, 255, 0.78);
+    color: var(--muted);
     font-size: 13px;
     font-weight: 800;
     text-transform: uppercase;
@@ -160,13 +192,14 @@ body {
 
 .panel-copy h1 {
     margin: 0;
+    color: var(--title);
     font-size: clamp(42px, 4.7vw, 64px);
     line-height: 1;
 }
 
 .panel-copy p:last-child {
     margin: 20px 0 0;
-    color: rgba(255, 255, 255, 0.78);
+    color: var(--text);
     font-size: 17px;
     line-height: 1.45;
 }
@@ -176,8 +209,8 @@ body {
     min-height: 0;
     display: grid;
     place-items: center;
-    padding: 28px 42px;
-    background: rgba(255, 255, 255, 0.92);
+    padding: 84px 42px 28px;
+    background: var(--form-bg);
 }
 
 .form-card {
@@ -185,17 +218,17 @@ body {
     z-index: 1;
     width: min(510px, 100%);
     padding: 40px 52px 42px;
-    border: 1px solid rgba(45, 111, 81, 0.14);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.68);
-    box-shadow: 0 16px 38px rgba(21, 21, 21, 0.04);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    background: var(--card-bg);
+    box-shadow: var(--card-shadow);
     max-height: 100%;
     overflow-y: auto;
 }
 
 .form-card h2 {
     margin: 0;
-    color: var(--green-dark);
+    color: var(--title);
     font-size: clamp(36px, 3vw, 44px);
     line-height: 1.1;
 }
@@ -212,7 +245,7 @@ form {
 }
 
 label {
-    color: var(--green-dark);
+    color: var(--title);
     font-size: 14px;
     font-weight: 700;
 }
@@ -226,29 +259,33 @@ input[type="date"] {
     padding: 0 16px;
     border: 1px solid var(--line);
     border-radius: 8px;
-    color: var(--ink);
-    background: var(--white);
+    color: var(--text);
+    background: var(--input-bg);
     font: inherit;
     outline: none;
     transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
+input::placeholder {
+    color: var(--muted);
+}
+ 
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
 input[type="date"]:focus {
-    border-color: var(--green);
-    box-shadow: 0 0 0 4px rgba(45, 111, 81, 0.13);
+    border-color: var(--orange);
+    box-shadow: 0 0 0 4px rgba(239, 142, 25, 0.18);
 }
 
 .password-field {
     position: relative;
 }
-
+ 
 .password-field input {
     padding-right: 46px;
 }
-
+ 
 .password-toggle {
     position: absolute;
     top: 50%;
@@ -265,13 +302,13 @@ input[type="date"]:focus {
     line-height: 1;
     cursor: pointer;
 }
-
+ 
 .password-toggle:hover {
-    color: var(--green);
+    color: var(--orange);
     transform: translateY(-50%);
     box-shadow: none;
 }
-
+ 
 /* Leyenda de requisitos de contraseña, visible solo mientras el campo tiene foco */
 .password-hint {
     display: none;
@@ -280,12 +317,12 @@ input[type="date"]:focus {
     font-size: 12px;
     line-height: 1.4;
 }
-
+ 
 input[type="password"]:focus + .password-hint,
 .password-field:focus-within + .password-hint {
     display: block;
 }
-
+ 
 .form-error {
     display: none;
     padding: 10px 14px;
@@ -296,36 +333,36 @@ input[type="password"]:focus + .password-hint,
     font-size: 14px;
     font-weight: 600;
 }
-
+ 
 .form-error.is-visible {
     display: block;
 }
-
+ 
 a {
     color: var(--orange-dark);
     font-weight: 700;
     text-decoration: none;
 }
-
+ 
 a:hover {
     text-decoration: underline;
 }
-
+ 
 .form-footer {
     margin: 18px 0 0;
     color: var(--muted);
     font-size: 14px;
     text-align: center;
 }
-
+ 
 .link-login {
     text-decoration: underline;
 }
-
+ 
 .link-login:hover {
     color: #1e5fb0;
 }
-
+ 
 button {
     width: 100%;
     height: 54px;
@@ -339,87 +376,88 @@ button {
     box-shadow: 0 16px 26px rgba(207, 113, 16, 0.22);
     transition: transform 160ms ease, box-shadow 160ms ease;
 }
-
+ 
 button:hover {
     transform: translateY(-1px);
     box-shadow: 0 20px 32px rgba(207, 113, 16, 0.28);
 }
-
+ 
 @media (max-width: 860px) {
     .login-page {
-        padding: 12px;
+        padding: 0;
     }
-
+ 
     .login-shell {
         grid-template-columns: 1fr;
         height: auto;
         min-height: auto;
     }
-
+ 
     .brand-panel {
         min-height: 320px;
         padding: 36px 28px;
     }
-
+ 
+    /* Deja espacio a la derecha para el botón de tema */
     .language-switcher {
         top: 16px;
-        right: 20px;
+        right: 84px;
     }
-
+ 
     .brand-mark {
         gap: 16px;
         justify-content: flex-start;
     }
-
+ 
     .logo-badge img {
         width: clamp(180px, 36vw, 240px);
     }
-
+ 
     .brand-wordmark p {
         font-size: clamp(2.3rem, 7vw, 3.5rem);
     }
-
+ 
     .form-panel {
         padding: 42px 24px;
     }
-
+ 
     .form-card {
         max-height: none;
     }
-
+ 
     .form-card h2 {
         font-size: 32px;
     }
 }
-
+ 
 @media (max-width: 520px) {
     .brand-panel {
         min-height: 260px;
     }
-
+ 
     .brand-mark {
         align-items: flex-start;
         flex-direction: column;
         gap: 12px;
     }
-
+ 
     .logo-badge img {
         width: clamp(170px, 58vw, 220px);
     }
-
+ 
     .brand-wordmark p {
         font-size: 2.2rem;
     }
-
+ 
     .brand-wordmark span {
         font-size: 11px;
     }
-
+ 
     .panel-copy h1 {
         font-size: 32px;
     }
 }
-
+ 
 /* ---- Botón "Continuar con Google" ---- */
 .google-divider {
     display: flex;
@@ -429,7 +467,7 @@ button:hover {
     color: var(--muted);
     font-size: 13px;
 }
-
+ 
 .google-divider::before,
 .google-divider::after {
     content: "";
@@ -437,7 +475,7 @@ button:hover {
     height: 1px;
     background: var(--line);
 }
-
+ 
 .btn-google {
     display: flex;
     align-items: center;
@@ -447,16 +485,66 @@ button:hover {
     height: 52px;
     border: 1px solid var(--line);
     border-radius: 8px;
-    background: var(--white);
-    color: var(--ink);
+    background: var(--input-bg);
+    color: var(--text);
     font-weight: 700;
     font-size: 15px;
     text-decoration: none;
     transition: transform 160ms ease, box-shadow 160ms ease;
 }
-
+ 
 .btn-google:hover {
     text-decoration: none;
     transform: translateY(-1px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
 }
+ 
+/* ==========================================================
+   Botón de cambio de tema (claro / oscuro)
+   ========================================================== */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    z-index: 20;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--toggle-border);
+    border-radius: 50%;
+    background: var(--toggle-bg);
+    box-shadow: none;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 160ms ease, border-color 160ms ease;
+}
+ 
+.theme-toggle:hover {
+    transform: scale(1.06);
+    box-shadow: none;
+    border-color: var(--orange);
+}
+ 
+.theme-toggle:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+}
+ 
+.theme-toggle i {
+    display: block;
+    background: linear-gradient(135deg, #ffd45a, #f58a1f);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+ 
+/* Muestra el icono del modo al que se va a cambiar:
+   luna en modo claro, sol en modo oscuro. */
+.theme-toggle .icon-sun { display: none; }
+ 
+:root[data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+ 
