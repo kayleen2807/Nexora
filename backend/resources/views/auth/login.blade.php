@@ -119,8 +119,8 @@
                     </a>
 
                     <p class="form-footer">
-                        ¿No tienes cuenta?
-                        <a class="link-register" href="{{ route('register') }}">Registrarme</a>
+                        {{ __("Don't have an account?") }}
+                        <a class="link-register" href="{{ route('register') }}">{{ __('Register') }}</a>
                     </p>
                 </div>
             </section>
