@@ -11,23 +11,23 @@
   :root {
     --bg: #f4f5f7; --text: #1f2933; --card-bg: #ffffff; --border: #d1d5db; --border-light: #eeeeee;
     --muted: #6b7280; --muted-light: #9ca3af; --topbar-bg: #1f2933; --topbar-text: #ffffff;
-    --accent: #0d9488; --accent-hover: #0b7d73; --accent-bg-light: #e6fffb; --sidebar-hover: #f4f5f7;
+    --accent: #ea580c; --accent-hover: #c2410c; --accent-bg-light: #fff1e6; --sidebar-hover: #f4f5f7;
     --danger-bg: #fee2e2; --danger-text: #dc2626; --danger-hover: #fecaca;
-    --success-bg: #dcfce7; --success-text: #16a34a; --success-hover: #bbf7d0;
+    --success-bg: #ffedd5; --success-text: #c2410c; --success-hover: #fed7aa;
     --badge-admin-bg: #ede9fe; --badge-admin-text: #6d28d9;
-    --badge-gerente-bg: #ccfbf1; --badge-gerente-text: #0d9488;
+    --badge-gerente-bg: #dbeafe; --badge-gerente-text: #1d4ed8;
     --badge-cajero-bg: #fff3e0; --badge-cajero-text: #e8631f;
-    --shadow: rgba(0,0,0,0.06); --login-bg: #e0f2f1;
+    --shadow: rgba(0,0,0,0.06); --login-bg: #fff3e8;
   }
 
   [data-theme="dark"] {
     --bg: #0f1420; --text: #e5e7eb; --card-bg: #1a2233; --border: #374151; --border-light: #2b3444;
     --muted: #9ca3af; --muted-light: #6b7280; --topbar-bg: #0a0e17; --topbar-text: #f3f4f6;
-    --accent: #14b8a6; --accent-hover: #2dd4bf; --accent-bg-light: #113a36; --sidebar-hover: #232c3d;
+    --accent: #fb923c; --accent-hover: #fdba74; --accent-bg-light: #3a2210; --sidebar-hover: #232c3d;
     --danger-bg: #3f1d1d; --danger-text: #f87171; --danger-hover: #522525;
-    --success-bg: #143621; --success-text: #4ade80; --success-hover: #1c4a2c;
+    --success-bg: #3b2410; --success-text: #fb923c; --success-hover: #4d2f14;
     --badge-admin-bg: #2e1f4d; --badge-admin-text: #c4b5fd;
-    --badge-gerente-bg: #113a36; --badge-gerente-text: #5eead4;
+    --badge-gerente-bg: #1e2a4a; --badge-gerente-text: #93c5fd;
     --badge-cajero-bg: #3a2a1a; --badge-cajero-text: #fdba74;
     --shadow: rgba(0,0,0,0.4); --login-bg: #0a0e17;
   }
@@ -61,6 +61,8 @@
   .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 56px); }
   .sidebar { background: var(--card-bg); border-right: 1px solid var(--border-light); padding: 1rem 0; }
   .sidebar button { display: block; width: 100%; text-align: left; padding: 0.7rem 1.25rem; background: none; border: none; font-size: 0.88rem; color: var(--muted); cursor: pointer; border-left: 3px solid transparent; }
+  .btn .ico { width: 1.15em; height: 1.15em; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .sidebar .ico { width: 1.15em; height: 1.15em; vertical-align: -0.2em; margin-right: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .sidebar button:hover { background: var(--sidebar-hover); }
   .sidebar button.activo { background: var(--accent-bg-light); border-left-color: var(--accent); color: var(--accent-hover); font-weight: 600; }
 
@@ -100,7 +102,7 @@
   .filtro-sucursal { margin-bottom: 1rem; }
   .filtro-sucursal select { padding: 0.55rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; min-width: 200px; background: var(--card-bg); color: var(--text); }
 
-  /* ---------- TOASTS ---------- */
+  /* TOASTS */
 #toastContainer {
   position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1000;
   display: flex; flex-direction: column; gap: 0.6rem;
@@ -116,7 +118,7 @@
 .toast.saliendo { animation: toastOut 0.2s ease-in forwards; }
 @keyframes toastOut { to { opacity: 0; transform: translateX(20px); } }
 
-/* ---------- MODAL DE CONFIRMACIÓN ---------- */
+/*  MODAL DE CONFIRMACIÓN */
 #modalOverlay {
   display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
   align-items: center; justify-content: center; z-index: 1001;
@@ -153,7 +155,7 @@
 </div>
 <div class="panel-view" id="panelView">
   <div class="topbar">
-    <div class="brand"><span class="logo-sm">N</span> Nexora <span class="sucursal" data-i18n="topbarTitulo"> — Panel de Administrador</span></div>
+    <div class="brand">Nexora <span class="sucursal" data-i18n="topbarTitulo"> — Panel de Administrador</span></div>
     <div class="topbar-derecha">
       <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
       <div class="esquina-superior">
@@ -349,7 +351,7 @@
     cortes = await res.json();
   }
 
-  /* ---------- IDIOMA ---------- */
+  /*  IDIOMA  */
   const textos = {
     es: {
       tagline: 'Panel de administrador', placeholderUsuario: 'Usuario', placeholderClave: 'Contraseña',
@@ -431,6 +433,20 @@
   let idioma = '{{ app()->getLocale() }}';
   function t(clave) { return textos[idioma][clave] || clave; }
 
+  /* -------- ICONOS --------- */
+  const svg = d => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+  const CLIPBOARD_LIST = '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>';
+  const ICONO_BASURA = svg('<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>');
+  const ICONOS_MENU = {
+    navSistema: svg('<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>'),
+    navSucursales: svg('<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/>'),
+    navRoles: svg('<path d="M2 21a8 8 0 0 1 10.434-7.62"/><circle cx="10" cy="8" r="5"/><circle cx="18" cy="18" r="3"/><path d="m19.5 14.3-.4.9"/><path d="m16.9 20.8-.4.9"/><path d="m21.7 19.5-.9-.4"/><path d="m15.2 16.9-.9-.4"/><path d="m21.7 16.5-.9.4"/><path d="m15.2 19.1-.9.4"/><path d="m19.5 21.7-.4-.9"/><path d="m16.9 15.2-.4-.9"/>'),
+    navUsuarios: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+    navInventario: svg('<path d="M12 22v-9"/><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z"/><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13"/><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.82 1.2a1.655 1.655 0 0 0-1.64 0L3 3.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z"/>'),
+    navVentas: svg('<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>'),
+    navCortes: svg(CLIPBOARD_LIST),
+  };
+
   const secciones = [
     { id: 'sistema', key: 'navSistema' },
     { id: 'sucursales', key: 'navSucursales' },
@@ -444,7 +460,7 @@
 
   let seccionActual = 'sistema';
 
-  /* ---------- TEMA CLARO / OSCURO ---------- */
+  /* TEMA  */
   function aplicarTema(tema) {
     document.documentElement.setAttribute('data-theme', tema);
     const icono = tema === 'dark' ? '☀️' : '🌙';
@@ -469,7 +485,7 @@
     else aplicarTema('light');
   })();
 
-  /* ---------- IDIOMA ---------- */
+  /* IDIOMA*/
 
   function aplicarIdioma() {
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
@@ -504,7 +520,7 @@
   })();
 
   function renderSidebar() {
-    document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${t(s.key)}</button>`).join('');
+    document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${(ICONOS_MENU[s.key] || '') + t(s.key)}</button>`).join('');
     secciones.forEach(s => document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === seccionActual));
   }
 
@@ -530,7 +546,7 @@
 
   function textoRol(rol) { return rol === 'admin' ? t('rolAdmin') : rol === 'gerente' ? t('rolGerente') : t('rolCajero'); }
 
-  /* ---------- Consulta general del sistema (dashboard) ---------- */
+  /* -Consulta general del sistema (dashboard)  */
   function renderResumen() {
     document.getElementById('statSucursales').textContent = resumen.sucursales ?? 0;
     document.getElementById('statUsuarios').textContent = resumen.usuarios?.total ?? 0;
@@ -542,7 +558,7 @@
     document.getElementById('statStockBajo').textContent = resumen.stock_bajo ?? 0;
   }
 
-  /* ---------- SUCURSALES ---------- */
+  /*  SUCURSALES  */
   function renderSucursales() {
     document.getElementById('tablaSucursales').innerHTML = sucursales.map(s => `
       <tr>
@@ -622,7 +638,7 @@
     await cargarSucursales();
   }
 
-  /* ---------- ROLES ---------- */
+  /* ROLES  */
   function renderRoles() {
     document.getElementById('tablaRoles').innerHTML = usuarios.map(u => `
       <tr>
@@ -659,7 +675,7 @@
     await cargarUsuarios();
   }
 
-  /* ---------- USUARIOS ---------- */
+  /*  USUARIOS  */
   function renderUsuarios() {
     document.getElementById('usrSucursal').innerHTML = `<option value="">${t('sinAsignar')}</option>${opcionesSucursal()}`;
     document.getElementById('tablaUsuarios').innerHTML = usuarios.map(u => {
@@ -670,7 +686,7 @@
         <td>${u.nombre}</td>
         <td><span class="badge ${badgeClase}">${textoRol(u.rol)}</span></td>
         <td>${sucursal ? sucursal.nombre : '—'}</td>
-        <td><button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})">${t('btnEliminar')}</button></td>
+        <td><button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button></td>
       </tr>`;
     }).join('');
   }
@@ -729,7 +745,7 @@
     await cargarUsuarios();
   }
 
-  /* ---------- PROVEEDORES ---------- */
+  /* -PROVEEDORES  */
   function renderProveedores() {
     document.getElementById('tablaProveedores').innerHTML = proveedores.map(p => `
       <tr>
@@ -770,7 +786,7 @@
     renderProveedores();
   }
 
-  /* ---------- INVENTARIO GLOBAL ---------- */
+  /* INVENTARIO GLOBAL  */
   function renderInventarioGlobal() {
     const filtro = document.getElementById('filtroSucursal');
     if (!filtro.options.length) {
@@ -790,14 +806,14 @@
       : `<tr><td colspan="2" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
   }
 
-  /* ---------- Sekeccion de gerente ---------- */
+  /* Sekeccion de gerente  */
   function opcionesGerente(seleccionId) {
     const gerentes = usuarios.filter(u => u.rol === 'gerente');
     const opciones = gerentes.map(g => `<option value="${g.id}" ${g.id === seleccionId ? 'selected' : ''}>${g.nombre}</option>`).join('');
     return `<option value="">${t('sinAsignar')}</option>${opciones}`;
   }
 
-  /* ---------- Consultar ventas ---------- */
+  /* -Consultar ventas  */
   function renderVentas() {
     const filtro = document.getElementById('filtroSucursalVentas');
     if (!filtro.options.length) {
@@ -821,7 +837,7 @@
       : `<tr><td colspan="5" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
   }
 
-  /* ---------- Consultar cortes de caja (solo lectura) ---------- */
+  /*  Consultar cortes de caja (solo lectura)  */
   function renderCortes() {
     const filtro = document.getElementById('filtroSucursalCortes');
     if (!filtro.options.length) {
