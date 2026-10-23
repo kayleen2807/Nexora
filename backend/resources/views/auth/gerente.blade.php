@@ -82,6 +82,13 @@
   .fila-form .campo { display: flex; flex-direction: column; gap: 4px; }
   .fila-form label { font-size: 0.75rem; color: var(--muted); }
   .fila-form input, .fila-form select { padding: 0.55rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; min-width: 130px; background: var(--card-bg); color: var(--text); }
+  .fila-form input[type="file"] { min-width: 260px; max-width: 100%; padding: 0.28rem; color: var(--muted); cursor: pointer; }
+  .fila-form input[type="file"]::file-selector-button { margin-right: 0.65rem; padding: 0.42rem 0.75rem; border: 0; border-radius: 5px; background: var(--accent); color: #fff; font: inherit; font-weight: 600; cursor: pointer; transition: background 0.2s ease; }
+  .fila-form input[type="file"]::file-selector-button:hover { background: var(--accent-hover); }
+  .selector-foto { display: inline-flex; align-items: center; gap: 0.45rem; width: fit-content; padding: 0.48rem 0.75rem; border-radius: 6px; background: var(--accent-bg-light); color: var(--accent-hover); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: background 0.2s ease, transform 0.2s ease; }
+  .selector-foto:hover { background: var(--accent); color: #fff; transform: translateY(-1px); }
+  .selector-foto input[type="file"] { display: none; }
+  .icono-foto { width: 1.15rem; height: 1.15rem; flex: 0 0 auto; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   .btn { padding: 0.55rem 1rem; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
   .btn-primario { background: var(--accent); color: #fff; }
@@ -197,7 +204,7 @@
         <p class="desc" data-i18n="invDesc">Consulta y ajusta las existencias de tu sucursal.</p>
         <div class="card">
           <table>
-            <tr><th data-i18n="thProducto">Producto</th><th data-i18n="thStockActual">Stock actual</th><th data-i18n="thAjustar">Ajustar</th><th></th></tr>
+            <tr><th data-i18n="thFoto">Foto</th><th data-i18n="thProducto">Producto</th><th data-i18n="thStockActual">Stock actual</th><th data-i18n="thAjustar">Ajustar</th><th></th></tr>
             <tbody id="tablaInventario"></tbody>
           </table>
         </div>
@@ -218,7 +225,7 @@
         <div class="card">
           <h3 data-i18n="comprasRegistradasHeading">Compras registradas</h3>
           <table>
-            <tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thProducto">Producto</th><th data-i18n="thCantidad">Cantidad</th><th data-i18n="thCostoUnit">Costo unit.</th><th data-i18n="thTotal">Total</th><th data-i18n="thProveedor">Proveedor</th></tr>
+            <tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thFoto">Foto</th><th data-i18n="thProducto">Producto</th><th data-i18n="thCantidad">Cantidad</th><th data-i18n="thCostoUnit">Costo unit.</th><th data-i18n="thTotal">Total</th><th data-i18n="thProveedor">Proveedor</th></tr>
             <tbody id="tablaCompras"></tbody>
           </table>
         </div>
@@ -271,17 +278,20 @@
             <div class="campo"><label data-i18n="thPrecioBase">Precio base</label><input type="number" id="nuevoPrecio" min="0" step="0.01" placeholder="0.00"></div>
             <div class="campo"><label data-i18n="thIva">IVA %</label><input type="number" id="nuevoIva" min="0" step="0.01" value="16"></div>
             <div class="campo"><label data-i18n="labelStockInicial">Stock inicial</label><input type="number" id="nuevoStock" min="0" placeholder="0"></div>
+            <div class="campo"><label data-i18n="labelFotoProducto">Foto (opcional)</label><label class="selector-foto" for="nuevaFoto" title="Seleccionar foto" aria-label="Seleccionar foto"><svg class="icono-foto" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 8h.01"></path><path d="m3 16 5-5c.928-.893 2.072-.893 3 0l4 4"></path><path d="m14 14 1-1c.928-.893 2.072-.893 3 0l3 3"></path><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M19 2v4"></path><path d="M17 4h4"></path></svg><span>Foto</span><input type="file" id="nuevaFoto" accept="image/*"></label></div>
             <button class="btn btn-primario" onclick="darDeAlta()" data-i18n="btnDarAlta">Dar de alta</button>
           </div>
         </div>
         <div class="card">
           <table>
             <tr>
+              <th data-i18n="thFoto">Foto</th>
               <th data-i18n="thProducto">Producto</th>
               <th data-i18n="thPrecioBase">Precio base</th>
               <th data-i18n="thIva">IVA %</th>
               <th data-i18n="thPrecioFinal">Precio final</th>
               <th data-i18n="thEstado">Estado</th>
+              <th></th>
               <th></th>
               <th></th>
             </tr>
@@ -430,6 +440,7 @@
       devolucionRegistrada: 'Devolución registrada; stock actualizado', ventaCancelada: 'Venta cancelada; stock actualizado',
       historialDevoluciones: 'Devoluciones registradas', tipoDevolucion: 'Devolución', tipoCancelacion: 'Cancelación',
       devueltoLabel: 'devuelto', canceladaPor: 'Motivo de cancelación',
+      labelFotoProducto: 'Foto del producto', thFoto: 'Foto', fotoActualizada: 'Foto actualizada',
     },
     en: {
       tagline: 'Manager panel', placeholderUsuario: 'Username', placeholderClave: 'Password',
@@ -490,6 +501,7 @@
       devolucionRegistrada: 'Return recorded; stock updated', ventaCancelada: 'Sale cancelled; stock updated',
       historialDevoluciones: 'Recorded returns', tipoDevolucion: 'Return', tipoCancelacion: 'Cancellation',
       devueltoLabel: 'returned', canceladaPor: 'Cancellation reason',
+      labelFotoProducto: 'Product photo', thFoto: 'Photo', fotoActualizada: 'Photo updated',
     }
   };
   let idioma = '{{ app()->getLocale() }}';
@@ -591,6 +603,9 @@
   function renderInventario() {
     document.getElementById('tablaInventario').innerHTML = productos.filter(p => p.activo).map(p => `
       <tr>
+        <td>${p.foto
+          ? `<img src="${p.foto}" alt="${p.nombre}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
+          : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}</td>
         <td>${p.nombre}</td>
         <td>${p.stock}</td>
         <td><input type="number" id="ajuste-${p.id}" placeholder="+/-"></td>
@@ -624,9 +639,11 @@
     // El servidor ya las manda de la más reciente a la más antigua
     document.getElementById('tablaCompras').innerHTML = compras.map(c => `
       <tr>
-        <td>${formatearFecha(c.fecha)}</td><td>${c.producto}</td><td>${c.cantidad}</td>
+        <td>${formatearFecha(c.fecha)}</td>
+        <td>${c.foto ? `<img src="${c.foto}" alt="${c.producto}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<span style="color:var(--muted-light);">—</span>`}</td>
+        <td>${c.producto}</td><td>${c.cantidad}</td>
         <td>$${c.costo.toFixed(2)}</td><td>$${c.total.toFixed(2)}</td><td>${c.proveedor || '—'}</td>
-      </tr>`).join('') || `<tr><td colspan="6" style="color:var(--muted-light);">${t('sinCompras')}</td></tr>`;
+      </tr>`).join('') || `<tr><td colspan="7" style="color:var(--muted-light);">${t('sinCompras')}</td></tr>`;
   }
 
   async function registrarCompra() {
@@ -733,14 +750,44 @@
   function renderProductos() {
     document.getElementById('tablaProductos').innerHTML = productos.map(p => `
       <tr>
+        <td>
+          ${p.foto
+            ? `<img src="${p.foto}" alt="${p.nombre}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
+            : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}
+        </td>
         <td>${p.nombre}</td>
         <td><input type="number" id="precio-${p.id}" value="${p.precio}" step="0.01"></td>
         <td><input type="number" id="iva-${p.id}" value="${p.iva}" step="0.01"></td>
         <td id="final-${p.id}">$${(p.precio * (1 + p.iva / 100)).toFixed(2)}</td>
         <td><span class="badge ${p.activo ? 'badge-activo' : 'badge-inactivo'}">${p.activo ? t('badgeActivo') : t('badgeInactivo')}</span></td>
         <td><button class="btn btn-primario btn-sm" onclick="guardarProducto(${p.id})">${t('btnGuardar')}</button></td>
+        <td>
+          <label class="btn btn-sm" style="background:var(--accent-bg-light);color:var(--accent-hover);cursor:pointer;" title="${t('labelFotoProducto')}">
+            <svg class="icono-foto" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 8h.01"></path><path d="m3 16 5-5c.928-.893 2.072-.893 3 0l4 4"></path><path d="m14 14 1-1c.928-.893 2.072-.893 3 0l3 3"></path><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M19 2v4"></path><path d="M17 4h4"></path></svg>
+            <input type="file" accept="image/*" style="display:none" onchange="subirFoto(${p.id}, this)">
+          </label>
+        </td>
         <td><button class="btn btn-sm ${p.activo ? 'btn-peligro' : 'btn-exito'}" onclick="toggleActivo(${p.id})">${p.activo ? t('btnDarBaja') : t('btnReactivar')}</button></td>
       </tr>`).join('');
+  }
+
+  async function subirFoto(id, inputEl) {
+    if (!inputEl.files[0]) return;
+    const formData = new FormData();
+    formData.append('foto', inputEl.files[0]);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+    try {
+      const resp = await fetch('/gerente/productos/' + id + '/foto', { method: 'POST', body: formData });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data?.message || t('errorGenerico'));
+      const p = productos.find(x => x.id === id);
+      if (p) p.foto = data.foto;
+      renderProductos();
+      mostrarToast(t('fotoActualizada'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   async function guardarProducto(id) {
@@ -775,10 +822,16 @@
     if (!nombre || !precio) { mostrarToast(t('alertCompletaProducto'), 'error'); return; }
 
     try {
-      await api('/gerente/productos', 'POST', { nombre, precio, iva, stock });
+      const producto = await api('/gerente/productos', 'POST', { nombre, precio, iva, stock });
+      // Sube la foto si el gerente eligió una al crear el producto
+      const fotoInput = document.getElementById('nuevaFoto');
+      if (fotoInput.files[0]) {
+        await subirFoto(producto.id_producto, fotoInput);
+      }
       document.getElementById('nuevoNombre').value = '';
       document.getElementById('nuevoPrecio').value = '';
       document.getElementById('nuevoStock').value = '';
+      fotoInput.value = '';
       await cargarProductos();
       renderProductos();
       mostrarToast(t('productoAgregado'), 'exito');

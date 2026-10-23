@@ -245,7 +245,24 @@
           <select id="filtroSucursal" onchange="renderInventarioGlobal()"></select>
         </div>
         <div class="card">
-          <table><tr><th data-i18n="thProducto">Producto</th><th data-i18n="thStock">Stock</th></tr><tbody id="tablaInventarioGlobal"></tbody></table>
+          <table><tr><th data-i18n="thFoto">Foto</th><th data-i18n="thProducto">Producto</th><th data-i18n="thStock">Stock</th></tr><tbody id="tablaInventarioGlobal"></tbody></table>
+        </div>
+      </div>
+
+      <div class="seccion" id="sec-productos-admin">
+        <h2 data-i18n="adminProductosHeading">Catálogo de productos</h2>
+        <p class="desc" data-i18n="adminProductosDesc">Sube o reemplaza la foto de cada producto del catálogo global.</p>
+        <div class="card">
+          <table>
+            <tr>
+              <th data-i18n="thFoto">Foto</th>
+              <th data-i18n="thProducto">Producto</th>
+              <th data-i18n="thPrecio">Precio</th>
+              <th data-i18n="thEstado">Estado</th>
+              <th></th>
+            </tr>
+            <tbody id="tablaProductosAdmin"></tbody>
+          </table>
         </div>
       </div>
 
@@ -374,6 +391,9 @@
       alertNombreProveedor: 'Ingresa el nombre del proveedor.', confirmEliminarProveedor: '¿Eliminar este proveedor?',
       inventarioHeading: 'Inventario por sucursal', inventarioDesc: 'Consulta las existencias de cualquier sucursal.',
       thProducto: 'Producto', thStock: 'Stock', sinDatos: 'Sin datos',
+      navProductosAdmin: 'Catálogo / fotos',
+      adminProductosHeading: 'Catálogo de productos', adminProductosDesc: 'Sube o reemplaza la foto de cada producto del catálogo global.',
+      thFoto: 'Foto', thPrecio: 'Precio', fotoActualizada: 'Foto actualizada', labelFotoProducto: 'Foto del producto',
       navVentas: 'Ventas',
       ventasHeading: 'Ventas por sucursal', ventasDesc: 'Consulta las ventas registradas en cualquier sucursal.',
       thFecha: 'Fecha', thCajero: 'Cajero', thMetodoPago: 'Método de pago', thTotal: 'Total',
@@ -412,6 +432,9 @@
       alertNombreProveedor: 'Enter the supplier name.', confirmEliminarProveedor: 'Delete this supplier?',
       inventarioHeading: 'Inventory by branch', inventarioDesc: 'Check the stock at any branch.',
       thProducto: 'Product', thStock: 'Stock', sinDatos: 'No data',
+      navProductosAdmin: 'Catalog / photos',
+      adminProductosHeading: 'Product catalog', adminProductosDesc: 'Upload or replace the photo for each product in the global catalog.',
+      thFoto: 'Photo', thPrecio: 'Price', fotoActualizada: 'Photo updated', labelFotoProducto: 'Product photo',
       navVentas: 'Sales',
       ventasHeading: 'Sales by branch', ventasDesc: 'Check the sales recorded at any branch.',
       thFecha: 'Date', thCajero: 'Cashier', thMetodoPago: 'Payment method', thTotal: 'Total',
@@ -438,6 +461,7 @@
     { id: 'usuarios', key: 'navUsuarios' },
     //{ id: 'proveedores', key: 'navProveedores' }, //pendiente en la bd y conexion
     { id: 'inventario', key: 'navInventario' },
+    { id: 'productos-admin', key: 'navProductosAdmin' },
     { id: 'ventas', key: 'navVentas'},
     { id: 'cortes', key: 'navCortes' },
   ];
@@ -492,11 +516,60 @@
     document.getElementById('logoutForm').submit();
   }
 
+  let productosAdmin = [];
+
+  async function cargarProductosAdmin() {
+    try {
+      const res = await fetch('/administrador/productos', {
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+      });
+      productosAdmin = await res.json();
+    } catch (e) {}
+  }
+
+  function renderProductosAdmin() {
+    document.getElementById('tablaProductosAdmin').innerHTML = productosAdmin.map(p => `
+      <tr>
+        <td>${p.foto
+          ? `<img src="${p.foto}" alt="${p.nombre}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
+          : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}
+        </td>
+        <td>${p.nombre}</td>
+        <td>$${p.precio.toFixed(2)}</td>
+        <td><span class="badge ${p.activo ? 'badge-gerente' : 'badge-cajero'}">${p.activo ? t('estadoActiva') : t('estadoInactiva')}</span></td>
+        <td>
+          <label class="btn btn-sm" style="background:var(--accent-bg-light);color:var(--accent-hover);cursor:pointer;" title="${t('labelFotoProducto')}">
+            📷 <input type="file" accept="image/*" style="display:none" onchange="subirFotoAdmin(${p.id}, this)">
+          </label>
+        </td>
+      </tr>`).join('') || `<tr><td colspan="5" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+  }
+
+  async function subirFotoAdmin(id, inputEl) {
+    if (!inputEl.files[0]) return;
+    const formData = new FormData();
+    formData.append('foto', inputEl.files[0]);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+    try {
+      const resp = await fetch('/administrador/productos/' + id + '/foto', { method: 'POST', body: formData });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data?.message || t('errorGenerico') || 'Error');
+      const p = productosAdmin.find(x => x.id === id);
+      if (p) p.foto = data.foto;
+      renderProductosAdmin();
+      mostrarToast(t('fotoActualizada'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
+  }
+
   renderSidebar();
   (async () => {
     await cargarUsuarios();
     await cargarSucursales();
     await cargarInventario();
+    await cargarProductosAdmin();
     await cargarVentas();
     await cargarCortes();
     await cargarResumen();
@@ -520,6 +593,7 @@
     if (id === 'usuarios') renderUsuarios();
     //if (id === 'proveedores') renderProveedores();
     if (id === 'inventario') renderInventarioGlobal();
+    if (id === 'productos-admin') { renderProductosAdmin(); cargarProductosAdmin().then(renderProductosAdmin); }
     if (id === 'ventas') renderVentas();
     if (id === 'cortes') renderCortes();
   }
@@ -783,11 +857,12 @@
       ? items.map(i => {
           const bajo = i.existencias <= i.stock_minimo;
           return `<tr>
+            <td>${i.foto ? `<img src="${i.foto}" alt="${i.producto}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<span style="color:var(--muted-light);">—</span>`}</td>
             <td>${i.producto}</td>
             <td style="${bajo ? 'color:var(--danger-text); font-weight:600;' : ''}">${i.existencias}${bajo ? ' ⚠️' : ''}</td>
           </tr>`;
         }).join('')
-      : `<tr><td colspan="2" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+      : `<tr><td colspan="3" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
   }
 
   /* ---------- Sekeccion de gerente ---------- */
