@@ -499,9 +499,7 @@ button:hover {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
 }
  
-/* ==========================================================
-   Botón de cambio de tema (claro / oscuro)
-   ========================================================== */
+/* Botón de cambio de tema (claro / oscuro) */
 .theme-toggle {
     position: absolute;
     top: 20px;
@@ -547,4 +545,52 @@ button:hover {
  
 :root[data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
 :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
- 
+
+@media (min-width: 861px) {
+    .login-page { height: 100dvh; overflow: hidden; }
+    .login-shell { height: 100dvh; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+    .brand-panel { overflow-y: auto; }
+    .form-panel { overflow-y: auto; place-items: start center; }
+    .form-card { margin-block: auto; max-height: none; overflow: visible; }
+}
+/* Botón "Continuar con Google": resalta al pasar el cursor o al enfocarlo con teclado */
+.btn-google {
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease,
+                border-color 160ms ease, background 160ms ease;
+}
+.btn-google:hover,
+.btn-google:focus-visible {
+    border-color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 8%, var(--input-bg));
+    box-shadow: 0 0 0 4px rgba(239, 142, 25, 0.18), 0 10px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    outline: none;
+}
+.btn-google:active {
+    transform: translateY(0);
+    box-shadow: 0 0 0 3px rgba(239, 142, 25, 0.18);
+}
+/* Google bloqueado: atenuado y sin efecto hasta aceptar términos y privacidad */
+.btn-google.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.btn-google.is-disabled:hover,
+.btn-google.is-disabled:focus-visible,
+.btn-google.is-disabled:active {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--line);
+    background: var(--input-bg);
+}
+/* Botón "Registrarme" bloqueado hasta completar el formulario */
+button[type="submit"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+button[type="submit"]:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}

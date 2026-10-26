@@ -616,3 +616,44 @@ button:hover {
     color: var(--text);
     border-color: var(--line);
 }
+
+/* Sin marco blanco: el login ocupa toda la pantalla, igual que el registro */
+body { background: var(--form-bg); }
+.login-page { padding: 0; }
+.login-shell {
+    width: 100%;
+    min-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+@media (min-width: 861px) {
+    .login-page { height: 100dvh; overflow: hidden; padding: 0; }
+    .login-shell { height: 100dvh; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+    .brand-panel { overflow-y: auto; }
+    .form-panel {
+        overflow-y: auto;
+        place-items: start center;
+        padding-top: 84px;
+    }
+    .form-card { margin-block: auto; }
+}
+/* Botón "Continuar con Google": resalta al pasar el cursor o al enfocarlo con teclado */
+.btn-google {
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease,
+                border-color 160ms ease, background 160ms ease;
+}
+.btn-google:hover,
+.btn-google:focus-visible {
+    border-color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 8%, var(--input-bg));
+    box-shadow: 0 0 0 4px rgba(239, 142, 25, 0.18), 0 10px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    outline: none;
+}
+.btn-google:active {
+    transform: translateY(0);
+    box-shadow: 0 0 0 3px rgba(239, 142, 25, 0.18);
+}

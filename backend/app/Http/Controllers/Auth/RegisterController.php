@@ -46,6 +46,9 @@ class RegisterController extends Controller
                 'confirmed',
                 'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/',
             ],
+            // Es obligatorio aceptar ambos documentos para poder crear la cuenta
+            'acepta_terminos' => ['accepted'],
+            'acepta_privacidad' => ['accepted'],
         ], [
             'nombre.required' => __('Name is required.'),
             'nombre.max' => __('Name cannot exceed 150 characters.'),
@@ -62,6 +65,8 @@ class RegisterController extends Controller
             'password.min' => __('Password must be at least 8 characters.'),
             'password.confirmed' => __('Passwords do not match.'),
             'password.regex' => __('Password must include an uppercase letter, a number, and a special character.'),
+            'acepta_terminos.accepted' => __('You must accept the Terms and Conditions.'),
+            'acepta_privacidad.accepted' => __('You must accept the Privacy Notice.'),
         ]);
 
         /** Rol y usuario se crean en una sola transacción para evitar un rol huérfano si algo falla */
