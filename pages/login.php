@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="../assets/css/estilos.css">
 </head>
 <body>
+    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="{{ __('Change theme') }}">
+        <i class="bi bi-sun-fill icon-sun"></i>
+        <i class="bi bi-moon-fill icon-moon"></i>
+    </button>
     <main class="login-page">
         <section class="login-shell" aria-label="Inicio de sesión Nexora">
             <aside class="brand-panel">

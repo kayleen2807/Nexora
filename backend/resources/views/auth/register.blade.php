@@ -9,8 +9,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/register.css') }}">
+     <script>
+        (function () {
+            var saved = null;
+            try { saved = localStorage.getItem('theme'); } catch (e) {}
+            var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </head>
 <body>
+    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="{{ __('Change theme') }}">
+        <i class="bi bi-sun-fill icon-sun"></i>
+        <i class="bi bi-moon-fill icon-moon"></i>
+    </button>
     <main class="login-page">
         <section class="login-shell" aria-label="{{ __('User registration') }}">
             <aside class="brand-panel">
@@ -105,12 +117,27 @@
                             </button>
                         </div>
 
-                        <button type="submit">{{ __('Register') }}</button>
+                        {{-- Aceptación obligatoria de Términos y Condiciones y Aviso de Privacidad --}}
+                        <div class="legal-checks">
+                            <label class="check-row" for="acepta_terminos">
+                                <input type="checkbox" id="acepta_terminos" name="acepta_terminos" value="1" {{ old('acepta_terminos') ? 'checked' : '' }} required>
+                                <span class="check-box" aria-hidden="true"></span>
+                                <span>{!! __('I accept the :link', ['link' => '<a href="' . e(url('/terminos')) . '" target="_blank" rel="noopener">' . e(__('Terms and Conditions')) . '</a>']) !!}</span>
+                            </label>
+
+                            <label class="check-row" for="acepta_privacidad">
+                                <input type="checkbox" id="acepta_privacidad" name="acepta_privacidad" value="1" {{ old('acepta_privacidad') ? 'checked' : '' }} required>
+                                <span class="check-box" aria-hidden="true"></span>
+                                <span>{!! __('I agree to the :link', ['link' => '<a href="' . e(url('/privacidad')) . '" target="_blank" rel="noopener">' . e(__('Privacy Notice')) . '</a>']) !!}</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" id="register-submit" disabled>{{ __('Register') }}</button>
                     </form>
 
                     <div class="google-divider"><span>{{ __('or') }}</span></div>
 
-                    <a href="{{ route('google.redirect') }}" class="btn-google">
+                    <a href="{{ route('google.redirect') }}" class="btn-google" id="google-register">
                         <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
                             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                             <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -156,6 +183,38 @@
             } else {
                 mismatchAlert.classList.remove('is-visible');
             }
+        });
+
+        // El botón de registro se habilita solo con el formulario completo y válido
+        // y las dos casillas marcadas. El de Google solo depende de las casillas.
+        var form = document.getElementById('register-form');
+        var terms = document.getElementById('acepta_terminos');
+        var privacy = document.getElementById('acepta_privacidad');
+        var submitBtn = document.getElementById('register-submit');
+        var googleBtn = document.getElementById('google-register');
+
+        function updateState() {
+        var legalOk = terms.checked && privacy.checked;
+
+        submitBtn.disabled = !(legalOk && form.checkValidity());
+        googleBtn.classList.toggle('is-disabled', !legalOk);
+        googleBtn.setAttribute('aria-disabled', legalOk ? 'false' : 'true');
+}
+
+        form.addEventListener('input', updateState);
+        form.addEventListener('change', updateState);
+        window.addEventListener('pageshow', updateState);
+        googleBtn.addEventListener('click', function (event) {
+        if (!(terms.checked && privacy.checked)) {
+            event.preventDefault();
+    }
+});
+        updateState();
+        document.getElementById('theme-toggle').addEventListener('click', function () {
+            var root = document.documentElement;
+            var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            try { localStorage.setItem('theme', next); } catch (e) {}
         });
     </script>
 </body>

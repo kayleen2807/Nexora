@@ -46,6 +46,10 @@ Route::get('/lang/{locale}', function ($locale){
     return redirect()->back();
 })->name('lang.switch'); 
 
+//Ruta para terminos y privacidad
+Route::view('/terminos', 'legal.terminos')->name('legal.terminos');
+Route::view('/privacidad', 'legal.privacidad')->name('legal.privacidad');
+
 //Ruta para el login y para cerrar sesion
 Route::get('/', fn () => redirect()->route('login'));
 

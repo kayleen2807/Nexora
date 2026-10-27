@@ -146,6 +146,4 @@ Este proyecto está bajo la Licencia [MIT](LICENSE.md). Puedes usarlo, modificar
 
 <div align="center">
 
-Hecho con ❤️ por el equipo de Nexora 
-
 </div>
