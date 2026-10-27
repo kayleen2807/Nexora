@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $precio numeric(10,2) sin IVA (por defecto), llega como string
  * @property string $iva numeric(5,2) porcentaje (por defecto), llega como string
  * @property bool $estado activo por defecto para sucursales nuevas
+ * @property string|null $foto ruta relativa en storage/app/public/productos
  * @property string|null $codigo_barras
  * @property int|null $id_categoria
  */
@@ -24,7 +25,7 @@ class Producto extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['nombre', 'precio', 'iva', 'estado'];
+    protected $fillable = ['nombre', 'foto', 'precio', 'iva', 'estado'];
 
     protected function casts(): array
     {

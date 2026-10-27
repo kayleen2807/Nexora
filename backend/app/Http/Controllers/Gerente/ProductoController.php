@@ -8,6 +8,7 @@ use App\Models\Inventario;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * El catálogo (`producto`) es compartido, pero precio, IVA y activo/inactivo
@@ -47,6 +48,7 @@ class ProductoController extends Controller
                 return [
                     'id' => $p->id_producto,
                     'nombre' => $p->nombre,
+                    'foto' => $p->foto ? Storage::disk('public')->url($p->foto) : null,
                     'precio' => (float) ($p->getAttribute('precio_sucursal') ?? $p->precio),
                     'iva' => (float) ($p->getAttribute('iva_sucursal') ?? $p->iva),
                     // Si el producto aún no está en la sucursal, hereda el estado del catálogo
@@ -91,6 +93,24 @@ class ProductoController extends Controller
         });
 
         return response()->json($producto, 201);
+    }
+
+    /** Sube o reemplaza la foto del producto (catálogo global). */
+    public function uploadFoto(Request $request, Producto $producto)
+    {
+        $request->validate([
+            'foto' => ['required', 'image', 'max:2048'],
+        ]);
+
+        // Borra la foto anterior si existe
+        if ($producto->foto) {
+            Storage::disk('public')->delete($producto->foto);
+        }
+
+        $ruta = $request->file('foto')->store('productos', 'public');
+        $producto->update(['foto' => $ruta]);
+
+        return response()->json(['foto' => Storage::disk('public')->url($ruta)]);
     }
 
     /** Cambia precio e IVA SOLO en la sucursal del gerente. */

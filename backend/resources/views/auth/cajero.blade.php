@@ -141,6 +141,8 @@
   .main h2 { font-size: 1.1rem; margin-bottom: 1rem; font-weight: 600; }
   .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
   .producto-card { background: var(--card-bg); border-radius: 12px; padding: 1rem; box-shadow: 0 1px 4px var(--shadow); text-align: center; }
+  .producto-card .foto-producto { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; margin-bottom: 6px; }
+  .producto-card .foto-placeholder { width: 64px; height: 64px; background: var(--border-light); border-radius: 8px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
   .producto-card .nombre { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
   .producto-card .precio { color: var(--accent); font-weight: 700; margin-bottom: 4px; }
   .producto-card .stock { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.6rem; }
@@ -743,8 +745,12 @@
     grid.innerHTML = productos.filter(p => p.nombre.toLowerCase().includes(busqueda)).map(p => {
       const enCarrito = carrito.find(i => i.id === p.id);
       const disponible = p.stock - (enCarrito ? enCarrito.cantidad : 0);
+      const imgHtml = p.foto
+        ? `<img class="foto-producto" src="${p.foto}" alt="${p.nombre}">`
+        : `<div class="foto-placeholder">🛒</div>`;
       return `
         <div class="producto-card">
+          ${imgHtml}
           <div class="nombre">${p.nombre}</div>
           <div class="precio">$${p.precio.toFixed(2)}</div>
           <div class="stock">${t('stockLabel')}${disponible}</div>

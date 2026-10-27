@@ -12,6 +12,7 @@ use App\Models\Producto;
 use App\Models\Venta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class VentaController extends Controller
 {
@@ -32,6 +33,7 @@ class VentaController extends Controller
             ->map(fn (Inventario $i) => [
                 'id' => $i->id_producto,
                 'nombre' => $i->producto->nombre,
+                'foto' => $i->producto->foto ? Storage::disk('public')->url($i->producto->foto) : null,
                 'precio' => $i->precioFinal($i->producto),
                 'stock' => $i->existencias,
             ]);

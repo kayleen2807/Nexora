@@ -8,10 +8,12 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Admin\SucursalController;
 use Illuminate\Support\Facades\Cookie;
 use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\Admin\InventarioController;
+use App\Http\Controllers\Admin\ProductoController as AdminProductoController;
 use App\Http\Controllers\Admin\VentaController;
 use App\Http\Controllers\Admin\ResumeController;
 use App\Http\Controllers\Gerente\MiSucursalController;
@@ -46,6 +48,14 @@ Route::get('/lang/{locale}', function ($locale){
 
 //Ruta para el login y para cerrar sesion
 Route::get('/', fn () => redirect()->route('login'));
+
+// Sirve los archivos públicos también en el servidor local de Windows, donde
+// el servidor PHP puede no resolver correctamente el junction public/storage.
+Route::get('/product-images/{path}', function (string $path) {
+    abort_unless(Storage::disk('public')->exists($path), 404);
+
+    return Storage::disk('public')->response($path);
+})->where('path', '.*');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -105,6 +115,9 @@ Route::middleware(['auth', 'rol:administrador'])
 
         Route::get('/inventario', [InventarioController::class, 'index']);
 
+        Route::get('/productos', [AdminProductoController::class, 'index']);
+        Route::post('/productos/{producto}/foto', [AdminProductoController::class, 'uploadFoto']);
+
         Route::get('/ventas', [VentaController::class, 'index']);
 
         Route::get('/resumen', [ResumeController::class, 'index']);
@@ -123,6 +136,7 @@ Route::middleware(['auth', 'rol:gerente'])
         Route::post('/productos', [ProductoController::class, 'store']);
         Route::put('/productos/{producto}', [ProductoController::class, 'update']);
         Route::put('/productos/{producto}/toggle', [ProductoController::class, 'toggleActivo']);
+        Route::post('/productos/{producto}/foto', [ProductoController::class, 'uploadFoto']);
 
         Route::put('/inventario/{producto}', [GerenteInventarioController::class, 'ajustar']);
 

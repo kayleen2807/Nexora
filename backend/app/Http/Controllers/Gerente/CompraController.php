@@ -8,6 +8,7 @@ use App\Models\Compra;
 use App\Models\Inventario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CompraController extends Controller
 {
@@ -26,6 +27,7 @@ class CompraController extends Controller
                 'id' => $c->id_compra,
                 'fecha' => $c->fecha?->toIso8601String(),
                 'producto' => $c->producto->nombre ?? 'Producto eliminado',
+                'foto' => $c->producto?->foto ? Storage::disk('public')->url($c->producto->foto) : null,
                 'cantidad' => $c->cantidad,
                 'costo' => (float) $c->costo_unitario,
                 'total' => (float) $c->total,
