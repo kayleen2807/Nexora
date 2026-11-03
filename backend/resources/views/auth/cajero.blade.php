@@ -143,6 +143,11 @@
   .producto-card { background: var(--card-bg); border-radius: 12px; padding: 1rem; box-shadow: 0 1px 4px var(--shadow); text-align: center; }
   .producto-card .foto-producto { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; margin-bottom: 6px; }
   .producto-card .foto-placeholder { width: 64px; height: 64px; background: var(--border-light); border-radius: 8px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 1rem; }
+  .chip { padding: 0.35rem 0.85rem; border: 1px solid var(--border, #d1d5db); border-radius: 999px; background: transparent; color: var(--text, inherit); font-size: 0.82rem; cursor: pointer; }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.activo { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .producto-card .cat { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted-light, #9ca3af); margin-bottom: 0.15rem; }
   .producto-card .nombre { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
   .producto-card .precio { color: var(--accent); font-weight: 700; margin-bottom: 4px; }
   .producto-card .stock { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.6rem; }
@@ -154,6 +159,7 @@
   .carrito-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-light); font-size: 0.85rem; }
   .carrito-item .quitar { color: var(--danger-text); cursor: pointer; margin-left: 8px; }
   .vacio { font-size: 0.85rem; color: var(--muted-light); padding: 0.5rem 0; }
+  .total-box #total { margin-left: 0.4rem; }
   .total-box { margin-top: 1rem; font-size: 1.3rem; font-weight: 700; text-align: right; color: var(--text); }
 
   .pago-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
@@ -247,7 +253,7 @@
 
 <div class="pos-view" id="posView">
   <div class="topbar">
-    <div class="brand"><span class="logo-sm">N</span> Nexora <span class="sucursal">— <span data-i18n="topbarPanelCajero">Punto de venta</span> · {{ auth()->user()->sucursal->nombre ?? __('Sin sucursal asignada') }}</span></div>
+    <div class="brand">Nexora <span class="sucursal">— <span data-i18n="topbarPanelCajero">Punto de venta</span> · {{ auth()->user()->sucursal->nombre ?? __('Sin sucursal asignada') }}</span></div>
     <div class="topbar-derecha">
       <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
       <div class="esquina-superior">
@@ -282,12 +288,13 @@
             <div class="fila-form">
               <div class="campo"><input type="search" id="buscarProducto" data-i18n-placeholder="placeholderBuscar" placeholder="Buscar producto..." oninput="renderProductos()"></div>
             </div>
+            <div class="chips" id="chipsCategorias"></div>
             <div class="productos-grid" id="productosGrid"></div>
           </div>
           <div class="carrito">
             <h2 data-i18n="carritoHeading">Carrito</h2>
             <div id="carritoItems"></div>
-            <div class="total-box"><span data-i18n="totalLabel">Total: $</span><span id="total">0.00</span></div>
+            <div class="total-box"><span data-i18n="totalLabel">Total: $</span><span id="total">$0.00 MXN</span></div>
 
             <div class="pago-section">
               <h3 data-i18n="metodoPagoHeading">Método de pago</h3>
@@ -317,17 +324,17 @@
 
         <div id="corteContenido" style="display:none">
           <div class="resumen-grid">
-            <div class="resumen-card"><div class="label" data-i18n="ventasEfectivo">Ventas en efectivo</div><div class="valor" id="resEfectivo">$0.00</div></div>
-            <div class="resumen-card"><div class="label" data-i18n="ventasTarjeta">Ventas con tarjeta</div><div class="valor" id="resTarjeta">$0.00</div></div>
-            <div class="resumen-card"><div class="label" data-i18n="totalTurno">Total del turno</div><div class="valor" id="resTotal">$0.00</div></div>
+            <div class="resumen-card"><div class="label" data-i18n="ventasEfectivo">Ventas en efectivo</div><div class="valor" id="resEfectivo">$0.00 MXN</div></div>
+            <div class="resumen-card"><div class="label" data-i18n="ventasTarjeta">Ventas con tarjeta</div><div class="valor" id="resTarjeta">$0.00 MXN</div></div>
+            <div class="resumen-card"><div class="label" data-i18n="totalTurno">Total del turno</div><div class="valor" id="resTotal">$0.00 MXN</div></div>
           </div>
           <div class="card">
             <table>
               <tr><td data-i18n="labelCaja">Caja</td><td id="corteCaja">—</td></tr>
               <tr><td data-i18n="labelApertura">Apertura</td><td id="corteApertura">—</td></tr>
-              <tr><td data-i18n="fondoInicialLabel">Fondo inicial de caja</td><td id="corteFondo">$0.00</td></tr>
+              <tr><td data-i18n="fondoInicialLabel">Fondo inicial de caja</td><td id="corteFondo">$0.00 MXN</td></tr>
               <tr><td data-i18n="labelNumVentas">Ventas realizadas</td><td id="corteNumVentas">0</td></tr>
-              <tr><td data-i18n="labelDevoluciones">Devoluciones / cancelaciones</td><td id="corteDevoluciones">$0.00</td></tr>
+              <tr><td data-i18n="labelDevoluciones">Devoluciones / cancelaciones</td><td id="corteDevoluciones">$0.00 MXN</td></tr>
             </table>
           </div>
           <div class="card">
@@ -399,6 +406,8 @@
 
 <script>
   /* ---------- DATOS (declarados antes de cualquier función que los use) ---------- */
+  let categoriaSel = '';     // '' = todas, '__sin__' = productos sin categoría
+  let opcionesChips = [];
   let productos = [];        // { id, nombre, precio (con IVA), stock } de la sucursal
   let carrito = [];
   let compras = [];          // solo lo usa la sección oculta "Registrar compras"
@@ -436,7 +445,7 @@
     return iso ? new Date(iso).toLocaleString(idioma === 'es' ? 'es-MX' : 'en-US') : '—';
   }
 
-  const dinero = n => '$' + Number(n).toFixed(2);
+  const dinero = n => '$' + Number(n).toFixed(2) + ' MXN';
 
   /* ---------- IDIOMA ---------- */
   const textos = {
@@ -453,12 +462,12 @@
       navProductos: 'Productos',
       productosHeading: 'Productos',
       carritoHeading: 'Carrito',
-      totalLabel: 'Total: $',
+      totalLabel: 'Total:',
       carritoVacio: 'Carrito vacío',
       metodoPagoHeading: 'Método de pago',
       btnEfectivo: 'Efectivo',
       btnTarjeta: 'Tarjeta',
-      efectivoRecibidoLabel: 'Efectivo recibido',
+      efectivoRecibidoLabel: 'Efectivo recibido (MXN)',
       btnCobrar: 'Cobrar',
       cambioLabel: 'Cambio',
       faltaLabel: 'Falta',
@@ -469,7 +478,7 @@
       comprasDesc: 'Registra las entradas de mercancía recibidas por el cajero o proveedor.',
       labelProducto: 'Producto',
       labelCantidad: 'Cantidad',
-      labelCostoUnitario: 'Costo unitario',
+      labelCostoUnitario: 'Costo unitario (MXN)',
       labelProveedor: 'Proveedor',
       placeholderNombre: 'Nombre',
       btnRegistrar: 'Registrar',
@@ -492,7 +501,7 @@
       alertCompletaProducto: 'Completa al menos nombre y precio.',
       topbarPanelCajero: 'Punto de venta', navCorte: 'Corte de caja',
       errorGenerico: 'Ocurrió un error. Intenta de nuevo.', errorCargar: 'No se pudo cargar la información del punto de venta.',
-      placeholderBuscar: 'Buscar producto...', sinResultados: 'Sin productos que coincidan.',
+      placeholderBuscar: 'Buscar producto...', todasCategorias: 'Todas', sinCategoria: 'Sin categoría', sinResultados: 'Sin productos que coincidan.',
       aperturaHeading: 'Abrir caja', aperturaDesc: 'Elige tu caja y cuenta el fondo inicial antes de empezar a vender.',
       labelCaja: 'Caja', fondoInicialLabel: 'Fondo inicial de caja', btnAbrirCaja: 'Abrir caja',
       sinCajasLibres: 'No hay cajas disponibles. Pide al gerente que registre o libere una.',
@@ -503,7 +512,7 @@
       corteSinTurno: 'No tienes un turno abierto.', ventasEfectivo: 'Ventas en efectivo', ventasTarjeta: 'Ventas con tarjeta',
       totalTurno: 'Total del turno', labelApertura: 'Apertura', labelNumVentas: 'Ventas realizadas',
       labelDevoluciones: 'Devoluciones / cancelaciones',
-      efectivoContadoLabel: 'Efectivo contado físicamente', btnCerrarCaja: 'Cerrar caja y hacer corte',
+      efectivoContadoLabel: 'Efectivo contado físicamente (MXN)', btnCerrarCaja: 'Cerrar caja y hacer corte',
       efectivoEsperado: 'Efectivo esperado en caja', sobrante: 'Sobrante', faltante: 'Faltante', cajaCuadrada: 'Caja cuadrada',
       alertEfectivoContado: 'Ingresa el efectivo contado.', confirmCerrarCaja: '¿Cerrar tu caja? Después ya no podrás vender en este turno.',
       btnCerrarConfirm: 'Cerrar caja', corteRealizado: 'Corte realizado. Caja cerrada.',
@@ -523,12 +532,12 @@
       navProductos: 'Products',
       productosHeading: 'Products',
       carritoHeading: 'Cart',
-      totalLabel: 'Total: $',
+      totalLabel: 'Total:',
       carritoVacio: 'Cart is empty',
       metodoPagoHeading: 'Payment method',
       btnEfectivo: 'Cash',
       btnTarjeta: 'Card',
-      efectivoRecibidoLabel: 'Cash received',
+      efectivoRecibidoLabel: 'Cash received (MXN)',
       btnCobrar: 'Charge',
       cambioLabel: 'Change',
       faltaLabel: 'Missing',
@@ -539,7 +548,7 @@
       comprasDesc: 'Log incoming stock received by the cashier or supplier.',
       labelProducto: 'Product',
       labelCantidad: 'Quantity',
-      labelCostoUnitario: 'Unit cost',
+      labelCostoUnitario: 'Unit cost (MXN)',
       labelProveedor: 'Supplier',
       placeholderNombre: 'Name',
       btnRegistrar: 'Register',
@@ -562,7 +571,7 @@
       alertCompletaProducto: 'Fill in at least name and price.',
       topbarPanelCajero: 'Point of sale', navCorte: 'Cash count',
       errorGenerico: 'Something went wrong. Please try again.', errorCargar: 'Could not load the point of sale information.',
-      placeholderBuscar: 'Search product...', sinResultados: 'No matching products.',
+      placeholderBuscar: 'Search product...', todasCategorias: 'All', sinCategoria: 'No category', sinResultados: 'No matching products.',
       aperturaHeading: 'Open register', aperturaDesc: 'Choose your register and count the starting cash before selling.',
       labelCaja: 'Register', fondoInicialLabel: 'Starting cash fund', btnAbrirCaja: 'Open register',
       sinCajasLibres: 'No registers available. Ask your manager to add or free one.',
@@ -573,7 +582,7 @@
       corteSinTurno: 'You have no open shift.', ventasEfectivo: 'Cash sales', ventasTarjeta: 'Card sales',
       totalTurno: 'Shift total', labelApertura: 'Opened', labelNumVentas: 'Sales made',
       labelDevoluciones: 'Returns / cancellations',
-      efectivoContadoLabel: 'Physical cash counted', btnCerrarCaja: 'Close register and count',
+      efectivoContadoLabel: 'Physical cash counted (MXN)', btnCerrarCaja: 'Close register and count',
       efectivoEsperado: 'Expected cash in register', sobrante: 'Overage', faltante: 'Shortage', cajaCuadrada: 'Register balanced',
       alertEfectivoContado: 'Enter the cash counted.', confirmCerrarCaja: 'Close your register? You will not be able to sell in this shift afterwards.',
       btnCerrarConfirm: 'Close register', corteRealizado: 'Cash count done. Register closed.',
@@ -738,11 +747,32 @@
     renderCarrito();
   }
 
+  const escCat = c => String(c).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Botones de categoría: salen de los propios productos (cada negocio escribe las suyas).
+  // Si ningún producto tiene categoría, no se muestran.
+  function renderChipsCategorias() {
+    const cont = document.getElementById('chipsCategorias');
+    const cats = [...new Set(productos.map(p => p.categoria).filter(Boolean))].sort((a, b) => a.localeCompare(b, idioma));
+    if (!cats.length) { categoriaSel = ''; cont.innerHTML = ''; return; }
+    opcionesChips = [{ valor: '', texto: t('todasCategorias') }, ...cats.map(c => ({ valor: c, texto: c }))];
+    if (productos.some(p => !p.categoria)) opcionesChips.push({ valor: '__sin__', texto: t('sinCategoria') });
+    if (!opcionesChips.some(o => o.valor === categoriaSel)) categoriaSel = '';
+    cont.innerHTML = opcionesChips.map((o, i) => `<button class="chip ${o.valor === categoriaSel ? 'activo' : ''}" onclick="seleccionarCategoria(${i})">${escCat(o.texto)}</button>`).join('');
+  }
+
+  function seleccionarCategoria(i) {
+    categoriaSel = opcionesChips[i].valor;
+    renderProductos();
+  }
+
   function renderProductos() {
     const grid = document.getElementById('productosGrid');
     const busqueda = document.getElementById('buscarProducto').value.trim().toLowerCase();
+    renderChipsCategorias();
     // El servidor ya manda solo productos activos con inventario en esta sucursal
-    grid.innerHTML = productos.filter(p => p.nombre.toLowerCase().includes(busqueda)).map(p => {
+    grid.innerHTML = productos.filter(p => p.nombre.toLowerCase().includes(busqueda)
+      && (!categoriaSel || (categoriaSel === '__sin__' ? !p.categoria : p.categoria === categoriaSel))).map(p => {
       const enCarrito = carrito.find(i => i.id === p.id);
       const disponible = p.stock - (enCarrito ? enCarrito.cantidad : 0);
       const imgHtml = p.foto
@@ -751,8 +781,8 @@
       return `
         <div class="producto-card">
           ${imgHtml}
-          <div class="nombre">${p.nombre}</div>
-          <div class="precio">$${p.precio.toFixed(2)}</div>
+          ${p.categoria ? `<div class="cat">${escCat(p.categoria)}</div>` : ''}<div class="nombre">${p.nombre}</div>
+          <div class="precio">${dinero(p.precio)}</div>
           <div class="stock">${t('stockLabel')}${disponible}</div>
           <button onclick="agregarAlCarrito(${p.id})" ${disponible <= 0 ? 'disabled' : ''}>
             ${disponible <= 0 ? t('sinStock') : ICONOS.agregarBtn + t('agregarBtn')}
@@ -786,11 +816,11 @@
       ? carrito.map(i => `
           <div class="carrito-item">
             <span>${i.nombre} x${i.cantidad}</span>
-            <span>$${(i.precio * i.cantidad).toFixed(2)}<span class="quitar" onclick="quitarDelCarrito(${i.id})">✕</span></span>
+            <span>${dinero((i.precio * i.cantidad))}<span class="quitar" onclick="quitarDelCarrito(${i.id})">✕</span></span>
           </div>`).join('')
       : `<div class="vacio">${t('carritoVacio')}</div>`;
 
-    document.getElementById('total').textContent = total.toFixed(2);
+    document.getElementById('total').textContent = dinero(total);
 
     const cambioRow = document.getElementById('cambioRow');
     let puedeCobrar = carrito.length > 0;
@@ -805,11 +835,11 @@
         puedeCobrar = false;
       } else if (cambio < 0) {
         cambioRow.className = 'cambio-row insuficiente';
-        cambioRow.innerHTML = `<span>${t('faltaLabel')}</span><span>$${Math.abs(cambio).toFixed(2)}</span>`;
+        cambioRow.innerHTML = `<span>${t('faltaLabel')}</span><span>${dinero(Math.abs(cambio))}</span>`;
         puedeCobrar = false;
       } else {
         cambioRow.className = 'cambio-row ok';
-        cambioRow.innerHTML = `<span>${t('cambioLabel')}</span><span>$${cambio.toFixed(2)}</span>`;
+        cambioRow.innerHTML = `<span>${t('cambioLabel')}</span><span>${dinero(cambio)}</span>`;
       }
     } else {
       cambioRow.innerHTML = '';
@@ -858,13 +888,13 @@
   function mostrarTicket(venta) {
     const filasItems = venta.items.map(i => `
       <tr>
-        <td>${i.nombre}<br><span style="color:var(--muted);font-size:0.72rem;">${i.cantidad} x $${i.precio.toFixed(2)}</span></td>
-        <td style="text-align:right;">$${(i.precio * i.cantidad).toFixed(2)}</td>
+        <td>${i.nombre}<br><span style="color:var(--muted);font-size:0.72rem;">${i.cantidad} x ${dinero(i.precio)}</span></td>
+        <td style="text-align:right;">${dinero((i.precio * i.cantidad))}</td>
       </tr>`).join('');
 
     const filasPago = venta.metodo === 'efectivo'
-      ? `<tr><td>${t('ticketRecibido')}</td><td style="text-align:right;">$${venta.recibido.toFixed(2)}</td></tr>
-         <tr><td>${t('ticketCambio')}</td><td style="text-align:right;">$${venta.cambio.toFixed(2)}</td></tr>`
+      ? `<tr><td>${t('ticketRecibido')}</td><td style="text-align:right;">${dinero(venta.recibido)}</td></tr>
+         <tr><td>${t('ticketCambio')}</td><td style="text-align:right;">${dinero(venta.cambio)}</td></tr>`
       : '';
 
     document.getElementById('ticketContenido').innerHTML = `
@@ -874,9 +904,9 @@
       <table>${filasItems}</table>
       <div class="linea"></div>
       <table>
-        <tr><td>${t('ticketSubtotal')}</td><td style="text-align:right;">$${venta.subtotal.toFixed(2)}</td></tr>
-        <tr><td>${t('ticketIva')}</td><td style="text-align:right;">$${venta.iva.toFixed(2)}</td></tr>
-        <tr class="fila-total"><td>${t('ticketTotal')}</td><td style="text-align:right;">$${venta.total.toFixed(2)}</td></tr>
+        <tr><td>${t('ticketSubtotal')}</td><td style="text-align:right;">${dinero(venta.subtotal)}</td></tr>
+        <tr><td>${t('ticketIva')}</td><td style="text-align:right;">${dinero(venta.iva)}</td></tr>
+        <tr class="fila-total"><td>${t('ticketTotal')}</td><td style="text-align:right;">${dinero(venta.total)}</td></tr>
         <tr><td>${t('ticketMetodoPago')}</td><td style="text-align:right;">${venta.metodo === 'efectivo' ? t('ticketEfectivo') : t('ticketTarjeta')}</td></tr>
         ${filasPago}
       </table>
@@ -961,7 +991,7 @@
     document.getElementById('tablaCompras').innerHTML = compras.slice().reverse().map(c => `
       <tr>
         <td>${c.fecha}</td><td>${c.nombre}</td><td>${c.cantidad}</td>
-        <td>$${c.costo.toFixed(2)}</td><td>$${(c.costo * c.cantidad).toFixed(2)}</td><td>${c.proveedor || '—'}</td>
+        <td>${dinero(c.costo)}</td><td>${dinero((c.costo * c.cantidad))}</td><td>${c.proveedor || '—'}</td>
       </tr>`).join('') || `<tr><td colspan="6" style="color:var(--muted-light);">${t('sinCompras')}</td></tr>`;
   }
 
@@ -987,7 +1017,7 @@
     document.getElementById('tablaProductos').innerHTML = productos.map(p => `
       <tr>
         <td>${p.nombre}</td>
-        <td>$${p.precio.toFixed(2)}</td>
+        <td>${dinero(p.precio)}</td>
         <td>${p.stock}</td>
         <td><span class="badge ${p.activo ? 'badge-activo' : 'badge-inactivo'}">${p.activo ? t('badgeActivo') : t('badgeInactivo')}</span></td>
         <td><button class="btn btn-sm ${p.activo ? 'btn-peligro' : 'btn-exito'}" onclick="toggleActivo(${p.id})">${p.activo ? t('btnDarBaja') : t('btnReactivar')}</button></td>
