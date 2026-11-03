@@ -99,6 +99,23 @@
   .badge-gerente { background: var(--badge-gerente-bg); color: var(--badge-gerente-text); }
   .badge-cajero { background: var(--badge-cajero-bg); color: var(--badge-cajero-text); }
 
+  /* Formulario en cuadrícula (Crear usuarios): mismos tamaños y colores que .fila-form */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.9rem 1rem; }
+  .form-grid .campo { display: flex; flex-direction: column; gap: 4px; }
+  .form-grid label { font-size: 0.75rem; color: var(--muted); }
+  .form-grid input, .form-grid select { width: 100%; height: 2.35rem; padding: 0 0.55rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.85rem; background: var(--card-bg); color: var(--text); }
+  [data-theme="dark"] .form-grid input, [data-theme="dark"] .form-grid select { color-scheme: dark; } /* calendario y listas en claro sobre fondo oscuro */
+  .form-grid select:disabled { opacity: 0.55; cursor: not-allowed; }
+  .form-grid .ayuda { font-size: 0.72rem; color: var(--muted-light); line-height: 1.35; }
+  .campo-clave { position: relative; }
+  .campo-clave input { padding-right: 2.4rem; }
+  .campo-clave button { position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); display: flex; padding: 0.25rem; background: none; border: none; color: var(--muted); cursor: pointer; }
+  .campo-clave button:hover { color: var(--accent); }
+  .campo-clave .ico { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .form-separador { border: none; border-top: 1px solid var(--border-light); margin: 1.25rem 0; }
+  .form-acciones { display: flex; justify-content: flex-end; margin-top: 1.25rem; }
+  .form-acciones .ico { margin-right: 6px; }
+
   .filtro-sucursal { margin-bottom: 1rem; }
   .filtro-sucursal select { padding: 0.55rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; min-width: 200px; background: var(--card-bg); color: var(--text); }
 
@@ -199,26 +216,50 @@
         </div>
       </div>
 
-      <div class="seccion" id="sec-usuarios">
-        <h2 data-i18n="usuariosHeading">Usuarios</h2>
-        <p class="desc" data-i18n="usuariosDesc">Crea, edita o elimina cuentas de acceso al sistema.</p>
+      <div class="seccion" id="sec-crear-usuarios">
+        <h2 data-i18n="crearUsuariosHeading">Crear usuarios</h2>
+        <p class="desc" data-i18n="crearUsuariosDesc">Registra una cuenta nueva y asígnale su rol y sucursal.</p>
+        <!-- Mismos datos que register.blade.php (sin repetir contraseña) + rol y sucursal -->
         <div class="card">
-          <div class="fila-form">
-            <div class="campo"><label data-i18n="labelNombre">Nombre</label><input type="text" id="usrNombre" placeholder="Nombre"></div>
-            <div class="campo"><label data-i18n="labelApellido">Apellido</label><input type="text" id="usrApellido" placeholder="Apellido"></div>
-            <div class="campo"><label data-i18n="labelCorreo">Correo</label><input type="email" id="usrCorreo" placeholder="correo@nexora.com"></div>
-            <div class="campo"><label data-i18n="labelContrasena">Contraseña</label><input type="password" id="usrClave" placeholder="••••••"></div>
-            <div class="campo"><label data-i18n="labelRol">Rol</label>
-              <select id="usrRol">
+          <h3 data-i18n="grupoDatosPersonales">Datos personales</h3>
+          <div class="form-grid">
+            <div class="campo"><label for="usrNombre" data-i18n="labelNombre">Nombre</label><input type="text" id="usrNombre" maxlength="150" autocomplete="off" data-i18n-placeholder="labelNombre" placeholder="Nombre"></div>
+            <div class="campo"><label for="usrApellido" data-i18n="labelApellido">Apellido</label><input type="text" id="usrApellido" maxlength="150" autocomplete="off" data-i18n-placeholder="labelApellido" placeholder="Apellido"></div>
+            <div class="campo"><label for="usrNacimiento" data-i18n="labelFechaNacimiento">Fecha de nacimiento</label><input type="date" id="usrNacimiento" max="{{ now()->subYears(18)->toDateString() }}"></div>
+            <div class="campo"><label for="usrCorreo" data-i18n="labelCorreo">Correo</label><input type="email" id="usrCorreo" maxlength="150" autocomplete="off" placeholder="correo@nexora.com"></div>
+          </div>
+
+          <hr class="form-separador">
+
+          <h3 data-i18n="grupoAcceso">Acceso al sistema</h3>
+          <div class="form-grid">
+            <div class="campo">
+              <label for="usrClave" data-i18n="labelContrasena">Contraseña</label>
+              <div class="campo-clave">
+                <input type="password" id="usrClave" autocomplete="new-password" placeholder="••••••••">
+                <button type="button" id="usrClaveToggle" onclick="toggleClaveUsuario()"></button>
+              </div>
+              <span class="ayuda" data-i18n="ayudaContrasena">Mínimo 8 caracteres, una mayúscula, un número y por lo menos un carácter especial.</span>
+            </div>
+            <div class="campo"><label for="usrRol" data-i18n="labelRol">Rol</label>
+              <select id="usrRol" onchange="renderCrearUsuario()">
                 <option value="cajero" data-i18n="rolCajero">Cajero</option>
                 <option value="gerente" data-i18n="rolGerente">Gerente</option>
                 <option value="admin" data-i18n="rolAdmin">Administrador</option>
               </select>
             </div>
-            <div class="campo"><label data-i18n="thSucursal">Sucursal</label><select id="usrSucursal"></select></div>
-            <button class="btn btn-primario" onclick="crearUsuario()" data-i18n="btnCrearUsuario">Crear usuario</button>
+            <div class="campo"><label for="usrSucursal" data-i18n="thSucursal">Sucursal</label><select id="usrSucursal"></select></div>
+          </div>
+
+          <div class="form-acciones">
+            <button class="btn btn-primario" onclick="crearUsuario()"><span id="icoCrearUsuario"></span><span data-i18n="btnCrearUsuario">Crear usuario</span></button>
           </div>
         </div>
+      </div>
+
+      <div class="seccion" id="sec-usuarios">
+        <h2 data-i18n="usuariosHeading">Usuarios</h2>
+        <p class="desc" data-i18n="usuariosDesc">Consulta o elimina las cuentas de acceso al sistema.</p>
         <div class="card">
           <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thRol">Rol</th><th data-i18n="thSucursal">Sucursal</th><th></th></tr><tbody id="tablaUsuarios"></tbody></table>
         </div>
@@ -326,7 +367,7 @@
   }
 
   let sucursales = [];
-  
+
   async function cargarSucursales() {
     const res = await fetch('/administrador/sucursales');
     sucursales = await res.json();
@@ -383,10 +424,18 @@
       rolesHeading: 'Asignar roles', rolesDesc: 'Cambia el rol y la sucursal asignada a cada usuario.',
       thUsuario: 'Usuario', thRol: 'Rol', thSucursal: 'Sucursal', sinAsignar: '— Sin asignar —',
       rolCajero: 'Cajero', rolGerente: 'Gerente', rolAdmin: 'Administrador',
-      usuariosHeading: 'Usuarios', usuariosDesc: 'Crea, edita o elimina cuentas de acceso al sistema.',
+      usuariosHeading: 'Usuarios', usuariosDesc: 'Consulta o elimina las cuentas de acceso al sistema.',
       labelNombreCompleto: 'Nombre completo', placeholderNombre: 'Nombre', labelUsuario: 'Usuario',
       labelContrasena: 'Contraseña', labelRol: 'Rol', btnCrearUsuario: 'Crear usuario',
-      alertCompletaUsuario: 'Completa nombre, usuario y contraseña.', confirmEliminarUsuario: '¿Eliminar este usuario?',
+      alertCompletaUsuario: 'Completa todos los campos.', confirmEliminarUsuario: '¿Eliminar este usuario?',
+      navCrearUsuarios: 'Crear usuarios', crearUsuariosHeading: 'Crear usuarios',
+      crearUsuariosDesc: 'Registra una cuenta nueva y asígnale su rol y sucursal.',
+      labelFechaNacimiento: 'Fecha de nacimiento', grupoDatosPersonales: 'Datos personales', grupoAcceso: 'Acceso al sistema',
+      ayudaContrasena: 'Mínimo 8 caracteres, una mayúscula, un número y por lo menos un carácter especial.',
+      alertContrasenaInvalida: 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial.',
+      alertMayorEdad: 'El usuario debe ser mayor de edad (18 años o más).', alertCorreoInvalido: 'El correo no tiene un formato válido.',
+      usuarioCreado: 'Usuario creado', errorCrearUsuario: 'No se pudo crear el usuario.',
+      mostrarContrasena: 'Mostrar contraseña', ocultarContrasena: 'Ocultar contraseña',
       proveedoresHeading: 'Proveedores', proveedoresDesc: 'Administra el directorio de proveedores para las compras de mercancía.',
       labelNombreEmpresa: 'Nombre / empresa', labelContacto: 'Contacto', placeholderContacto: 'Nombre del contacto', labelTelefono: 'Teléfono',
       thProveedor: 'Proveedor', thContacto: 'Contacto', thTelefono: 'Teléfono',
@@ -424,10 +473,18 @@
       rolesHeading: 'Assign roles', rolesDesc: 'Change the role and assigned branch for each user.', thGerente: 'Manager',
       thUsuario: 'User', thRol: 'Role', thSucursal: 'Branch', sinAsignar: '— Unassigned —',
       rolCajero: 'Cashier', rolGerente: 'Manager', rolAdmin: 'Administrator',
-      usuariosHeading: 'Users', usuariosDesc: 'Create, edit, or delete system access accounts.',
+      usuariosHeading: 'Users', usuariosDesc: 'View or delete system access accounts.',
       labelNombreCompleto: 'Full name', placeholderNombre: 'Name', labelUsuario: 'Username',
       labelContrasena: 'Password', labelRol: 'Role', btnCrearUsuario: 'Create user',
-      alertCompletaUsuario: 'Fill in name, username, and password.', confirmEliminarUsuario: 'Delete this user?',
+      alertCompletaUsuario: 'Fill in all the fields.', confirmEliminarUsuario: 'Delete this user?',
+      navCrearUsuarios: 'Create users', crearUsuariosHeading: 'Create users',
+      crearUsuariosDesc: 'Register a new account and assign its role and branch.',
+      labelFechaNacimiento: 'Date of birth', grupoDatosPersonales: 'Personal details', grupoAcceso: 'System access',
+      ayudaContrasena: 'At least 8 characters, one uppercase letter, one number, and at least one special character.',
+      alertContrasenaInvalida: 'The password needs at least 8 characters, one uppercase letter, one number, and one special character.',
+      alertMayorEdad: 'The user must be an adult (18 or older).', alertCorreoInvalido: 'The email address is not valid.',
+      usuarioCreado: 'User created', errorCrearUsuario: 'The user could not be created.',
+      mostrarContrasena: 'Show password', ocultarContrasena: 'Hide password',
       proveedoresHeading: 'Suppliers', proveedoresDesc: 'Manage the supplier directory for merchandise purchases.',
       labelNombreEmpresa: 'Name / company', labelContacto: 'Contact', placeholderContacto: 'Contact name', labelTelefono: 'Phone',
       thProveedor: 'Supplier', thContacto: 'Contact', thTelefono: 'Phone',
@@ -459,11 +516,16 @@
   /* -------- ICONOS --------- */
   const svg = d => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
   const CLIPBOARD_LIST = '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>';
+  const ICONO_OJO = svg('<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>');
+  const ICONO_OJO_TACHADO = svg('<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>');
+  // Mismas reglas que el registro (RegisterController): 8+ caracteres, mayúscula, número y carácter especial
+  const REGLA_CONTRASENA = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
   const ICONO_BASURA = svg('<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>');
   const ICONOS_MENU = {
     navSistema: svg('<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>'),
     navSucursales: svg('<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/>'),
     navRoles: svg('<path d="M2 21a8 8 0 0 1 10.434-7.62"/><circle cx="10" cy="8" r="5"/><circle cx="18" cy="18" r="3"/><path d="m19.5 14.3-.4.9"/><path d="m16.9 20.8-.4.9"/><path d="m21.7 19.5-.9-.4"/><path d="m15.2 16.9-.9-.4"/><path d="m21.7 16.5-.9.4"/><path d="m15.2 19.1-.9.4"/><path d="m19.5 21.7-.4-.9"/><path d="m16.9 15.2-.4-.9"/>'),
+    navCrearUsuarios: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>'),
     navUsuarios: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
     navInventario: svg('<path d="M12 22v-9"/><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z"/><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13"/><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.82 1.2a1.655 1.655 0 0 0-1.64 0L3 3.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z"/>'),
     navVentas: svg('<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>'),
@@ -474,6 +536,7 @@
     { id: 'sistema', key: 'navSistema' },
     { id: 'sucursales', key: 'navSucursales' },
     { id: 'roles', key: 'navRoles' },
+    { id: 'crear-usuarios', key: 'navCrearUsuarios' },
     { id: 'usuarios', key: 'navUsuarios' },
     //{ id: 'proveedores', key: 'navProveedores' }, //pendiente en la bd y conexion
     { id: 'inventario', key: 'navInventario' },
@@ -606,6 +669,7 @@
     if(id === 'sistema') renderResumen();
     if (id === 'sucursales') renderSucursales();
     if (id === 'roles') renderRoles();
+    if (id === 'crear-usuarios') renderCrearUsuario();
     if (id === 'usuarios') renderUsuarios();
     //if (id === 'proveedores') renderProveedores();
     if (id === 'inventario') renderInventarioGlobal();
@@ -751,7 +815,6 @@
 
   /*  USUARIOS  */
   function renderUsuarios() {
-    document.getElementById('usrSucursal').innerHTML = `<option value="">${t('sinAsignar')}</option>${opcionesSucursal()}`;
     document.getElementById('tablaUsuarios').innerHTML = usuarios.map(u => {
       const sucursal = sucursales.find(s => s.id_sucursal === u.sucursalId);
       const badgeClase = u.rol === 'admin' ? 'badge-admin' : u.rol === 'gerente' ? 'badge-gerente' : 'badge-cajero';
@@ -765,39 +828,80 @@
     }).join('');
   }
 
+  /*  CREAR USUARIOS  */
+  /* Llena el selector de sucursales (sin perder la elección) y lo desactiva para administradores */
+  function renderCrearUsuario() {
+    const select = document.getElementById('usrSucursal');
+    const elegida = select.value;
+    select.innerHTML = `<option value="">${t('sinAsignar')}</option>${opcionesSucursal()}`;
+    select.value = elegida;
+
+    const esAdmin = document.getElementById('usrRol').value === 'admin';
+    if (esAdmin) select.value = '';
+    select.disabled = esAdmin;
+
+    document.getElementById('icoCrearUsuario').innerHTML = ICONOS_MENU.navCrearUsuarios;
+    pintarBotonClave();
+  }
+
+  function pintarBotonClave() {
+    const visible = document.getElementById('usrClave').type === 'text';
+    const boton = document.getElementById('usrClaveToggle');
+    boton.innerHTML = visible ? ICONO_OJO_TACHADO : ICONO_OJO;
+    boton.title = visible ? t('ocultarContrasena') : t('mostrarContrasena');
+    boton.setAttribute('aria-label', boton.title);
+  }
+
+  function toggleClaveUsuario() {
+    const input = document.getElementById('usrClave');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    pintarBotonClave();
+  }
+
+  function esMayorDeEdad(fechaIso) {
+    const limite = new Date();
+    limite.setFullYear(limite.getFullYear() - 18);
+    return new Date(fechaIso + 'T00:00:00') <= limite;
+  }
+
   async function crearUsuario() {
     const nombre = document.getElementById('usrNombre').value.trim();
     const apellido = document.getElementById('usrApellido').value.trim();
-    const correo = document.getElementById('usrCorreo').value.trim();
+    const fecha_nacimiento = document.getElementById('usrNacimiento').value;
+    const correo = document.getElementById('usrCorreo').value.trim().toLowerCase();
     const contrasena = document.getElementById('usrClave').value;
     const rol = document.getElementById('usrRol').value;
     const sucVal = document.getElementById('usrSucursal').value;
 
-    if (!nombre || !apellido || !correo || !contrasena) { 
-      mostrarToast(t('alertCompletaUsuario'), 'error'); 
-      return; 
-    }
+    // Validación rápida en el navegador; el servidor vuelve a validar todo
+    if (!nombre || !apellido || !fecha_nacimiento || !correo || !contrasena) { mostrarToast(t('alertCompletaUsuario'), 'error'); return; }
+    if (!document.getElementById('usrCorreo').checkValidity()) { mostrarToast(t('alertCorreoInvalido'), 'error'); return; }
+    if (!esMayorDeEdad(fecha_nacimiento)) { mostrarToast(t('alertMayorEdad'), 'error'); return; }
+    if (!REGLA_CONTRASENA.test(contrasena)) { mostrarToast(t('alertContrasenaInvalida'), 'error'); return; }
 
     const res = await fetch('/administrador/usuarios', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
       },
-      body: JSON.stringify({ nombre, apellido, correo, contrasena, rol, id_sucursal: sucVal ? parseInt(sucVal) : null }),
+      body: JSON.stringify({
+        nombre, apellido, fecha_nacimiento, correo, contrasena, rol,
+        id_sucursal: rol !== 'admin' && sucVal ? parseInt(sucVal) : null,
+      }),
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => null);
-      mostrarToast(err?.message ?? 'No se pudo crear el usuario.', 'error');
+      mostrarToast(err?.message ?? t('errorCrearUsuario'), 'error');
       return;
     }
 
-    document.getElementById('usrNombre').value = '';
-    document.getElementById('usrApellido').value = '';
-    document.getElementById('usrCorreo').value = '';
-    document.getElementById('usrClave').value = '';
-    mostrarToast('Usuario creado', 'exito');
+    ['usrNombre', 'usrApellido', 'usrNacimiento', 'usrCorreo', 'usrClave'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('usrClave').type = 'password';
+    renderCrearUsuario();
+    mostrarToast(t('usuarioCreado'), 'exito');
     await cargarUsuarios();
   }
 

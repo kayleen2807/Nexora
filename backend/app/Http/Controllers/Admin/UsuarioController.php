@@ -24,24 +24,37 @@ class UsuarioController extends Controller
         ]);
     }
 
+    /** Mismos datos y reglas que el registro público (RegisterController), más rol y sucursal. */
     public function store(Request $request)
     {
+        $request->merge(['correo' => strtolower(trim((string) $request->input('correo')))]);
+
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:150'],
             'apellido' => ['required', 'string', 'max:150'],
+            'fecha_nacimiento' => ['required', 'date', 'before_or_equal:'.now()->subYears(18)->toDateString()],
             'correo' => ['required', 'email', 'max:150', 'unique:usuario,correo'],
-            'contrasena' => ['required', 'string', 'min:6'],
+            'contrasena' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/'],
             'rol' => ['required', 'in:admin,gerente,cajero'],
             'id_sucursal' => ['nullable', 'integer', 'exists:sucursal,id_sucursal'],
+        ], [
+            'fecha_nacimiento.required' => __('Date of birth is required.'),
+            'fecha_nacimiento.date' => __('Date of birth is invalid.'),
+            'fecha_nacimiento.before_or_equal' => __('You must be at least 18 years old to register.'),
+            'correo.unique' => __('This email address is already registered.'),
+            'contrasena.min' => __('Password must be at least 8 characters.'),
+            'contrasena.regex' => __('Password must include an uppercase letter, a number, and a special character.'),
         ]);
 
         $usuario = User::create([
             'nombre' => $data['nombre'],
             'apellido' => $data['apellido'],
+            'fecha_nacimiento' => $data['fecha_nacimiento'],
             'correo' => $data['correo'],
             'contrasena' => $data['contrasena'], // se hashea sola por el cast del modelo
             'id_rol' => self::ROLES_INVERSO[$data['rol']],
-            'id_sucursal' => $data['id_sucursal'] ?? null,
+            // Un administrador no pertenece a una sucursal
+            'id_sucursal' => $data['rol'] === 'admin' ? null : ($data['id_sucursal'] ?? null),
         ]);
 
         return response()->json($usuario, 201);
