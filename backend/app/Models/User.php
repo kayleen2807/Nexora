@@ -24,7 +24,7 @@ use App\Notifications\ResetPasswordNotification;
  * @property-read Rol|null $rol
  * @property-read Sucursal|null $sucursal
  */
-#[Fillable(['nombre', 'apellido', 'fecha_nacimiento', 'correo', 'contrasena', 'id_rol', 'id_sucursal', 'idioma'])]
+#[Fillable(['nombre', 'apellido', 'fecha_nacimiento', 'correo', 'contrasena', 'id_rol', 'id_sucursal', 'idioma', 'email_verified_at', 'email_verification_code', 'email_verification_expires_at'])]
 #[Hidden(['contrasena', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -82,6 +82,8 @@ class User extends Authenticatable
         return [
             'contrasena' => 'hashed',
             'fecha_nacimiento' => 'date',
+            'email_verified_at' => 'datetime',
+            'email_verification_expires_at' => 'datetime',
         ];
     }
 }

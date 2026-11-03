@@ -134,6 +134,7 @@ class GoogleController extends Controller
                     'id_rol' => $rol->id_rol,
                     'id_sucursal' => null,
                     'idioma' => $request->cookie('idioma') ?? config('app.locale'),
+                    'email_verified_at' => now(),
                 ]);
             });
         }

@@ -56,6 +56,15 @@ class LoginController extends Controller
                 ->onlyInput('correo');
         }
 
+        /** Las cuentas nuevas deben confirmar su correo antes de entrar al sistema. */
+        $usuario = Auth::user();
+        if (! $usuario->email_verified_at) {
+            Auth::logout();
+
+            return redirect()->route('verification.notice', ['correo' => $usuario->correo])
+                ->withErrors(['correo' => __('Please verify your email before logging in.')]);
+        }
+
         /** Si funciona crea una nueva sesion y lo redirige a la sesion correcta (depende del rol */
         $request->session()->regenerate();
 

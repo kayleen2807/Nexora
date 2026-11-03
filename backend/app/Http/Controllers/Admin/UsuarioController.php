@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\EmailVerificationService;
 
 class UsuarioController extends Controller
 {
@@ -25,7 +26,7 @@ class UsuarioController extends Controller
     }
 
     /** Mismos datos y reglas que el registro público (RegisterController), más rol y sucursal. */
-    public function store(Request $request)
+    public function store(Request $request, EmailVerificationService $verificationService)
     {
         $request->merge(['correo' => strtolower(trim((string) $request->input('correo')))]);
 
@@ -56,6 +57,8 @@ class UsuarioController extends Controller
             // Un administrador no pertenece a una sucursal
             'id_sucursal' => $data['rol'] === 'admin' ? null : ($data['id_sucursal'] ?? null),
         ]);
+
+        $verificationService->send($usuario);
 
         return response()->json($usuario, 201);
     }
