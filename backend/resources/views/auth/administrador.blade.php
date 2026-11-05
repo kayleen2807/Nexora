@@ -193,7 +193,7 @@
           <div class="fila-form">
             <div class="campo"><label data-i18n="labelNombre">Nombre</label><input type="text" id="sucNombre" placeholder="Sucursal Sur"></div>
             <div class="campo"><label data-i18n="labelDireccion">Dirección</label><input type="text" id="sucDireccion" placeholder="Calle 123"></div>
-            <div class="campo"><label data-i18n="labelContacto">Contacto</label><input type="text" id="sucContacto" placeholder="312 000 0000"></div>
+            <div class="campo"><label data-i18n="labelContacto">Contacto</label><input type="tel" id="sucContacto" placeholder="3120000000" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10"></div>
             <div class="campo"><label data-i18n="labelEstado">Estado</label>
               <select id="sucEstado">
                 <option value="activa" data-i18n="estadoActiva">Activa</option>
@@ -420,7 +420,7 @@
       sucursalesHeading: 'Registro de sucursales', sucursalesDesc: 'Da de alta nuevas sucursales o edita las existentes.', thGerente: 'Gerente',
       labelNombre: 'Nombre', labelDireccion: 'Dirección', labelApellido: 'Apellido', labelCorreo: 'Correo', btnAgregar: 'Agregar',
       thNombre: 'Nombre', thDireccion: 'Dirección', btnGuardar: 'Guardar', btnEliminar: 'Eliminar', btnCancelar: 'Cancelar',
-      alertNombreSucursal: 'Ingresa el nombre de la sucursal.', confirmEliminarSucursal: '¿Eliminar esta sucursal? Los usuarios asignados quedarán sin sucursal.',
+      alertNombreSucursal: 'Ingresa el nombre de la sucursal.', alertContactoInvalido: 'El contacto debe tener exactamente 10 números.', errorGuardarSucursal: 'No se pudo guardar la sucursal.', errorActualizarSucursal: 'No se pudo actualizar la sucursal.', sucursalAgregada: 'Sucursal agregada', sucursalActualizada: 'Sucursal actualizada', confirmEliminarSucursal: '¿Eliminar esta sucursal? Los usuarios asignados quedarán sin sucursal.',
       rolesHeading: 'Asignar roles', rolesDesc: 'Cambia el rol y la sucursal asignada a cada usuario.',
       thUsuario: 'Usuario', thRol: 'Rol', thSucursal: 'Sucursal', sinAsignar: '— Sin asignar —',
       rolCajero: 'Cajero', rolGerente: 'Gerente', rolAdmin: 'Administrador',
@@ -469,7 +469,7 @@
       sucursalesHeading: 'Branch registry', sucursalesDesc: 'Add new branches or edit existing ones.',
       labelNombre: 'Name', labelDireccion: 'Address', labelApellido: 'Last name', labelCorreo: 'Email', btnAgregar: 'Add',
       thNombre: 'Name', thDireccion: 'Address', btnGuardar: 'Save', btnEliminar: 'Delete', btnCancelar: 'Cancel',
-      alertNombreSucursal: 'Enter the branch name.', confirmEliminarSucursal: 'Delete this branch? Assigned users will be left without a branch.',
+      alertNombreSucursal: 'Enter the branch name.', alertContactoInvalido: 'Contact must contain exactly 10 digits.', errorGuardarSucursal: 'The branch could not be saved.', errorActualizarSucursal: 'The branch could not be updated.', sucursalAgregada: 'Branch added', sucursalActualizada: 'Branch updated', confirmEliminarSucursal: 'Delete this branch? Assigned users will be left without a branch.',
       rolesHeading: 'Assign roles', rolesDesc: 'Change the role and assigned branch for each user.', thGerente: 'Manager',
       thUsuario: 'User', thRol: 'Role', thSucursal: 'Branch', sinAsignar: '— Unassigned —',
       rolCajero: 'Cashier', rolGerente: 'Manager', rolAdmin: 'Administrator',
@@ -702,7 +702,7 @@
       <tr>
         <td><input value="${s.nombre}" id="sucN-${s.id_sucursal}"></td>
         <td><input value="${s.direccion}" id="sucD-${s.id_sucursal}"></td>
-        <td><input value="${s.contacto ?? ''}" id="sucC-${s.id_sucursal}"></td>
+        <td><input type="tel" value="${s.contacto ?? ''}" id="sucC-${s.id_sucursal}" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10"></td>
         <td>
           <select id="sucE-${s.id_sucursal}">
             <option value="activa" ${s.estado === 'activa' ? 'selected' : ''}>${t('estadoActiva')}</option>
@@ -721,6 +721,7 @@
     const contacto = document.getElementById('sucContacto').value.trim();
     const estado = document.getElementById('sucEstado').value;
     if (!nombre) { mostrarToast(t('alertNombreSucursal'), 'error'); return; }
+    if (contacto && !/^\d{10}$/.test(contacto)) { mostrarToast(t('alertContactoInvalido'), 'error'); return; }
 
     const res = await fetch('/administrador/sucursales', {
       method: 'POST',
@@ -731,13 +732,17 @@
       body: JSON.stringify({ nombre, direccion, contacto, estado }),
     });
 
-    if (!res.ok) { mostrarToast('No se pudo guardar la sucursal.', 'error'); return; }
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      mostrarToast(error?.errors?.contacto?.[0] || t('errorGuardarSucursal'), 'error');
+      return;
+    }
 
     document.getElementById('sucNombre').value = '';
     document.getElementById('sucDireccion').value = '';
     document.getElementById('sucContacto').value = '';
     await cargarSucursales();
-    mostrarToast('Sucursal agregada', 'exito');
+    mostrarToast(t('sucursalAgregada'), 'exito');
   }
 
   async function guardarSucursal(id) {
@@ -746,6 +751,7 @@
     const contacto = document.getElementById('sucC-' + id).value;
     const estado = document.getElementById('sucE-' + id).value;
     const gerVal = document.getElementById('sucGer-' + id).value;
+    if (contacto.trim() && !/^\d{10}$/.test(contacto.trim())) { mostrarToast(t('alertContactoInvalido'), 'error'); return; }
 
     const res = await fetch('/administrador/sucursales/' + id, {
       method: 'PUT',
@@ -756,10 +762,14 @@
       body: JSON.stringify({ nombre, direccion, contacto, estado, id_gerente: gerVal ? parseInt(gerVal) : null }),
     });
 
-    if (!res.ok) { mostrarToast('No se pudo actualizar la sucursal.', 'error'); return; }
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      mostrarToast(error?.errors?.contacto?.[0] || t('errorActualizarSucursal'), 'error');
+      return;
+    }
     await cargarSucursales();
     await cargarUsuarios();
-    mostrarToast('Sucursal actualizada', 'exito');
+    mostrarToast(t('sucursalActualizada'), 'exito');
   }
 
   async function eliminarSucursal(id) {

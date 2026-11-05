@@ -18,8 +18,10 @@ class SucursalController extends Controller
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:150'],
             'direccion' => ['required', 'string'],
-            'contacto' => ['nullable', 'string', 'max:100'],
+            'contacto' => ['nullable', 'digits:10'],
             'estado' => ['nullable', 'string', 'max:20'],
+        ], [
+            'contacto.digits' => __('Contact must contain exactly 10 digits.'),
         ]);
 
         return response()->json(Sucursal::create($data), 201);
@@ -29,9 +31,11 @@ class SucursalController extends Controller
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:150'],
             'direccion' => ['required', 'string'],
-            'contacto' => ['nullable', 'string', 'max:100'],
+            'contacto' => ['nullable', 'digits:10'],
             'estado' => ['nullable', 'string', 'max:20'],
             'id_gerente' => ['nullable', 'integer', 'exists:usuario,id_usuario'],
+        ], [
+            'contacto.digits' => __('Contact must contain exactly 10 digits.'),
         ]);
 
         DB::transaction(function () use ($sucursal, $data) {

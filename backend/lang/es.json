@@ -95,5 +95,6 @@
     "Your email has been verified.": "Tu correo ha sido verificado.",
     "Your email has been verified. Please log in.": "Tu correo ha sido verificado. Inicia sesión.",
     "If the account exists and is not verified, a new code was sent.": "Si la cuenta existe y no está verificada, se envió un código nuevo.",
-    "Please verify your email before logging in.": "Verifica tu correo antes de iniciar sesión."
+    "Please verify your email before logging in.": "Verifica tu correo antes de iniciar sesión.",
+    "Contact must contain exactly 10 digits.": "El contacto debe tener exactamente 10 números."
 }

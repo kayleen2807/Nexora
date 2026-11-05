@@ -89,5 +89,6 @@
     "Your email has been verified.": "Your email has been verified.",
     "Your email has been verified. Please log in.": "Your email has been verified. Please log in.",
     "If the account exists and is not verified, a new code was sent.": "If the account exists and is not verified, a new code was sent.",
-    "Please verify your email before logging in.": "Please verify your email before logging in."
+    "Please verify your email before logging in.": "Please verify your email before logging in.",
+    "Contact must contain exactly 10 digits.": "Contact must contain exactly 10 digits."
 }
