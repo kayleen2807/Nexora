@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Nexora - Panel de Gerente</title>
+@include('partials.favicon')
+<script src="{{ asset('js/theme.js') }}"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -588,12 +590,12 @@
     const actual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     const nuevo = actual === 'dark' ? 'light' : 'dark';
     aplicarTema(nuevo);
-    try { localStorage.setItem('nexora-tema', nuevo); } catch (e) {}
+    try { localStorage.setItem('theme', nuevo); } catch (e) {}
   }
 
   (function inicializarTema() {
     let guardado = null;
-    try { guardado = localStorage.getItem('nexora-tema'); } catch (e) {}
+    try { guardado = localStorage.getItem('theme'); } catch (e) {}
     if (guardado === 'dark' || guardado === 'light') aplicarTema(guardado);
     else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) aplicarTema('dark');
     else aplicarTema('light');

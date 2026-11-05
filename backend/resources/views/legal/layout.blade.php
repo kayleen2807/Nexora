@@ -8,14 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script>
-        (function () {
-            var saved = null;
-            try { saved = localStorage.getItem('theme'); } catch (e) {}
-            var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
-    </script>
+    <script src="{{ asset('js/theme.js') }}"></script>
     <style>
         /* Mismas variables que public/css/login.css */
         :root {
@@ -171,14 +164,5 @@
         </article>
     </div>
  
-    <script>
-        document.getElementById('legal-theme').addEventListener('click', function () {
-            var root = document.documentElement;
-            var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            root.setAttribute('data-theme', next);
-            try { localStorage.setItem('theme', next); } catch (e) {}
-        });
-    </script>
 </body>
 </html>
- 
