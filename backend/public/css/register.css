@@ -594,3 +594,19 @@ button[type="submit"]:disabled:hover {
     transform: none;
     box-shadow: none;
 }
+
+/* Casillas legales bloqueadas hasta abrir su enlace */
+.check-row.is-locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.check-row.is-locked a {
+    cursor: pointer; /* el enlace sí debe verse clicable */
+}
+.legal-hint {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
