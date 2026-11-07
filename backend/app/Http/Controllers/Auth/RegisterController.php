@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Contracts\View\View;
+use App\Services\EmailVerificationService;
 
 class RegisterController extends Controller
 {
@@ -26,7 +27,7 @@ class RegisterController extends Controller
     /**
      * Registrar un nuevo usuario. Todo registro público crea una cuenta con rol "administrador".
      */
-    public function register(Request $request): RedirectResponse
+    public function register(Request $request, EmailVerificationService $verificationService): RedirectResponse
     {
         $request->merge(['correo' => strtolower(trim((string) $request->input('correo')))]);
 
@@ -95,9 +96,8 @@ class RegisterController extends Controller
             ]);
         }
 
-        Auth::login($user);
-        $request->session()->regenerate();
+        $verificationService->send($user);
 
-        return redirect()->intended('/dashboard');
+        return redirect()->route('verification.notice', ['correo' => $user->correo]);
     }
 }
