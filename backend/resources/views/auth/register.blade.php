@@ -4,19 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('Register') }} | Nexora</title>
+    @include('partials.favicon')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/register.css') }}">
-     <script>
-        (function () {
-            var saved = null;
-            try { saved = localStorage.getItem('theme'); } catch (e) {}
-            var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
-    </script>
+    <script src="{{ asset('js/theme.js') }}"></script>
 </head>
 <body>
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="{{ __('Change theme') }}">
@@ -117,19 +111,24 @@
                             </button>
                         </div>
 
-                        {{-- Aceptación obligatoria de Términos y Condiciones y Aviso de Privacidad --}}
+                        {{-- Aceptación obligatoria de Términos y Condiciones y Aviso de Privacidad.
+                             Las casillas se habilitan solo después de abrir su enlace. --}}
                         <div class="legal-checks">
-                            <label class="check-row" for="acepta_terminos">
-                                <input type="checkbox" id="acepta_terminos" name="acepta_terminos" value="1" {{ old('acepta_terminos') ? 'checked' : '' }} required>
+                            <label class="check-row {{ old('acepta_terminos') ? '' : 'is-locked' }}" for="acepta_terminos">
+                                <input type="checkbox" id="acepta_terminos" name="acepta_terminos" value="1"
+                                       {{ old('acepta_terminos') ? 'checked' : 'disabled' }} required>
                                 <span class="check-box" aria-hidden="true"></span>
-                                <span>{!! __('I accept the :link', ['link' => '<a href="' . e(url('/terminos')) . '" target="_blank" rel="noopener">' . e(__('Terms and Conditions')) . '</a>']) !!}</span>
+                                <span>{!! __('I accept the :link', ['link' => '<a href="' . e(url('/terminos')) . '" target="_blank" rel="noopener" data-requires="acepta_terminos">' . e(__('Terms and Conditions')) . '</a>']) !!}</span>
                             </label>
 
-                            <label class="check-row" for="acepta_privacidad">
-                                <input type="checkbox" id="acepta_privacidad" name="acepta_privacidad" value="1" {{ old('acepta_privacidad') ? 'checked' : '' }} required>
+                            <label class="check-row {{ old('acepta_privacidad') ? '' : 'is-locked' }}" for="acepta_privacidad">
+                                <input type="checkbox" id="acepta_privacidad" name="acepta_privacidad" value="1"
+                                       {{ old('acepta_privacidad') ? 'checked' : 'disabled' }} required>
                                 <span class="check-box" aria-hidden="true"></span>
-                                <span>{!! __('I agree to the :link', ['link' => '<a href="' . e(url('/privacidad')) . '" target="_blank" rel="noopener">' . e(__('Privacy Notice')) . '</a>']) !!}</span>
+                                <span>{!! __('I agree to the :link', ['link' => '<a href="' . e(url('/privacidad')) . '" target="_blank" rel="noopener" data-requires="acepta_privacidad">' . e(__('Privacy Notice')) . '</a>']) !!}</span>
                             </label>
+
+                            <small id="legal-hint" class="legal-hint">{{ __('Open and read both links to be able to accept them.') }}</small>
                         </div>
 
                         <button type="submit" id="register-submit" disabled>{{ __('Register') }}</button>
@@ -194,28 +193,62 @@
         var googleBtn = document.getElementById('google-register');
 
         function updateState() {
-        var legalOk = terms.checked && privacy.checked;
+            var legalOk = terms.checked && privacy.checked;
 
-        submitBtn.disabled = !(legalOk && form.checkValidity());
-        googleBtn.classList.toggle('is-disabled', !legalOk);
-        googleBtn.setAttribute('aria-disabled', legalOk ? 'false' : 'true');
-}
+            submitBtn.disabled = !(legalOk && form.checkValidity());
+            googleBtn.classList.toggle('is-disabled', !legalOk);
+            googleBtn.setAttribute('aria-disabled', legalOk ? 'false' : 'true');
+        }
 
         form.addEventListener('input', updateState);
         form.addEventListener('change', updateState);
         window.addEventListener('pageshow', updateState);
         googleBtn.addEventListener('click', function (event) {
-        if (!(terms.checked && privacy.checked)) {
-            event.preventDefault();
-    }
-});
-        updateState();
-        document.getElementById('theme-toggle').addEventListener('click', function () {
-            var root = document.documentElement;
-            var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            root.setAttribute('data-theme', next);
-            try { localStorage.setItem('theme', next); } catch (e) {}
+            if (!(terms.checked && privacy.checked)) {
+                event.preventDefault();
+            }
         });
+
+        // Las casillas legales se habilitan solo después de abrir su enlace.
+        var legalHint = document.getElementById('legal-hint');
+
+        function safeGet(key) {
+            try { return sessionStorage.getItem(key); } catch (e) { return null; }
+        }
+        function safeSet(key, value) {
+            try { sessionStorage.setItem(key, value); } catch (e) {}
+        }
+
+        function refreshLegalHint() {
+            var pendientes = document.querySelectorAll('.legal-checks input:disabled').length;
+            legalHint.style.display = pendientes ? 'block' : 'none';
+        }
+
+        document.querySelectorAll('a[data-requires]').forEach(function (link) {
+            var checkbox = document.getElementById(link.dataset.requires);
+            var row = checkbox.closest('.check-row');
+            var key = 'leido_' + link.dataset.requires;
+
+            function unlock() {
+                checkbox.disabled = false;
+                row.classList.remove('is-locked');
+                row.removeAttribute('title');
+                safeSet(key, '1');
+                refreshLegalHint();
+            }
+
+            if (safeGet(key) || checkbox.checked) {
+                unlock();
+            } else {
+                row.title = @json(__('First open and read the link'));
+            }
+
+            link.addEventListener('click', unlock);
+            link.addEventListener('auxclick', unlock); // clic con la rueda del mouse
+        });
+
+        refreshLegalHint();
+        updateState();
     </script>
 </body>
 </html>
