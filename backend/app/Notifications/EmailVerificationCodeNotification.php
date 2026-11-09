@@ -27,6 +27,8 @@ class EmailVerificationCodeNotification extends Notification
                 'logoUrl' => asset('img/nexora-logo-cropped.png'),
                 'code' => $this->code,
                 'expires' => 10,
+                'termsUrl' => route('legal.terminos'),
+                'privacyUrl' => route('legal.privacidad'),
             ]);
     }
 }

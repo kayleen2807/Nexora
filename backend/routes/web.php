@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\UserInvitationController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -74,6 +75,9 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::get('/verify-email', [EmailVerificationController::class, 'show'])->name('verification.notice');
 Route::post('/verify-email', [EmailVerificationController::class, 'verify'])->name('verification.verify');
 Route::post('/verify-email/resend', [EmailVerificationController::class, 'resend'])->name('verification.resend');
+
+Route::get('/invitations/{invitation}/{token}', [UserInvitationController::class, 'show'])->name('invitation.accept');
+Route::post('/invitations/{invitation}/{token}', [UserInvitationController::class, 'accept']);
 
 Route::get('/forgot-password', [PasswordResetController::class, 'showRequestForm'])->name('password.request');
 Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->name('password.email');
