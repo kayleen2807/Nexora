@@ -2,22 +2,16 @@
 
 namespace App\Http\Controllers\Concerns;
 
-use App\Models\User;
 use Illuminate\Http\Request;
 
 /**
- * Gerente y Cajero solo operan sobre SU sucursal. Este trait centraliza cómo se
- * obtiene y se valida, para que ningún controlador pueda olvidarse del filtro.
+ * Gerente y Cajero solo operan sobre SU sucursal (y por lo tanto sobre su negocio).
+ * Este trait centraliza cómo se obtiene y se valida, para que ningún controlador
+ * pueda olvidarse del filtro. Hereda usuario(), idNegocio() y asegurarDelNegocio().
  */
 trait UsaSucursalDelUsuario
 {
-    protected function usuario(Request $request): User
-    {
-        /** @var User $usuario */
-        $usuario = $request->user();
-
-        return $usuario;
-    }
+    use UsaNegocioDelUsuario;
 
     /** id_sucursal del usuario logueado; responde 422 si no tiene una asignada. */
     protected function idSucursal(Request $request): int

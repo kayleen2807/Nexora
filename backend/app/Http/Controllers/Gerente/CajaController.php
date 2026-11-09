@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Gerente;
 use App\Http\Controllers\Concerns\UsaSucursalDelUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Caja;
+use App\Support\Limites;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -39,12 +40,13 @@ class CajaController extends Controller
 
         $data = $request->validate([
             'numero' => [
-                'required', 'integer', 'min:1',
+                'required', 'integer', 'min:1', 'max:'.Limites::ENTERO,
                 // El número de caja no se repite dentro de la misma sucursal
                 Rule::unique('caja', 'numero_caja')->where('id_sucursal', $idSucursal),
             ],
         ], [
             'numero.unique' => 'Ya existe una caja con ese número en tu sucursal.',
+            'numero.max' => 'El número de caja es demasiado grande.',
         ]);
 
         $caja = Caja::create([

@@ -2,14 +2,22 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\UsaNegocioDelUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Venta;
+use Illuminate\Http\Request;
 
 class VentaController extends Controller
 {
-    public function index()
+    use UsaNegocioDelUsuario;
+
+    /** Ventas de las sucursales del negocio del admin. */
+    public function index(Request $request)
     {
+        $idNegocio = $this->idNegocio($request);
+
         return Venta::with(['cajero', 'metodoPago', 'devoluciones'])
+            ->whereIn('id_sucursal', fn ($q) => $q->select('id_sucursal')->from('sucursal')->where('id_negocio', $idNegocio))
             ->orderByDesc('fecha_hora')
             ->get()
             ->map(fn (Venta $v) => [

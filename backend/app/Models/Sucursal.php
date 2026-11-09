@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $contacto
  * @property string|null $estado
  * @property int|null $id_gerente
+ * @property int|null $id_negocio
  * @property-read User|null $gerente
  */
 class Sucursal extends Model {
@@ -19,7 +20,7 @@ class Sucursal extends Model {
     protected $primaryKey = 'id_sucursal';
     public $timestamps = false;
 
-    protected $fillable = ['nombre', 'direccion', 'contacto', 'estado', 'id_gerente'];
+    protected $fillable = ['nombre', 'direccion', 'contacto', 'estado', 'id_gerente', 'id_negocio'];
 
     public function gerente(): BelongsTo{
         return $this->belongsTo(User::class, 'id_gerente', 'id_usuario');

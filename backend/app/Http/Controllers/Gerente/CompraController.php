@@ -6,9 +6,11 @@ use App\Http\Controllers\Concerns\UsaSucursalDelUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Compra;
 use App\Models\Inventario;
+use App\Support\Limites;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class CompraController extends Controller
 {
@@ -41,11 +43,19 @@ class CompraController extends Controller
         $idSucursal = $this->idSucursal($request);
 
         $data = $request->validate([
-            'id_producto' => ['required', 'integer', 'exists:producto,id_producto'],
-            'cantidad' => ['required', 'integer', 'min:1'],
-            'costo_unitario' => ['required', 'numeric', 'min:0'],
+            // Solo productos del catálogo de SU negocio
+            'id_producto' => ['required', 'integer', Rule::exists('producto', 'id_producto')->where('id_negocio', $this->idNegocio($request))],
+            'cantidad' => ['required', 'integer', 'min:1', 'max:'.Limites::ENTERO],
+            'costo_unitario' => ['required', 'numeric', 'min:0', 'max:'.Limites::DINERO],
             'proveedor' => ['nullable', 'string', 'max:150'],
+        ], [
+            'cantidad.max' => 'La cantidad es demasiado grande.',
+            'costo_unitario.max' => 'El costo no puede ser mayor a '.Limites::dineroTexto().'.',
         ]);
+
+        // compra.total es numeric(10,2): cantidad × costo debe caber
+        abort_if(round($data['cantidad'] * $data['costo_unitario'], 2) > Limites::DINERO, 422,
+            'El total de la compra supera el máximo permitido ('.Limites::dineroTexto().').');
 
         $compra = DB::transaction(function () use ($data, $idSucursal, $request) {
             $compra = Compra::create([
@@ -63,6 +73,9 @@ class CompraController extends Controller
                 ->where('id_sucursal', $idSucursal)
                 ->lockForUpdate()
                 ->first();
+
+            abort_if(($inventario->existencias ?? 0) + $data['cantidad'] > Limites::ENTERO, 422,
+                'El stock resultante supera el máximo permitido ('.number_format(Limites::ENTERO).').');
 
             if ($inventario) {
                 $inventario->increment('existencias', $data['cantidad']);

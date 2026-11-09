@@ -72,8 +72,11 @@
                     <form action="{{ route('register') }}" method="post" id="register-form">
                         @csrf
 
+                        <label for="nombre_negocio">{{ __('Business name') }}</label>
+                        <input type="text" id="nombre_negocio" name="nombre_negocio" value="{{ old('nombre_negocio') }}" placeholder="{{ __('Business name') }}" autocomplete="organization" maxlength="150" required autofocus>
+
                         <label for="nombre">{{ __('Name') }}</label>
-                        <input type="text" id="nombre" name="nombre" value="{{ old('nombre') }}" placeholder="{{ __('Name') }}" autocomplete="given-name" required autofocus>
+                        <input type="text" id="nombre" name="nombre" value="{{ old('nombre') }}" placeholder="{{ __('Name') }}" autocomplete="given-name" required>
 
                         <label for="apellido">{{ __('First surname') }}</label>
                         <input type="text" id="apellido" name="apellido" value="{{ old('apellido') }}" placeholder="{{ __('First surname') }}" autocomplete="family-name" required>

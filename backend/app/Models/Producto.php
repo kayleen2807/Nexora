@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Catálogo GLOBAL (compartido por todas las sucursales). Su precio/IVA/estado son
+ * Catálogo de UN negocio (compartido por todas sus sucursales). Su precio/IVA/estado son
  * solo el valor POR DEFECTO: cada sucursal define los suyos en `inventario`.
  *
  * @property int $id_producto
+ * @property int|null $id_negocio
  * @property string $nombre
  * @property string $precio numeric(10,2) sin IVA (por defecto), llega como string
  * @property string $iva numeric(5,2) porcentaje (por defecto), llega como string
@@ -25,7 +26,7 @@ class Producto extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['nombre', 'foto', 'precio', 'iva', 'estado'];
+    protected $fillable = ['nombre', 'foto', 'precio', 'iva', 'estado', 'id_negocio'];
 
     protected function casts(): array
     {

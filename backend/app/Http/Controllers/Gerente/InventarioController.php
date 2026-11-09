@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\UsaSucursalDelUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Inventario;
 use App\Models\Producto;
+use App\Support\Limites;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,10 +20,14 @@ class InventarioController extends Controller
      */
     public function ajustar(Request $request, Producto $producto)
     {
+        $this->asegurarDelNegocio($request, $producto);
         $idSucursal = $this->idSucursal($request);
 
         $data = $request->validate([
-            'ajuste' => ['required', 'integer', 'not_in:0'],
+            'ajuste' => ['required', 'integer', 'not_in:0', 'min:-'.Limites::ENTERO, 'max:'.Limites::ENTERO],
+        ], [
+            'ajuste.min' => 'El ajuste es demasiado grande.',
+            'ajuste.max' => 'El ajuste es demasiado grande.',
         ]);
 
         $inventario = DB::transaction(function () use ($producto, $idSucursal, $data) {
@@ -42,6 +47,7 @@ class InventarioController extends Controller
             $nuevo = $inventario->existencias + $data['ajuste'];
 
             abort_if($nuevo < 0, 422, "No puedes dejar el stock en negativo (actual: {$inventario->existencias}).");
+            abort_if($nuevo > Limites::ENTERO, 422, 'El stock resultante supera el máximo permitido ('.number_format(Limites::ENTERO).').');
 
             $inventario->existencias = $nuevo;
             $inventario->save();

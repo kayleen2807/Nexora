@@ -26,8 +26,12 @@ use App\Http\Controllers\Gerente\HistorialController;
 use App\Http\Controllers\Gerente\DevolucionController;
 use App\Http\Controllers\Gerente\CorteController as GerenteCorteController;
 use App\Http\Controllers\Admin\CorteController as AdminCorteController;
+use App\Http\Controllers\Admin\NegocioController;
 use App\Http\Controllers\Cajero\TurnoController;
 use App\Http\Controllers\Cajero\VentaController as CajeroVentaController;
+use App\Http\Controllers\Admin\ReporteController as AdminReporteController;
+use App\Http\Controllers\Gerente\ReporteController as GerenteReporteController;
+use App\Http\Controllers\Cajero\ReporteController as CajeroReporteController;
 
 //Ruta para la funcion del idioma(local)
 Route::get('/lang/{locale}', function ($locale){
@@ -133,6 +137,12 @@ Route::middleware(['auth', 'rol:administrador'])
 
         Route::get('/cortes', [AdminCorteController::class, 'index']);
 
+        Route::get('/negocio', [NegocioController::class, 'show']);
+        Route::put('/negocio', [NegocioController::class, 'update']);
+
+        Route::get('/reportes', [AdminReporteController::class, 'index']);
+        Route::put('/reportes/{reporte}', [AdminReporteController::class, 'update']);
+
     });
 
 //Gerente
@@ -163,6 +173,9 @@ Route::middleware(['auth', 'rol:gerente'])
         Route::post('/ventas/{venta}/cancelar', [DevolucionController::class, 'cancelar']);
 
         Route::get('/cortes', [GerenteCorteController::class, 'index']);
+
+        Route::get('/reportes', [GerenteReporteController::class, 'index']);
+        Route::post('/reportes', [GerenteReporteController::class, 'store']);
     });
 
 //Cajero
@@ -176,4 +189,7 @@ Route::middleware(['auth', 'rol:cajero'])
 
         Route::get('/productos', [CajeroVentaController::class, 'productos']);
         Route::post('/ventas', [CajeroVentaController::class, 'store']);
+
+        Route::get('/reportes', [CajeroReporteController::class, 'index']);
+        Route::post('/reportes', [CajeroReporteController::class, 'store']);
     });

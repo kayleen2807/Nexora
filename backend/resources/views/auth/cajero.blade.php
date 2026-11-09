@@ -234,6 +234,17 @@
     .ticket { box-shadow: none; margin: 0 auto; width: 100%; max-width: 300px; }
     .ticket-botones { display: none; }
   }
+
+  /* ---------- REPORTES (reglas nuevas; solo usan las variables del tema) ---------- */
+  .fila-form .campo-ancho { flex: 1 1 280px; }
+  .fila-form .campo-ancho input { width: 100%; }
+  .fila-form textarea { width: 100%; min-height: 4.5rem; padding: 0.55rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.85rem; background: var(--card-bg); color: var(--text); resize: vertical; }
+  .rep-btn .ico { width: 1.1em; height: 1.1em; vertical-align: -0.2em; margin-right: 6px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .rep-desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; white-space: pre-line; overflow-wrap: anywhere; }
+  .rep-pendiente, .rep-en_revision, .rep-resuelto { white-space: nowrap; }
+  .rep-pendiente { background: var(--danger-bg); color: var(--danger-text); }
+  .rep-en_revision { background: var(--border-light); color: var(--muted); }
+  .rep-resuelto { background: var(--success-bg); color: var(--success-text); }
 </style>
 </head>
 <body>
@@ -349,6 +360,29 @@
         </div>
       </div>
 
+      <div class="seccion" id="sec-reportes">
+        <h2 data-i18n="repHeading">Reportes</h2>
+        <p class="desc" data-i18n="repDesc">Avisa al administrador de una falla, un faltante, un problema con la caja o una sugerencia.</p>
+        <div class="card">
+          <h3 data-i18n="repNuevoHeading">Nuevo reporte</h3>
+          <div class="fila-form">
+            <div class="campo"><label for="repTipo" data-i18n="repLabelTipo">Tipo</label><select id="repTipo"></select></div>
+            <div class="campo campo-ancho"><label for="repAsunto" data-i18n="repLabelAsunto">Asunto</label><input type="text" id="repAsunto" maxlength="120" data-i18n-placeholder="repPhAsunto"></div>
+          </div>
+          <div class="fila-form">
+            <div class="campo campo-ancho"><label for="repDescripcion" data-i18n="repLabelDescripcion">Descripción</label><textarea id="repDescripcion" rows="3" maxlength="1000" data-i18n-placeholder="repPhDescripcion"></textarea></div>
+          </div>
+          <button class="btn btn-primario rep-btn" id="btnEnviarReporte" onclick="enviarReporte()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg><span data-i18n="repBtnEnviar">Enviar reporte</span></button>
+        </div>
+        <div class="card">
+          <h3 data-i18n="repListaHeading">Mis reportes</h3>
+          <table>
+            <tr><th data-i18n="repThFecha">Fecha</th><th data-i18n="repThTipo">Tipo</th><th data-i18n="repThAsunto">Asunto</th><th data-i18n="repThEstado">Estado</th><th data-i18n="repThRespuesta">Respuesta</th></tr>
+            <tbody id="tablaReportes"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- ---------- REGISTRAR COMPRAS (oculta: es función del Gerente) ---------- -->
       <div class="seccion" id="sec-compras">
         <h2 data-i18n="comprasHeading">Registrar compras</h2>
@@ -407,6 +441,12 @@
 </div>
 
 <script>
+  /* Escapa texto que viene de la BD antes de meterlo en innerHTML (evita XSS: un nombre como
+     <img onerror=...> se muestra como texto y no se ejecuta). function = se puede usar en todo el script. */
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
   /* ---------- DATOS (declarados antes de cualquier función que los use) ---------- */
   let categoriaSel = '';     // '' = todas, '__sin__' = productos sin categoría
   let opcionesChips = [];
@@ -420,6 +460,7 @@
   let resumenTurno = null;
   let cobrando = false;      // evita registrar la venta dos veces con doble clic
   let estadoCargado = false; // hasta que responda /cajero/estado no se muestra apertura ni venta
+  let reportes = [];         // reportes que este cajero envió al administrador
 
   /*
    * fetch con CSRF + JSON. Devuelve el cuerpo ya parseado (o null en 204).
@@ -520,6 +561,17 @@
       btnCerrarConfirm: 'Cerrar caja', corteRealizado: 'Corte realizado. Caja cerrada.',
       ticketSubtotal: 'Subtotal', ticketIva: 'IVA', ticketCajero: 'Cajero',
       btnCancelar: 'Cancelar', btnEliminar: 'Eliminar',
+      navReportes: 'Reportes', repHeading: 'Reportes al administrador', repNuevoHeading: 'Nuevo reporte', repListaHeading: 'Mis reportes',
+      repDesc: 'Avisa al administrador de una falla, un faltante de producto, un problema con la caja o una sugerencia.',
+      repThFecha: 'Fecha', repThEstado: 'Estado',
+      repLabelTipo: 'Tipo', repLabelAsunto: 'Asunto', repLabelDescripcion: 'Descripción',
+      repPhAsunto: 'Ej. La impresora no imprime tickets', repPhDescripcion: 'Cuéntale al administrador qué pasó, cuándo y en qué caja o producto…',
+      repBtnEnviar: 'Enviar reporte', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta del administrador',
+      repSinReportes: 'Aún no hay reportes.', repSinRespuesta: 'Sin respuesta todavía', repTu: 'Tú', repUsuarioEliminado: 'Usuario eliminado',
+      repTipo_falla: 'Falla del sistema', repTipo_faltante: 'Faltante de producto', repTipo_caja: 'Problema con caja / dinero', repTipo_sugerencia: 'Sugerencia', repTipo_otro: 'Otro',
+      repEstado_pendiente: 'Pendiente', repEstado_en_revision: 'En revisión', repEstado_resuelto: 'Resuelto',
+      repRol_gerente: 'Gerente', repRol_cajero: 'Cajero',
+      repEnviado: 'Reporte enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
     },
     en: {
       tagline: 'Multi-branch point of sale',
@@ -590,6 +642,17 @@
       btnCerrarConfirm: 'Close register', corteRealizado: 'Cash count done. Register closed.',
       ticketSubtotal: 'Subtotal', ticketIva: 'Tax', ticketCajero: 'Cashier',
       btnCancelar: 'Cancel', btnEliminar: 'Delete',
+      navReportes: 'Reports', repHeading: 'Reports to the administrator', repNuevoHeading: 'New report', repListaHeading: 'My reports',
+      repDesc: 'Let the administrator know about a failure, a missing product, a register problem or a suggestion.',
+      repThFecha: 'Date', repThEstado: 'Status',
+      repLabelTipo: 'Type', repLabelAsunto: 'Subject', repLabelDescripcion: 'Description',
+      repPhAsunto: 'E.g. The printer does not print receipts', repPhDescripcion: 'Tell the administrator what happened, when, and which register or product…',
+      repBtnEnviar: 'Send report', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: "Administrator's reply",
+      repSinReportes: 'No reports yet.', repSinRespuesta: 'No reply yet', repTu: 'You', repUsuarioEliminado: 'Deleted user',
+      repTipo_falla: 'System failure', repTipo_faltante: 'Missing product', repTipo_caja: 'Register / cash problem', repTipo_sugerencia: 'Suggestion', repTipo_otro: 'Other',
+      repEstado_pendiente: 'Pending', repEstado_en_revision: 'In review', repEstado_resuelto: 'Resolved',
+      repRol_gerente: 'Manager', repRol_cajero: 'Cashier',
+      repEnviado: 'Report sent to the administrator', repAlertCompleta: 'Write the subject and the description.',
     }
   };
   let idioma = '{{ app()->getLocale() }}';
@@ -608,11 +671,13 @@
     btnCerrarCaja: svg('<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88"/><path d="M14.47 14.48 20 20"/><path d="M8.12 8.12 12 12"/>'),
     btnAbrirCaja: svg('<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>'),
     agregarBtn: svg(CARRITO + '<path d="M13 6v5M10.5 8.5h5"/>'),
+    navReportes: svg('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v2"/><path d="M12 13h.01"/>'),
   };
 
   const secciones = [
     { id: 'vender', key: 'navVender' },
     { id: 'corte', key: 'navCorte' },
+    { id: 'reportes', key: 'navReportes' },
     // Compras y alta/baja de productos son funciones del Gerente; HTML/JS se conservan
     // { id: 'compras', key: 'navCompras' },
     // { id: 'productos', key: 'navProductos' },
@@ -680,8 +745,57 @@
     });
     if (id === 'vender') renderVender();
     if (id === 'corte') { renderCorte(); if (!soloRefrescar) cargarResumen(); }
+    if (id === 'reportes') { renderReportes(); if (!soloRefrescar) cargarReportes().then(renderReportes); }
     if (id === 'compras') renderCompras();
     if (id === 'productos') renderProductosAdmin();
+  }
+
+  /* ---------- REPORTES AL ADMINISTRADOR ---------- */
+  const TIPOS_REPORTE = ['falla', 'faltante', 'caja', 'sugerencia', 'otro'];
+
+  async function cargarReportes() {
+    try { reportes = await api('/cajero/reportes'); }
+    catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  function renderReportes() {
+    const sel = document.getElementById('repTipo');
+    const previo = sel.value;
+    sel.innerHTML = TIPOS_REPORTE.map(tp => `<option value="${tp}">${t('repTipo_' + tp)}</option>`).join('');
+    if (previo) sel.value = previo;
+
+    document.getElementById('tablaReportes').innerHTML = reportes.length
+      ? reportes.map(r => `
+        <tr>
+          <td>${formatearFecha(r.fecha)}</td>
+          <td>${t('repTipo_' + r.tipo)}</td>
+          <td><strong>${esc(r.asunto)}</strong><div class="rep-desc">${esc(r.descripcion)}</div></td>
+          <td><span class="badge rep-${r.estado}">${t('repEstado_' + r.estado)}</span></td>
+          <td>${r.respuesta ? `${esc(r.respuesta)}<div class="rep-desc">${formatearFecha(r.fecha_respuesta)}</div>` : `<span class="rep-desc">${t('repSinRespuesta')}</span>`}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="5" style="color:var(--muted);">${t('repSinReportes')}</td></tr>`;
+  }
+
+  async function enviarReporte() {
+    const tipo = document.getElementById('repTipo').value;
+    const asunto = document.getElementById('repAsunto').value.trim();
+    const descripcion = document.getElementById('repDescripcion').value.trim();
+    if (!asunto || !descripcion) { mostrarToast(t('repAlertCompleta'), 'error'); return; }
+
+    const btn = document.getElementById('btnEnviarReporte');
+    btn.disabled = true;   // evita mandar el mismo reporte dos veces con doble clic
+    try {
+      await api('/cajero/reportes', 'POST', { tipo, asunto, descripcion });
+      document.getElementById('repAsunto').value = '';
+      document.getElementById('repDescripcion').value = '';
+      await cargarReportes();
+      renderReportes();
+      mostrarToast(t('repEnviado'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   /* ---------- TURNO (apertura de caja) ---------- */
@@ -778,12 +892,12 @@
       const enCarrito = carrito.find(i => i.id === p.id);
       const disponible = p.stock - (enCarrito ? enCarrito.cantidad : 0);
       const imgHtml = p.foto
-        ? `<img class="foto-producto" src="${p.foto}" alt="${p.nombre}">`
+        ? `<img class="foto-producto" src="${esc(p.foto)}" alt="${esc(p.nombre)}">`
         : `<div class="foto-placeholder">🛒</div>`;
       return `
         <div class="producto-card">
           ${imgHtml}
-          ${p.categoria ? `<div class="cat">${escCat(p.categoria)}</div>` : ''}<div class="nombre">${p.nombre}</div>
+          ${p.categoria ? `<div class="cat">${escCat(p.categoria)}</div>` : ''}<div class="nombre">${esc(p.nombre)}</div>
           <div class="precio">${dinero(p.precio)}</div>
           <div class="stock">${t('stockLabel')}${disponible}</div>
           <button onclick="agregarAlCarrito(${p.id})" ${disponible <= 0 ? 'disabled' : ''}>
@@ -817,7 +931,7 @@
     cont.innerHTML = carrito.length
       ? carrito.map(i => `
           <div class="carrito-item">
-            <span>${i.nombre} x${i.cantidad}</span>
+            <span>${esc(i.nombre)} x${i.cantidad}</span>
             <span>${dinero((i.precio * i.cantidad))}<span class="quitar" onclick="quitarDelCarrito(${i.id})">✕</span></span>
           </div>`).join('')
       : `<div class="vacio">${t('carritoVacio')}</div>`;
@@ -890,7 +1004,7 @@
   function mostrarTicket(venta) {
     const filasItems = venta.items.map(i => `
       <tr>
-        <td>${i.nombre}<br><span style="color:var(--muted);font-size:0.72rem;">${i.cantidad} x ${dinero(i.precio)}</span></td>
+        <td>${esc(i.nombre)}<br><span style="color:var(--muted);font-size:0.72rem;">${i.cantidad} x ${dinero(i.precio)}</span></td>
         <td style="text-align:right;">${dinero((i.precio * i.cantidad))}</td>
       </tr>`).join('');
 
@@ -901,7 +1015,7 @@
 
     document.getElementById('ticketContenido').innerHTML = `
       <h2>Nexora</h2>
-      <div class="ticket-sub">${venta.sucursal}<br>${t('ticketFolio')}${venta.folio}<br>${formatearFecha(venta.fecha)}<br>${t('ticketCajero')}: ${venta.cajero} · ${t('labelCaja')} ${venta.caja}</div>
+      <div class="ticket-sub">${esc(venta.sucursal)}<br>${t('ticketFolio')}${venta.folio}<br>${formatearFecha(venta.fecha)}<br>${t('ticketCajero')}: ${esc(venta.cajero)} · ${t('labelCaja')} ${venta.caja}</div>
       <div class="linea"></div>
       <table>${filasItems}</table>
       <div class="linea"></div>
@@ -989,11 +1103,11 @@
   /* ---------- REGISTRAR COMPRAS ---------- */
   function renderCompras() {
     const select = document.getElementById('compraProducto');
-    select.innerHTML = productos.filter(p => p.activo).map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    select.innerHTML = productos.filter(p => p.activo).map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
     document.getElementById('tablaCompras').innerHTML = compras.slice().reverse().map(c => `
       <tr>
-        <td>${c.fecha}</td><td>${c.nombre}</td><td>${c.cantidad}</td>
-        <td>${dinero(c.costo)}</td><td>${dinero((c.costo * c.cantidad))}</td><td>${c.proveedor || '—'}</td>
+        <td>${c.fecha}</td><td>${esc(c.nombre)}</td><td>${c.cantidad}</td>
+        <td>${dinero(c.costo)}</td><td>${dinero((c.costo * c.cantidad))}</td><td>${esc(c.proveedor || '—')}</td>
       </tr>`).join('') || `<tr><td colspan="6" style="color:var(--muted-light);">${t('sinCompras')}</td></tr>`;
   }
 
@@ -1018,7 +1132,7 @@
   function renderProductosAdmin() {
     document.getElementById('tablaProductos').innerHTML = productos.map(p => `
       <tr>
-        <td>${p.nombre}</td>
+        <td>${esc(p.nombre)}</td>
         <td>${dinero(p.precio)}</td>
         <td>${p.stock}</td>
         <td><span class="badge ${p.activo ? 'badge-activo' : 'badge-inactivo'}">${p.activo ? t('badgeActivo') : t('badgeInactivo')}</span></td>

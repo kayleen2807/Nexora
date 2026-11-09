@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
@@ -34,5 +35,10 @@ class Caja extends Model
     public function corteAbierto(): HasOne
     {
         return $this->hasOne(CorteCaja::class, 'id_caja', 'id_caja')->whereNull('fecha_cierre');
+    }
+
+    public function sucursal(): BelongsTo
+    {
+        return $this->belongsTo(Sucursal::class, 'id_sucursal', 'id_sucursal');
     }
 }

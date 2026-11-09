@@ -20,11 +20,13 @@ use App\Notifications\ResetPasswordNotification;
  * @property string|null $remember_token
  * @property int $id_rol
  * @property int|null $id_sucursal
+ * @property int|null $id_negocio negocio al que pertenece (el admin: el negocio del que es dueño)
  * @property string $idioma
  * @property-read Rol|null $rol
  * @property-read Sucursal|null $sucursal
+ * @property-read Negocio|null $negocio
  */
-#[Fillable(['nombre', 'apellido', 'fecha_nacimiento', 'correo', 'contrasena', 'id_rol', 'id_sucursal', 'idioma', 'email_verified_at', 'email_verification_code', 'email_verification_expires_at'])]
+#[Fillable(['nombre', 'apellido', 'fecha_nacimiento', 'correo', 'contrasena', 'id_rol', 'id_sucursal', 'id_negocio', 'idioma', 'email_verified_at', 'email_verification_code', 'email_verification_expires_at'])]
 #[Hidden(['contrasena', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -70,6 +72,14 @@ class User extends Authenticatable
     public function sucursal(): BelongsTo
     {
         return $this->belongsTo(Sucursal::class, 'id_sucursal', 'id_sucursal');
+    }
+
+    /**
+     * Relación: un usuario pertenece a un negocio.
+     */
+    public function negocio(): BelongsTo
+    {
+        return $this->belongsTo(Negocio::class, 'id_negocio', 'id_negocio');
     }
 
     /**
