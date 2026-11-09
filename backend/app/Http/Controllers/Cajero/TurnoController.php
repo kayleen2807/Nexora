@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Caja;
 use App\Models\CorteCaja;
 use App\Models\MetodoPago;
+use App\Support\Limites;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -50,7 +51,9 @@ class TurnoController extends Controller
 
         $data = $request->validate([
             'id_caja' => ['required', 'integer'],
-            'monto_inicial' => ['required', 'numeric', 'min:0'],
+            'monto_inicial' => ['required', 'numeric', 'min:0', 'max:'.Limites::DINERO],
+        ], [
+            'monto_inicial.max' => 'El fondo inicial no puede ser mayor a '.Limites::dineroTexto().'.',
         ]);
 
         $turno = DB::transaction(function () use ($data, $idSucursal, $usuario) {
@@ -88,7 +91,9 @@ class TurnoController extends Controller
         $turno = $this->turnoActual($request);
 
         $data = $request->validate([
-            'efectivo_contado' => ['required', 'numeric', 'min:0'],
+            'efectivo_contado' => ['required', 'numeric', 'min:0', 'max:'.Limites::DINERO],
+        ], [
+            'efectivo_contado.max' => 'El efectivo contado no puede ser mayor a '.Limites::dineroTexto().'.',
         ]);
 
         $turno->update([

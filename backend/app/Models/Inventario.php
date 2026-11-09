@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $precio numeric(10,2) sin IVA; NULL = precio del catálogo
  * @property string|null $iva numeric(5,2); NULL = IVA del catálogo
  * @property bool $estado activo/inactivo en esta sucursal
+ * @property int|null $id_categoria categoría de esta sucursal (migración 2026_10_28)
  * @property-read Producto|null $producto
  */
 class Inventario extends Model
@@ -29,7 +30,7 @@ class Inventario extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['id_producto', 'id_sucursal', 'existencias', 'stock_minimo', 'precio', 'iva', 'estado'];
+    protected $fillable = ['id_producto', 'id_sucursal', 'existencias', 'stock_minimo', 'precio', 'iva', 'estado', 'id_categoria'];
 
     protected function casts(): array
     {
@@ -41,6 +42,11 @@ class Inventario extends Model
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class, 'id_producto', 'id_producto');
+    }
+
+    public function categoria(): BelongsTo
+    {
+        return $this->belongsTo(Categoria::class, 'id_categoria', 'id_categoria');
     }
 
     /** Precio sin IVA que aplica en esta sucursal. */

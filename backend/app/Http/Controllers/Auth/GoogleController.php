@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Negocio;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -125,7 +126,7 @@ class GoogleController extends Controller
             $usuario = DB::transaction(function () use ($google, $correo, $request) {
                 $rol = Rol::firstOrCreate(['nombre' => 'administrador']);
 
-                return User::create([
+                $usuario = User::create([
                     'nombre' => $google['given_name'] ?? $google['name'] ?? $correo,
                     'apellido' => $google['family_name'] ?? '',
                     'correo' => $correo,
@@ -136,6 +137,16 @@ class GoogleController extends Controller
                     'idioma' => $request->cookie('idioma') ?? config('app.locale'),
                     'email_verified_at' => now(),
                 ]);
+
+                // Google no nos da el nombre del negocio: se crea uno provisional que el dueño
+                // puede renombrar desde su panel ("Información general" → Mi negocio)
+                $negocio = Negocio::create([
+                    'nombre' => trim('Negocio de '.$usuario->nombre),
+                    'id_propietario' => $usuario->id_usuario,
+                ]);
+                $usuario->update(['id_negocio' => $negocio->id_negocio]);
+
+                return $usuario;
             });
         }
 

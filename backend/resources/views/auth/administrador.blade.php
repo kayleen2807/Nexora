@@ -64,6 +64,8 @@
   .sidebar { background: var(--card-bg); border-right: 1px solid var(--border-light); padding: 1rem 0; }
   .sidebar button { display: block; width: 100%; text-align: left; padding: 0.7rem 1.25rem; background: none; border: none; font-size: 0.88rem; color: var(--muted); cursor: pointer; border-left: 3px solid transparent; }
   .btn .ico { width: 1.15em; height: 1.15em; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .badge .ico { width: 1em; height: 1em; vertical-align: -0.15em; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .ico-texto .ico { margin-right: 6px; }
   .sidebar .ico { width: 1.15em; height: 1.15em; vertical-align: -0.2em; margin-right: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .sidebar button:hover { background: var(--sidebar-hover); }
   .sidebar button.activo { background: var(--accent-bg-light); border-left-color: var(--accent); color: var(--accent-hover); font-weight: 600; }
@@ -158,6 +160,26 @@
 .stat-card { background: var(--card-bg); border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 4px var(--shadow); text-align: center; }
 .stat-card .valor { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
 .stat-card .etiqueta { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+  /* ---------- REPORTES (reglas nuevas; solo usan las variables del tema) ---------- */
+  .fila-form .campo-ancho { flex: 1 1 280px; }
+  .fila-form .campo-ancho input { width: 100%; }
+  .fila-form textarea { width: 100%; min-height: 4.5rem; padding: 0.55rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.85rem; background: var(--card-bg); color: var(--text); resize: vertical; }
+  .rep-btn .ico { width: 1.1em; height: 1.1em; vertical-align: -0.2em; margin-right: 6px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .rep-desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; white-space: pre-line; overflow-wrap: anywhere; }
+  .rep-pendiente, .rep-en_revision, .rep-resuelto { white-space: nowrap; }
+  .rep-pendiente { background: var(--danger-bg); color: var(--danger-text); }
+  .rep-en_revision { background: var(--border-light); color: var(--muted); }
+  .rep-resuelto { background: var(--success-bg); color: var(--success-text); }
+  .filtros-rep { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+  .filtros-rep select, td select.rep-estado { padding: 0.45rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; background: var(--card-bg); color: var(--text); }
+  td select.rep-estado { display: block; margin-top: 4px; }
+  td textarea.rep-respuesta { width: 100%; min-width: 180px; min-height: 2.6rem; padding: 0.4rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.8rem; background: var(--card-bg); color: var(--text); resize: vertical; }
+  #tablaReportes .btn { white-space: nowrap; }
+  .contador-menu { margin-left: 6px; padding: 0 7px; border-radius: 20px; background: var(--danger-text); color: #fff; font-size: 0.7rem; font-weight: 700; }
+  /* ---------- PAGINACIÓN DE CORTES (regla nueva; variables del tema) ---------- */
+  .paginacion { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; margin-top: 0.9rem; font-size: 0.82rem; color: var(--muted); }
+  .paginacion .btn:disabled { opacity: 0.45; cursor: default; }
 </style>
 </head>
 <body>
@@ -172,13 +194,13 @@
     <p id="modalMensaje"></p>
     <div class="modal-acciones">
       <button class="btn" onclick="cerrarModal(false)" data-i18n="btnCancelar">Cancelar</button>
-      <button class="btn btn-peligro" onclick="cerrarModal(true)" data-i18n="btnEliminar">Eliminar</button>
+      <button class="btn btn-peligro" id="modalConfirmarBtn" onclick="cerrarModal(true)" data-i18n="btnEliminar">Eliminar</button>
     </div>
   </div>
 </div>
 <div class="panel-view" id="panelView">
   <div class="topbar">
-    <div class="brand">Nexora <span class="sucursal" data-i18n="topbarTitulo"> — Panel de Administrador</span></div>
+    <div class="brand">Nexora <span class="sucursal"><span data-i18n="topbarTitulo"> — Panel de Administrador</span> · <span id="topbarNegocio">{{ auth()->user()->negocio->nombre ?? '' }}</span></span></div>
     <div class="topbar-derecha">
       <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
       <div class="esquina-superior">
@@ -240,10 +262,10 @@
           <h3 data-i18n="grupoAcceso">Acceso al sistema</h3>
           <div class="form-grid">
             <div class="campo"><label for="usrRol" data-i18n="labelRol">Rol</label>
-              <select id="usrRol" onchange="renderCrearUsuario()">
+              <!-- Cada negocio tiene un solo administrador (su dueño): aquí solo se crean empleados -->
+              <select id="usrRol">
                 <option value="cajero" data-i18n="rolCajero">Cajero</option>
                 <option value="gerente" data-i18n="rolGerente">Gerente</option>
-                <option value="admin" data-i18n="rolAdmin">Administrador</option>
               </select>
             </div>
             <div class="campo"><label for="usrSucursal" data-i18n="thSucursal">Sucursal</label><select id="usrSucursal"></select></div>
@@ -323,7 +345,7 @@
         <h2 data-i18n="cortesHeading">Cortes de caja por sucursal</h2>
         <p class="desc" data-i18n="cortesDesc">Consulta los turnos de caja de cualquier sucursal: lo vendido contra el efectivo contado.</p>
         <div class="filtro-sucursal">
-          <select id="filtroSucursalCortes" onchange="renderCortes()"></select>
+          <select id="filtroSucursalCortes" onchange="irPaginaCortes(1)"></select>
         </div>
         <div class="card">
           <table>
@@ -334,12 +356,37 @@
             </tr>
             <tbody id="tablaCortes"></tbody>
           </table>
+          <div class="paginacion" id="paginacionCortes"></div>
+        </div>
+      </div>
+
+      <div class="seccion" id="sec-reportes">
+        <h2 data-i18n="repHeading">Reportes de tu equipo</h2>
+        <p class="desc" data-i18n="repDesc">Reportes que te envían tus gerentes y cajeros. Cambia el estado y, si quieres, contéstales con una nota.</p>
+        <div class="filtros-rep">
+          <select id="repFiltroEstado" onchange="renderReportes()"></select>
+          <select id="repFiltroTipo" onchange="renderReportes()"></select>
+          <select id="repFiltroSucursal" onchange="renderReportes()"></select>
+          <span class="rep-desc" id="repContador"></span>
+        </div>
+        <div class="card">
+          <table>
+            <tr><th data-i18n="repThFecha">Fecha</th><th data-i18n="repThSucursal">Sucursal</th><th data-i18n="repThAutor">Enviado por</th><th data-i18n="repThTipo">Tipo</th><th data-i18n="repThAsunto">Asunto</th><th data-i18n="repThEstado">Estado</th><th data-i18n="repThRespuesta">Respuesta</th><th></th></tr>
+            <tbody id="tablaReportes"></tbody>
+          </table>
         </div>
       </div>
 
       <div class="seccion" id="sec-sistema">
         <h2 data-i18n="sistemaHeading">Información general del sistema</h2>
         <p class="desc" data-i18n="sistemaDesc">Resumen general de sucursales, usuarios, ventas e inventario.</p>
+        <div class="card">
+          <h3 data-i18n="miNegocioHeading">Mi negocio</h3>
+          <div class="fila-form" style="margin-bottom:0;">
+            <div class="campo"><label for="negocioNombre" data-i18n="labelNombreNegocio">Nombre del negocio</label><input type="text" id="negocioNombre" maxlength="150" style="min-width:260px;"></div>
+            <button class="btn btn-primario" onclick="guardarNegocio()"><span id="icoGuardarNegocio" class="ico-texto"></span><span data-i18n="btnGuardar">Guardar</span></button>
+          </div>
+        </div>
         <div class="stats-grid">
           <div class="stat-card"><div class="valor" id="statSucursales">0</div><div class="etiqueta" data-i18n="statSucursales">Sucursales</div></div>
           <div class="stat-card"><div class="valor" id="statUsuarios">0</div><div class="etiqueta" data-i18n="statUsuarios">Usuarios totales</div></div>
@@ -357,11 +404,23 @@
 </div>
 
 <script>
+  /* Escapa texto que viene de la BD antes de meterlo en innerHTML (evita XSS: un nombre como
+     <img onerror=...> se muestra como texto y no se ejecuta). function = se puede usar en todo el script. */
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
   let resumen = {};
+  let negocio = null;
 
   async function cargarResumen() {
     const res = await fetch('/administrador/resumen');
     resumen = await res.json();
+  }
+
+  async function cargarNegocio() {
+    const res = await fetch('/administrador/negocio', { headers: { 'Accept': 'application/json' } });
+    if (res.ok) negocio = await res.json();
   }
 
   let sucursales = [];
@@ -401,10 +460,20 @@
   }
 
   let cortes = [];
+  let paginaCortes = { pagina: 1, paginas: 1, total: 0 };
+  let reportes = [];
+  let reportesPendientes = 0;
 
-  async function cargarCortes() {
-    const res = await fetch('/administrador/cortes');
-    cortes = await res.json();
+  /* Cortes de la sucursal elegida, de 50 en 50: el filtro y la página los resuelve el servidor */
+  async function cargarCortes(pagina = paginaCortes.pagina) {
+    const filtro = document.getElementById('filtroSucursalCortes');
+    if (!filtro.options.length) filtro.innerHTML = opcionesSucursal();
+    const sucursal = filtro.value || sucursales[0]?.id_sucursal || '';
+    const res = await fetch(`/administrador/cortes?sucursal=${sucursal}&pagina=${pagina}`, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return;
+    const data = await res.json();
+    cortes = data.cortes;
+    paginaCortes = { pagina: data.pagina, paginas: data.paginas, total: data.total };
   }
 
   /*  IDIOMA  */
@@ -434,6 +503,19 @@
       alertMayorEdad: 'El usuario debe ser mayor de edad (18 años o más).', alertCorreoInvalido: 'El correo no tiene un formato válido.',
       usuarioCreado: 'Usuario creado', invitacionEnviada: 'Usuario creado e invitación enviada.', errorCrearUsuario: 'No se pudo crear el usuario.',
       mostrarContrasena: 'Mostrar contraseña', ocultarContrasena: 'Ocultar contraseña',
+      errorGenerico: 'Ocurrió un error. Intenta de nuevo.',
+      miNegocioHeading: 'Mi negocio', labelNombreNegocio: 'Nombre del negocio',
+      alertNombreNegocio: 'Escribe el nombre de tu negocio.', negocioActualizado: 'Nombre del negocio actualizado',
+      etiquetaTu: 'Tú', noEditarPropio: 'Eres el dueño del negocio: no puedes cambiar tu propio rol ni eliminar tu cuenta.',
+      noEditarPropioCorto: 'Dueño del negocio',
+      confirmCambioRol: '{nombre} pasará de {de} a {a}.',
+      avisoAGerente: 'Dejará el punto de venta y administrará su sucursal (productos, inventario, compras y cajas).',
+      avisoACajero: 'Dejará de administrar su sucursal y solo podrá vender.',
+      avisoCambioSucursal: '{nombre} quedará asignado a: {sucursal}.',
+      preguntaContinuar: '¿Deseas continuar?', btnConfirmarCambio: 'Cambiar rol',
+      sinCambios: 'No hay cambios que guardar.', rolActualizado: 'Rol actualizado', errorRol: 'No se pudo actualizar el rol.',
+      sucursalEliminada: 'Sucursal eliminada', errorEliminarSucursal: 'No se pudo eliminar la sucursal.',
+      usuarioEliminado: 'Usuario eliminado', errorEliminarUsuario: 'No se pudo eliminar el usuario.',
       proveedoresHeading: 'Proveedores', proveedoresDesc: 'Administra el directorio de proveedores para las compras de mercancía.',
       labelNombreEmpresa: 'Nombre / empresa', labelContacto: 'Contacto', placeholderContacto: 'Nombre del contacto', labelTelefono: 'Teléfono',
       thProveedor: 'Proveedor', thContacto: 'Contacto', thTelefono: 'Teléfono',
@@ -457,6 +539,20 @@
       statSucursales: 'Sucursales', statUsuarios: 'Usuarios totales', statGerentes: 'Gerentes', statCajeros: 'Cajeros',
       statProductos: 'Productos', statVentasHoy: 'Ventas de hoy', statVentasMes: 'Ventas del mes', statStockBajo: 'Stock bajo',
       labelEstado: 'Estado', thEstado: 'Estado', estadoActiva: 'Activa', estadoInactiva: 'Inactiva',
+      navReportes: 'Reportes', repHeading: 'Reportes de tu equipo',
+      repDesc: 'Reportes que te envían tus gerentes y cajeros. Cambia el estado y, si quieres, contéstales con una nota.',
+      repTodosEstados: 'Todos los estados', repTodosTipos: 'Todos los tipos', repTodasSucursales: 'Todas las sucursales',
+      repContador: ':n pendientes', repPendientesTitulo: 'Reportes pendientes', repThFecha: 'Fecha', repThSucursal: 'Sucursal', repThEstado: 'Estado',
+      repPhRespuesta: 'Respuesta para quien lo envió (opcional)', repRespondido: 'Respondido el', repGuardado: 'Reporte actualizado',
+      repLabelTipo: 'Tipo', repLabelAsunto: 'Asunto', repLabelDescripcion: 'Descripción',
+      repPhAsunto: 'Ej. La impresora no imprime tickets', repPhDescripcion: 'Cuéntale al administrador qué pasó, cuándo y en qué caja o producto…',
+      repBtnEnviar: 'Enviar reporte', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta del administrador',
+      repSinReportes: 'Aún no hay reportes.', repSinRespuesta: 'Sin respuesta todavía', repTu: 'Tú', repUsuarioEliminado: 'Usuario eliminado',
+      repTipo_falla: 'Falla del sistema', repTipo_faltante: 'Faltante de producto', repTipo_caja: 'Problema con caja / dinero', repTipo_sugerencia: 'Sugerencia', repTipo_otro: 'Otro',
+      repEstado_pendiente: 'Pendiente', repEstado_en_revision: 'En revisión', repEstado_resuelto: 'Resuelto',
+      repRol_gerente: 'Gerente', repRol_cajero: 'Cajero',
+      repEnviado: 'Reporte enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
+      btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaDe: 'Página :p de :t · :n cortes',
     },
     en: {
       tagline: 'Admin panel', placeholderUsuario: 'Username', placeholderClave: 'Password',
@@ -483,6 +579,19 @@
       alertMayorEdad: 'The user must be an adult (18 or older).', alertCorreoInvalido: 'The email address is not valid.',
       usuarioCreado: 'User created', invitacionEnviada: 'User created and invitation sent.', errorCrearUsuario: 'The user could not be created.',
       mostrarContrasena: 'Show password', ocultarContrasena: 'Hide password',
+      errorGenerico: 'Something went wrong. Please try again.',
+      miNegocioHeading: 'My business', labelNombreNegocio: 'Business name',
+      alertNombreNegocio: 'Enter your business name.', negocioActualizado: 'Business name updated',
+      etiquetaTu: 'You', noEditarPropio: 'You own this business: you cannot change your own role or delete your account.',
+      noEditarPropioCorto: 'Business owner',
+      confirmCambioRol: '{nombre} will change from {de} to {a}.',
+      avisoAGerente: 'They will leave the point of sale and manage their branch (products, inventory, purchases and registers).',
+      avisoACajero: 'They will stop managing their branch and will only be able to sell.',
+      avisoCambioSucursal: '{nombre} will be assigned to: {sucursal}.',
+      preguntaContinuar: 'Do you want to continue?', btnConfirmarCambio: 'Change role',
+      sinCambios: 'There are no changes to save.', rolActualizado: 'Role updated', errorRol: 'The role could not be updated.',
+      sucursalEliminada: 'Branch deleted', errorEliminarSucursal: 'The branch could not be deleted.',
+      usuarioEliminado: 'User deleted', errorEliminarUsuario: 'The user could not be deleted.',
       proveedoresHeading: 'Suppliers', proveedoresDesc: 'Manage the supplier directory for merchandise purchases.',
       labelNombreEmpresa: 'Name / company', labelContacto: 'Contact', placeholderContacto: 'Contact name', labelTelefono: 'Phone',
       thProveedor: 'Supplier', thContacto: 'Contact', thTelefono: 'Phone',
@@ -506,6 +615,20 @@
       statSucursales: 'Branches', statUsuarios: 'Total users', statGerentes: 'Managers', statCajeros: 'Cashiers',
       statProductos: 'Products', statVentasHoy: "Today's sales", statVentasMes: 'Monthly sales', statStockBajo: 'Low stock',
       labelEstado: 'Status', thEstado: 'Status', estadoActiva: 'Active', estadoInactiva: 'Inactive',
+      navReportes: 'Reports', repHeading: 'Reports from your team',
+      repDesc: 'Reports sent by your managers and cashiers. Change the status and, if you want, reply with a note.',
+      repTodosEstados: 'All statuses', repTodosTipos: 'All types', repTodasSucursales: 'All branches',
+      repContador: ':n pending', repPendientesTitulo: 'Pending reports', repThFecha: 'Date', repThSucursal: 'Branch', repThEstado: 'Status',
+      repPhRespuesta: 'Reply to the sender (optional)', repRespondido: 'Replied on', repGuardado: 'Report updated',
+      repLabelTipo: 'Type', repLabelAsunto: 'Subject', repLabelDescripcion: 'Description',
+      repPhAsunto: 'E.g. The printer does not print receipts', repPhDescripcion: 'Tell the administrator what happened, when, and which register or product…',
+      repBtnEnviar: 'Send report', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: "Administrator's reply",
+      repSinReportes: 'No reports yet.', repSinRespuesta: 'No reply yet', repTu: 'You', repUsuarioEliminado: 'Deleted user',
+      repTipo_falla: 'System failure', repTipo_faltante: 'Missing product', repTipo_caja: 'Register / cash problem', repTipo_sugerencia: 'Suggestion', repTipo_otro: 'Other',
+      repEstado_pendiente: 'Pending', repEstado_en_revision: 'In review', repEstado_resuelto: 'Resolved',
+      repRol_gerente: 'Manager', repRol_cajero: 'Cashier',
+      repEnviado: 'Report sent to the administrator', repAlertCompleta: 'Write the subject and the description.',
+      btnAnterior: 'Previous', btnSiguiente: 'Next', paginaDe: 'Page :p of :t · :n cash counts',
     }
   };
   let idioma = '{{ app()->getLocale() }}';
@@ -518,6 +641,8 @@
   const ICONO_OJO_TACHADO = svg('<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>');
   // Mismas reglas que el registro (RegisterController): 8+ caracteres, mayúscula, número y carácter especial
   const REGLA_CONTRASENA = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+  const ICONO_CANDADO = svg('<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>');
+  const ICONO_GUARDAR = svg('<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>');
   const ICONO_BASURA = svg('<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>');
   const ICONOS_MENU = {
     navSistema: svg('<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>'),
@@ -526,8 +651,10 @@
     navCrearUsuarios: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>'),
     navUsuarios: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
     navInventario: svg('<path d="M12 22v-9"/><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z"/><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13"/><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.82 1.2a1.655 1.655 0 0 0-1.64 0L3 3.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z"/>'),
+    navProductosAdmin: svg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
     navVentas: svg('<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>'),
     navCortes: svg(CLIPBOARD_LIST),
+    navReportes: svg('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v2"/><path d="M12 13h.01"/>'),
   };
 
   const secciones = [
@@ -541,6 +668,7 @@
     { id: 'productos-admin', key: 'navProductosAdmin' },
     { id: 'ventas', key: 'navVentas'},
     { id: 'cortes', key: 'navCortes' },
+    { id: 'reportes', key: 'navReportes' },
   ];
 
   let seccionActual = 'sistema';
@@ -608,10 +736,10 @@
     document.getElementById('tablaProductosAdmin').innerHTML = productosAdmin.map(p => `
       <tr>
         <td>${p.foto
-          ? `<img src="${p.foto}" alt="${p.nombre}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
+          ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
           : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}
         </td>
-        <td>${p.nombre}</td>
+        <td>${esc(p.nombre)}</td>
         <td>$${p.precio.toFixed(2)}</td>
         <td><span class="badge ${p.activo ? 'badge-gerente' : 'badge-cajero'}">${p.activo ? t('estadoActiva') : t('estadoInactiva')}</span></td>
         <td>
@@ -650,12 +778,15 @@
     await cargarVentas();
     await cargarCortes();
     await cargarResumen();
+    await cargarNegocio();
+    await cargarReportes();
     mostrarSeccion('sistema');
   })();
 
   function renderSidebar() {
     document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${(ICONOS_MENU[s.key] || '') + t(s.key)}</button>`).join('');
     secciones.forEach(s => document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === seccionActual));
+    pintarContadorReportes();
   }
 
   function mostrarSeccion(id) {
@@ -673,11 +804,12 @@
     if (id === 'inventario') renderInventarioGlobal();
     if (id === 'productos-admin') { renderProductosAdmin(); cargarProductosAdmin().then(renderProductosAdmin); }
     if (id === 'ventas') renderVentas();
-    if (id === 'cortes') renderCortes();
+    if (id === 'cortes') { renderCortes(); cargarCortes().then(renderCortes); }
+    if (id === 'reportes') { renderReportes(); cargarReportes().then(renderReportes); }
   }
 
   function opcionesSucursal(seleccionId) {
-    return sucursales.map(s => `<option value="${s.id_sucursal}" ${s.id_sucursal === seleccionId ? 'selected' : ''}>${s.nombre}</option>`).join('');
+    return sucursales.map(s => `<option value="${s.id_sucursal}" ${s.id_sucursal === seleccionId ? 'selected' : ''}>${esc(s.nombre)}</option>`).join('');
   }
 
   function textoRol(rol) { return rol === 'admin' ? t('rolAdmin') : rol === 'gerente' ? t('rolGerente') : t('rolCajero'); }
@@ -692,15 +824,37 @@
     document.getElementById('statVentasHoy').textContent = `$${Number(resumen.ventas_hoy ?? 0).toFixed(2)}`;
     document.getElementById('statVentasMes').textContent = `$${Number(resumen.ventas_mes ?? 0).toFixed(2)}`;
     document.getElementById('statStockBajo').textContent = resumen.stock_bajo ?? 0;
+
+    document.getElementById('icoGuardarNegocio').innerHTML = ICONO_GUARDAR;
+    const input = document.getElementById('negocioNombre');
+    if (negocio && document.activeElement !== input) input.value = negocio.nombre;
+  }
+
+  /* MI NEGOCIO (nombre editable) */
+  async function guardarNegocio() {
+    const nombre = document.getElementById('negocioNombre').value.trim();
+    if (!nombre) { mostrarToast(t('alertNombreNegocio'), 'error'); return; }
+
+    const res = await fetch('/administrador/negocio', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+      body: JSON.stringify({ nombre }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) { mostrarToast(data?.message ?? t('errorGenerico'), 'error'); return; }
+
+    negocio = data;
+    document.getElementById('topbarNegocio').textContent = data.nombre;
+    mostrarToast(t('negocioActualizado'), 'exito');
   }
 
   /*  SUCURSALES  */
   function renderSucursales() {
     document.getElementById('tablaSucursales').innerHTML = sucursales.map(s => `
       <tr>
-        <td><input value="${s.nombre}" id="sucN-${s.id_sucursal}"></td>
-        <td><input value="${s.direccion}" id="sucD-${s.id_sucursal}"></td>
-        <td><input type="tel" value="${s.contacto ?? ''}" id="sucC-${s.id_sucursal}" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10"></td>
+        <td><input value="${esc(s.nombre)}" id="sucN-${s.id_sucursal}"></td>
+        <td><input value="${esc(s.direccion)}" id="sucD-${s.id_sucursal}"></td>
+        <td><input type="tel" value="${esc(s.contacto ?? '')}" id="sucC-${s.id_sucursal}" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10"></td>
         <td>
           <select id="sucE-${s.id_sucursal}">
             <option value="activa" ${s.estado === 'activa' ? 'selected' : ''}>${t('estadoActiva')}</option>
@@ -760,14 +914,16 @@
       body: JSON.stringify({ nombre, direccion, contacto, estado, id_gerente: gerVal ? parseInt(gerVal) : null }),
     });
 
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
-      mostrarToast(error?.errors?.contacto?.[0] || t('errorActualizarSucursal'), 'error');
+      mostrarToast(data?.errors?.contacto?.[0] || data?.errors?.id_gerente?.[0] || data?.message || t('errorActualizarSucursal'), 'error');
       return;
     }
     await cargarSucursales();
     await cargarUsuarios();
     mostrarToast(t('sucursalActualizada'), 'exito');
+    // El servidor avisa si el gerente anterior quedó sin sucursal
+    if (data?.aviso) mostrarToast(data.aviso, 'exito');
   }
 
   async function eliminarSucursal(id) {
@@ -776,49 +932,99 @@
 
     const res = await fetch('/administrador/sucursales/' + id, {
       method: 'DELETE',
-      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+      headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
     });
 
-    if (!res.ok) { mostrarToast('No se pudo eliminar (puede tener usuarios asignados).','error'); return; }
-    mostrarToast('Sucursal eliminada', 'exito');
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      mostrarToast(err?.message ?? t('errorEliminarSucursal'), 'error');
+      return;
+    }
+    mostrarToast(t('sucursalEliminada'), 'exito');
     await cargarSucursales();
   }
 
   /* ROLES  */
+  /* Etiqueta "Tú" con candado para la cuenta del propio administrador */
+  function etiquetaTu() {
+    return `<span class="badge badge-admin" title="${t('noEditarPropio')}">${ICONO_CANDADO} ${t('etiquetaTu')}</span>`;
+  }
+
   function renderRoles() {
-    document.getElementById('tablaRoles').innerHTML = usuarios.map(u => `
+    document.getElementById('tablaRoles').innerHTML = usuarios.map(u => {
+      // El dueño (administrador) no se edita aquí: ni su rol ni su sucursal
+      if (u.esYo || u.rol === 'admin') {
+        return `
+        <tr>
+          <td>${esc(u.nombre)} ${u.esYo ? etiquetaTu() : ''}</td>
+          <td><span class="badge badge-admin">${t('rolAdmin')}</span></td>
+          <td>—</td>
+          <td><span style="color:var(--muted-light);font-size:0.78rem;">${t('noEditarPropioCorto')}</span></td>
+        </tr>`;
+      }
+      return `
       <tr>
-        <td>${u.nombre}</td>
+        <td>${esc(u.nombre)}</td>
         <td>
           <select id="rol-${u.id}">
             <option value="cajero" ${u.rol === 'cajero' ? 'selected' : ''}>${t('rolCajero')}</option>
             <option value="gerente" ${u.rol === 'gerente' ? 'selected' : ''}>${t('rolGerente')}</option>
-            <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>${t('rolAdmin')}</option>
           </select>
         </td>
         <td>
           <select id="sucRol-${u.id}"><option value="">${t('sinAsignar')}</option>${opcionesSucursal(u.sucursalId)}</select>
         </td>
         <td><button class="btn btn-primario btn-sm" onclick="guardarRol(${u.id})">${t('btnGuardar')}</button></td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
+  }
+
+  /* Explica en palabras qué implica el cambio, para confirmarlo antes de guardar */
+  function mensajeCambioRol(u, rol, idSucursal) {
+    const nombreSucursal = id => sucursales.find(s => s.id_sucursal === id)?.nombre ?? t('sinAsignar');
+    const partes = [];
+    if (rol !== u.rol) {
+      partes.push(t('confirmCambioRol').replace('{nombre}', u.nombre).replace('{de}', textoRol(u.rol)).replace('{a}', textoRol(rol)));
+      partes.push(rol === 'gerente' ? t('avisoAGerente') : t('avisoACajero'));
+    }
+    if (idSucursal !== (u.sucursalId ?? null)) {
+      partes.push(t('avisoCambioSucursal').replace('{nombre}', u.nombre).replace('{sucursal}', nombreSucursal(idSucursal)));
+    }
+    return partes.join(' ');
   }
 
   async function guardarRol(id) {
+    const u = usuarios.find(x => x.id === id);
     const rol = document.getElementById('rol-' + id).value;
     const sucVal = document.getElementById('sucRol-' + id).value;
+    const idSucursal = sucVal ? parseInt(sucVal) : null;
+
+    const mensaje = mensajeCambioRol(u, rol, idSucursal);
+    if (!mensaje) { mostrarToast(t('sinCambios'), 'error'); return; }
+    if (!(await confirmar(mensaje + ' ' + t('preguntaContinuar'), t('btnConfirmarCambio')))) {
+      renderRoles(); // regresa los selectores a como estaban
+      return;
+    }
 
     const res = await fetch('/administrador/usuarios/' + id + '/rol', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
       },
-      body: JSON.stringify({ rol, id_sucursal: sucVal ? parseInt(sucVal) : null }),
+      body: JSON.stringify({ rol, id_sucursal: idSucursal }),
     });
 
-    if (!res.ok) { mostrarToast('No se pudo actualizar el rol.', 'error'); return; }
-    mostrarToast('Rol actualizado', 'exito');
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      mostrarToast(err?.message ?? t('errorRol'), 'error');
+      renderRoles();
+      return;
+    }
+    mostrarToast(t('rolActualizado'), 'exito');
     await cargarUsuarios();
+    await cargarSucursales(); // el gerente de alguna sucursal pudo cambiar
   }
 
   /*  USUARIOS  */
@@ -826,14 +1032,19 @@
     document.getElementById('tablaUsuarios').innerHTML = usuarios.map(u => {
       const sucursal = sucursales.find(s => s.id_sucursal === u.sucursalId);
       const badgeClase = u.rol === 'admin' ? 'badge-admin' : u.rol === 'gerente' ? 'badge-gerente' : 'badge-cajero';
+      // El dueño no puede borrarse a sí mismo: en su fila no hay botón de eliminar
+      const accion = u.esYo || u.rol === 'admin'
+        ? ''
+        : `<button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button>`;
       const estadoInvitacion = u.invitacionEstado || 'pending';
       const estadoClase = estadoInvitacion === 'accepted' ? 'badge-invitacion-aceptada' : estadoInvitacion === 'expired' ? 'badge-invitacion-vencida' : estadoInvitacion === 'verified' ? 'badge-invitacion-verificada' : 'badge-invitacion-pendiente';
       const estadoTexto = t('estadoInvitacion' + estadoInvitacion.charAt(0).toUpperCase() + estadoInvitacion.slice(1));
       return `
       <tr>
-        <td>${u.nombre}</td>
+        <td>${esc(u.nombre)} ${u.esYo ? etiquetaTu() : ''}</td>
         <td><span class="badge ${badgeClase}">${textoRol(u.rol)}</span></td>
         <td>${sucursal ? sucursal.nombre : '—'}</td>
+        <td>${accion}</td>
         <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
         <td><button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button></td>
       </tr>`;
@@ -841,16 +1052,12 @@
   }
 
   /*  CREAR USUARIOS  */
-  /* Llena el selector de sucursales (sin perder la elección) y lo desactiva para administradores */
+  /* Llena el selector de sucursales sin perder la elección */
   function renderCrearUsuario() {
     const select = document.getElementById('usrSucursal');
     const elegida = select.value;
     select.innerHTML = `<option value="">${t('sinAsignar')}</option>${opcionesSucursal()}`;
     select.value = elegida;
-
-    const esAdmin = document.getElementById('usrRol').value === 'admin';
-    if (esAdmin) select.value = '';
-    select.disabled = esAdmin;
 
     document.getElementById('icoCrearUsuario').innerHTML = ICONOS_MENU.navCrearUsuarios;
   }
@@ -882,6 +1089,8 @@
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
       },
       body: JSON.stringify({
+        nombre, apellido, fecha_nacimiento, correo, contrasena, rol,
+        id_sucursal: sucVal ? parseInt(sucVal) : null,
         nombre, apellido, fecha_nacimiento, correo, rol,
         id_sucursal: rol !== 'admin' && sucVal ? parseInt(sucVal) : null,
       }),
@@ -905,15 +1114,15 @@
 
     const res = await fetch('/administrador/usuarios/' + id, {
       method: 'DELETE',
-      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+      headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => null);
-      mostrarToast(err?.message ?? 'No se pudo eliminar el usuario.', 'error');
+      mostrarToast(err?.message ?? t('errorEliminarUsuario'), 'error');
       return;
     }
-    mostrarToast('Usuario eliminado', 'exito');
+    mostrarToast(t('usuarioEliminado'), 'exito');
     await cargarUsuarios();
   }
 
@@ -921,9 +1130,9 @@
   function renderProveedores() {
     document.getElementById('tablaProveedores').innerHTML = proveedores.map(p => `
       <tr>
-        <td><input value="${p.nombre}" id="provN-${p.id}"></td>
-        <td><input value="${p.contacto}" id="provC-${p.id}"></td>
-        <td><input value="${p.telefono}" id="provT-${p.id}"></td>
+        <td><input value="${esc(p.nombre)}" id="provN-${p.id}"></td>
+        <td><input value="${esc(p.contacto)}" id="provC-${p.id}"></td>
+        <td><input value="${esc(p.telefono)}" id="provT-${p.id}"></td>
         <td>
           <button class="btn btn-primario btn-sm" onclick="guardarProveedor(${p.id})">${t('btnGuardar')}</button>
           <button class="btn btn-peligro btn-sm" onclick="eliminarProveedor(${p.id})">${t('btnEliminar')}</button>
@@ -971,8 +1180,8 @@
       ? items.map(i => {
           const bajo = i.existencias <= i.stock_minimo;
           return `<tr>
-            <td>${i.foto ? `<img src="${i.foto}" alt="${i.producto}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<span style="color:var(--muted-light);">—</span>`}</td>
-            <td>${i.producto}</td>
+            <td>${i.foto ? `<img src="${esc(i.foto)}" alt="${esc(i.producto)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<span style="color:var(--muted-light);">—</span>`}</td>
+            <td>${esc(i.producto)}</td>
             <td style="${bajo ? 'color:var(--danger-text); font-weight:600;' : ''}">${i.existencias}${bajo ? ' ⚠️' : ''}</td>
           </tr>`;
         }).join('')
@@ -982,7 +1191,7 @@
   /* Sekeccion de gerente  */
   function opcionesGerente(seleccionId) {
     const gerentes = usuarios.filter(u => u.rol === 'gerente');
-    const opciones = gerentes.map(g => `<option value="${g.id}" ${g.id === seleccionId ? 'selected' : ''}>${g.nombre}</option>`).join('');
+    const opciones = gerentes.map(g => `<option value="${g.id}" ${g.id === seleccionId ? 'selected' : ''}>${esc(g.nombre)}</option>`).join('');
     return `<option value="">${t('sinAsignar')}</option>${opciones}`;
   }
 
@@ -1002,12 +1211,101 @@
       ? items.map(v => `
         <tr>
           <td>${new Date(v.fecha).toLocaleString()}</td>
-          <td>${v.cajero}</td>
-          <td>${v.metodo_pago}</td>
+          <td>${esc(v.cajero)}</td>
+          <td>${esc(v.metodo_pago)}</td>
           <td>$${Number(v.total).toFixed(2)}</td>
           <td>${v.estado === 'cancelada' ? t('estadoCancelada') : (v.devuelto > 0 ? t('estadoDevParcial') : t('estadoCompletada'))}</td>
         </tr>`).join('')
       : `<tr><td colspan="5" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+  }
+
+  /*  REPORTES de gerentes y cajeros (bandeja del dueño)  */
+  const TIPOS_REPORTE = ['falla', 'faltante', 'caja', 'sugerencia', 'otro'];
+  const ESTADOS_REPORTE = ['pendiente', 'en_revision', 'resuelto'];
+  const fechaReporte = iso => iso ? new Date(iso).toLocaleString(idioma === 'es' ? 'es-MX' : 'en-US') : '—';
+
+  async function cargarReportes() {
+    const res = await fetch('/administrador/reportes', { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return;
+    const data = await res.json();
+    reportes = data.reportes;
+    reportesPendientes = data.pendientes;
+    pintarContadorReportes();
+  }
+
+  /* Globo rojo con el número de pendientes junto a "Reportes" en el menú */
+  function pintarContadorReportes() {
+    const btn = document.getElementById('btn-reportes');
+    if (!btn) return;
+    btn.querySelector('.contador-menu')?.remove();
+    if (reportesPendientes > 0) btn.insertAdjacentHTML('beforeend', `<span class="contador-menu" title="${t('repPendientesTitulo')}">${reportesPendientes}</span>`);
+  }
+
+  /* Rellena un <select> de filtro conservando lo que estaba elegido */
+  function llenarFiltroReportes(id, opciones) {
+    const sel = document.getElementById(id);
+    const previo = sel.value;
+    sel.innerHTML = opciones.map(([valor, texto]) => `<option value="${valor}">${esc(texto)}</option>`).join('');
+    sel.value = [...sel.options].some(o => o.value === previo) ? previo : '';
+  }
+
+  function renderReportes() {
+    llenarFiltroReportes('repFiltroEstado', [['', t('repTodosEstados')], ...ESTADOS_REPORTE.map(e => [e, t('repEstado_' + e)])]);
+    llenarFiltroReportes('repFiltroTipo', [['', t('repTodosTipos')], ...TIPOS_REPORTE.map(tp => [tp, t('repTipo_' + tp)])]);
+    llenarFiltroReportes('repFiltroSucursal', [['', t('repTodasSucursales')], ...sucursales.map(s => [String(s.id_sucursal), s.nombre])]);
+    const fEstado = document.getElementById('repFiltroEstado').value;
+    const fTipo = document.getElementById('repFiltroTipo').value;
+    const fSucursal = document.getElementById('repFiltroSucursal').value;
+    document.getElementById('repContador').textContent = t('repContador').replace(':n', reportesPendientes);
+
+    const items = reportes.filter(r => (!fEstado || r.estado === fEstado) && (!fTipo || r.tipo === fTipo) && (!fSucursal || String(r.id_sucursal) === fSucursal));
+    document.getElementById('tablaReportes').innerHTML = items.length
+      ? items.map(r => `
+        <tr>
+          <td>${fechaReporte(r.fecha)}</td>
+          <td>${esc(r.sucursal ?? '—')}</td>
+          <td>${esc(r.autor ?? t('repUsuarioEliminado'))}${r.rol_autor ? `<div class="rep-desc">${t('repRol_' + r.rol_autor)}</div>` : ''}</td>
+          <td>${t('repTipo_' + r.tipo)}</td>
+          <td><strong>${esc(r.asunto)}</strong><div class="rep-desc">${esc(r.descripcion)}</div></td>
+          <td>
+            <span class="badge rep-${r.estado}">${t('repEstado_' + r.estado)}</span>
+            <select class="rep-estado" id="repEstado-${r.id}">${ESTADOS_REPORTE.map(e => `<option value="${e}" ${e === r.estado ? 'selected' : ''}>${t('repEstado_' + e)}</option>`).join('')}</select>
+          </td>
+          <td>
+            <textarea class="rep-respuesta" id="repRespuesta-${r.id}" maxlength="500" placeholder="${t('repPhRespuesta')}">${esc(r.respuesta ?? '')}</textarea>
+            ${r.fecha_respuesta ? `<div class="rep-desc">${t('repRespondido')} ${fechaReporte(r.fecha_respuesta)}</div>` : ''}
+          </td>
+          <td><button class="btn btn-primario btn-sm" onclick="guardarReporte(${r.id})"><span class="ico-texto">${ICONO_GUARDAR}</span>${t('btnGuardar')}</button></td>
+        </tr>`).join('')
+      : `<tr><td colspan="8" style="color:var(--muted-light);">${t('repSinReportes')}</td></tr>`;
+  }
+
+  async function guardarReporte(id) {
+    const estado = document.getElementById('repEstado-' + id).value;
+    const respuesta = document.getElementById('repRespuesta-' + id).value.trim();
+    const res = await fetch('/administrador/reportes/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+      body: JSON.stringify({ estado, respuesta }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) { mostrarToast(data?.message ?? t('errorGenerico'), 'error'); return; }
+    await cargarReportes();
+    renderReportes();
+    mostrarToast(t('repGuardado'), 'exito');
+  }
+
+  /* Controles "Anterior / Página X de Y / Siguiente" del historial de cortes (50 por página) */
+  function renderPaginacionCortes() {
+    const { pagina, paginas, total } = paginaCortes;
+    document.getElementById('paginacionCortes').innerHTML = total <= 0 ? '' : `
+      <button class="btn btn-primario btn-sm" onclick="irPaginaCortes(${pagina - 1})" ${pagina <= 1 ? 'disabled' : ''}>‹ ${t('btnAnterior')}</button>
+      <span>${t('paginaDe').replace(':p', pagina).replace(':t', paginas).replace(':n', total)}</span>
+      <button class="btn btn-primario btn-sm" onclick="irPaginaCortes(${pagina + 1})" ${pagina >= paginas ? 'disabled' : ''}>${t('btnSiguiente')} ›</button>`;
+  }
+
+  function irPaginaCortes(n) {
+    cargarCortes(n).then(renderCortes);
   }
 
   /*  Consultar cortes de caja (solo lectura)  */
@@ -1016,8 +1314,7 @@
     if (!filtro.options.length) {
       filtro.innerHTML = opcionesSucursal();
     }
-    const sucId = parseInt(filtro.value) || sucursales[0]?.id_sucursal;
-    const items = cortes.filter(c => c.id_sucursal === sucId);
+    const items = cortes;   // ya vienen filtrados por sucursal y paginados desde el servidor
     const dinero = n => '$' + Number(n).toFixed(2);
 
     const diferencia = c => {
@@ -1030,13 +1327,14 @@
     document.getElementById('tablaCortes').innerHTML = items.length
       ? items.map(c => `
         <tr>
-          <td>${c.cajero ?? '—'}</td><td>${c.caja ?? '—'}</td>
+          <td>${esc(c.cajero ?? '—')}</td><td>${c.caja ?? '—'}</td>
           <td>${new Date(c.apertura).toLocaleString()}</td><td>${c.cierre ? new Date(c.cierre).toLocaleString() : '—'}</td>
           <td>${dinero(c.monto_inicial)}</td><td>${c.num_ventas} · ${dinero(c.total)}</td>
           <td>${dinero(c.efectivo_esperado)}</td><td>${c.efectivo_contado === null ? '—' : dinero(c.efectivo_contado)}</td>
           <td>${diferencia(c)}</td>
         </tr>`).join('')
       : `<tr><td colspan="9" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+    renderPaginacionCortes();
   }
 
   function mostrarToast(mensaje, tipo = 'exito') {
@@ -1052,8 +1350,9 @@
   }
 
   let _resolverModal = null;
-  function confirmar(mensaje) {
+  function confirmar(mensaje, textoBoton = t('btnEliminar')) {
     document.getElementById('modalMensaje').textContent = mensaje;
+    document.getElementById('modalConfirmarBtn').textContent = textoBoton;
     document.getElementById('modalOverlay').classList.add('activo');
     return new Promise(resolve => { _resolverModal = resolve; });
   }

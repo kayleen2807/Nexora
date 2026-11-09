@@ -2,15 +2,25 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\UsaNegocioDelUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Inventario;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class InventarioController extends Controller
 {
-    public function index()
+    use UsaNegocioDelUsuario;
+
+    /** Inventario de las sucursales del negocio del admin. */
+    public function index(Request $request)
     {
-        return Inventario::with('producto')->get()->map(fn ($i) => [
+        $idNegocio = $this->idNegocio($request);
+
+        return Inventario::with('producto')
+            ->whereIn('id_sucursal', fn ($q) => $q->select('id_sucursal')->from('sucursal')->where('id_negocio', $idNegocio))
+            ->get()
+            ->map(fn ($i) => [
             'id_sucursal' => $i->id_sucursal,
             'producto' => $i->producto->nombre ?? 'Producto eliminado',
             'foto' => $i->producto?->foto ? Storage::disk('public')->url($i->producto->foto) : null,

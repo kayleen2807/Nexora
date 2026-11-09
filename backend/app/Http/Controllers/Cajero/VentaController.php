@@ -10,6 +10,7 @@ use App\Models\Inventario;
 use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\Venta;
+use App\Support\Limites;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -23,9 +24,12 @@ class VentaController extends Controller
     {
         $idSucursal = $this->idSucursal($request);
 
-        return Inventario::with('producto')
+        $idNegocio = $this->idNegocio($request);
+
+        return Inventario::with(['producto', 'categoria'])
             ->where('id_sucursal', $idSucursal)
             ->where('estado', true)
+            ->whereHas('producto', fn ($q) => $q->where('id_negocio', $idNegocio))
             ->get()
             ->filter(fn (Inventario $i) => $i->producto !== null)
             ->sortBy(fn (Inventario $i) => $i->producto->nombre)
@@ -36,6 +40,7 @@ class VentaController extends Controller
                 'foto' => $i->producto->foto ? Storage::disk('public')->url($i->producto->foto) : null,
                 'precio' => $i->precioFinal($i->producto),
                 'stock' => $i->existencias,
+                'categoria' => $i->categoria?->nombre,
             ]);
     }
 
@@ -52,10 +57,12 @@ class VentaController extends Controller
             'id_metodo_pago' => ['required', 'integer', 'exists:metodo_pago,id_metodo_pago'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.id_producto' => ['required', 'integer', 'distinct'],
-            'items.*.cantidad' => ['required', 'integer', 'min:1'],
-            'recibido' => ['nullable', 'numeric', 'min:0'],
+            'items.*.cantidad' => ['required', 'integer', 'min:1', 'max:'.Limites::ENTERO],
+            'recibido' => ['nullable', 'numeric', 'min:0', 'max:'.Limites::DINERO],
         ], [
             'items.required' => 'El carrito está vacío.',
+            'items.*.cantidad.max' => 'La cantidad es demasiado grande.',
+            'recibido.max' => 'El efectivo recibido no puede ser mayor a '.Limites::dineroTexto().'.',
         ]);
 
         $turno = CorteCaja::abiertoDe($usuario->id_usuario);
@@ -65,8 +72,13 @@ class VentaController extends Controller
         $metodo = MetodoPago::findOrFail($data['id_metodo_pago']);
         $cantidades = collect($data['items'])->pluck('cantidad', 'id_producto');
 
-        $venta = DB::transaction(function () use ($cantidades, $idSucursal, $usuario, $turno, $metodo, $data) {
-            $productos = Producto::whereIn('id_producto', $cantidades->keys())->get()->keyBy('id_producto');
+        $idNegocio = $this->idNegocio($request);
+
+        $venta = DB::transaction(function () use ($cantidades, $idSucursal, $idNegocio, $usuario, $turno, $metodo, $data) {
+            // Solo productos del catálogo de su negocio
+            $productos = Producto::whereIn('id_producto', $cantidades->keys())
+                ->where('id_negocio', $idNegocio)
+                ->get()->keyBy('id_producto');
 
             // Bloquea las filas de inventario (en orden fijo, para evitar deadlocks) hasta el commit:
             // dos cajeros no pueden vender la misma última pieza
@@ -100,6 +112,9 @@ class VentaController extends Controller
 
             $total = round($total, 2);
             $subtotal = round($subtotal, 2);
+
+            // venta.total es numeric(10,2): un total mayor no cabe en la BD
+            abort_if($total > Limites::DINERO, 422, 'El total de la venta supera el máximo permitido ('.Limites::dineroTexto().'). Divídela en varias ventas.');
 
             if (strtolower($metodo->nombre) === 'efectivo') {
                 abort_if(($data['recibido'] ?? 0) < $total, 422, 'El efectivo recibido no cubre el total.');

@@ -154,6 +154,20 @@
   .filtro-cat { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.85rem; color: var(--muted); }
   .filtro-cat select { padding: 0.35rem 0.5rem; border: 1px solid var(--border); border-radius: 5px; font-size: 0.82rem; background: var(--card-bg); color: var(--text); }
   td input.cat-input { width: 140px; }
+
+  /* ---------- REPORTES (reglas nuevas; solo usan las variables del tema) ---------- */
+  .fila-form .campo-ancho { flex: 1 1 280px; }
+  .fila-form .campo-ancho input { width: 100%; }
+  .fila-form textarea { width: 100%; min-height: 4.5rem; padding: 0.55rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.85rem; background: var(--card-bg); color: var(--text); resize: vertical; }
+  .rep-btn .ico { width: 1.1em; height: 1.1em; vertical-align: -0.2em; margin-right: 6px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .rep-desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; white-space: pre-line; overflow-wrap: anywhere; }
+  .rep-pendiente, .rep-en_revision, .rep-resuelto { white-space: nowrap; }
+  .rep-pendiente { background: var(--danger-bg); color: var(--danger-text); }
+  .rep-en_revision { background: var(--border-light); color: var(--muted); }
+  .rep-resuelto { background: var(--success-bg); color: var(--success-text); }
+  /* ---------- PAGINACIÓN DE CORTES (regla nueva; variables del tema) ---------- */
+  .paginacion { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; margin-top: 0.9rem; font-size: 0.82rem; color: var(--muted); }
+  .paginacion .btn:disabled { opacity: 0.45; cursor: default; }
 </style>
 </head>
 <body>
@@ -260,6 +274,7 @@
             </tr>
             <tbody id="tablaCortes"></tbody>
           </table>
+          <div class="paginacion" id="paginacionCortes"></div>
         </div>
       </div>
 
@@ -324,20 +339,52 @@
         </div>
       </div>
 
+      <div class="seccion" id="sec-reportes">
+        <h2 data-i18n="repHeading">Reportes</h2>
+        <p class="desc" data-i18n="repDesc">Avisa al administrador de una falla, un faltante, un problema con la caja o una sugerencia.</p>
+        <div class="card">
+          <h3 data-i18n="repNuevoHeading">Nuevo reporte</h3>
+          <div class="fila-form">
+            <div class="campo"><label for="repTipo" data-i18n="repLabelTipo">Tipo</label><select id="repTipo"></select></div>
+            <div class="campo campo-ancho"><label for="repAsunto" data-i18n="repLabelAsunto">Asunto</label><input type="text" id="repAsunto" maxlength="120" data-i18n-placeholder="repPhAsunto"></div>
+          </div>
+          <div class="fila-form">
+            <div class="campo campo-ancho"><label for="repDescripcion" data-i18n="repLabelDescripcion">Descripción</label><textarea id="repDescripcion" rows="3" maxlength="1000" data-i18n-placeholder="repPhDescripcion"></textarea></div>
+          </div>
+          <button class="btn btn-primario rep-btn" id="btnEnviarReporte" onclick="enviarReporte()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg><span data-i18n="repBtnEnviar">Enviar reporte</span></button>
+        </div>
+        <div class="card">
+          <h3 data-i18n="repListaHeading">Mis reportes</h3>
+          <table>
+            <tr><th data-i18n="repThFecha">Fecha</th><th data-i18n="repThAutor">Enviado por</th><th data-i18n="repThTipo">Tipo</th><th data-i18n="repThAsunto">Asunto</th><th data-i18n="repThEstado">Estado</th><th data-i18n="repThRespuesta">Respuesta</th></tr>
+            <tbody id="tablaReportes"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
 <script>
+  /* Escapa texto que viene de la BD antes de meterlo en innerHTML (evita XSS: un nombre como
+     <img onerror=...> se muestra como texto y no se ejecuta). function = se puede usar en todo el script. */
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
   /* ---------- DATOS (declarados antes de cualquier función que los use) ---------- */
   let productos = [];
   let compras = [];
   let historial = [];
   let cajas = [];
   let cortes = [];
+  let cortesHoy = { efectivo: 0, tarjeta: 0 };              // totales de los turnos de hoy (los calcula el servidor)
+  let paginaCortes = { pagina: 1, paginas: 1, total: 0 };
   let miSucursal = null;
   let ventaAbierta = null;   // folio de la venta cuyo panel de devolución está abierto
   let detalleVenta = null;   // detalle (líneas + devoluciones) de esa venta
+  let reportes = [];         // reportes de la sucursal (suyos y de sus cajeros)
 
   /*
    * fetch con CSRF + JSON. Devuelve el cuerpo ya parseado (o null en 204).
@@ -385,8 +432,13 @@
     catch (e) { mostrarToast(e.message, 'error'); }
   }
 
-  async function cargarCortes() {
-    try { cortes = await api('/gerente/cortes'); }
+  async function cargarCortes(pagina = paginaCortes.pagina) {
+    try {
+      const data = await api('/gerente/cortes?pagina=' + pagina);
+      cortes = data.cortes;
+      cortesHoy = data.hoy;
+      paginaCortes = { pagina: data.pagina, paginas: data.paginas, total: data.total };
+    }
     catch (e) { mostrarToast(e.message, 'error'); }
   }
 
@@ -486,6 +538,18 @@
       historialDevoluciones: 'Devoluciones registradas', tipoDevolucion: 'Devolución', tipoCancelacion: 'Cancelación',
       devueltoLabel: 'devuelto', canceladaPor: 'Motivo de cancelación',
       labelFotoProducto: 'Foto del producto', thFoto: 'Foto', fotoActualizada: 'Foto actualizada',
+      navReportes: 'Reportes', repHeading: 'Reportes al administrador', repNuevoHeading: 'Nuevo reporte', repListaHeading: 'Reportes de la sucursal',
+      repDesc: 'Avisa al administrador de una falla, un faltante de producto, un problema con la caja o una sugerencia. Aquí también ves los reportes de tus cajeros.',
+      repThFecha: 'Fecha', repThEstado: 'Estado',
+      repLabelTipo: 'Tipo', repLabelAsunto: 'Asunto', repLabelDescripcion: 'Descripción',
+      repPhAsunto: 'Ej. La impresora no imprime tickets', repPhDescripcion: 'Cuéntale al administrador qué pasó, cuándo y en qué caja o producto…',
+      repBtnEnviar: 'Enviar reporte', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta del administrador',
+      repSinReportes: 'Aún no hay reportes.', repSinRespuesta: 'Sin respuesta todavía', repTu: 'Tú', repUsuarioEliminado: 'Usuario eliminado',
+      repTipo_falla: 'Falla del sistema', repTipo_faltante: 'Faltante de producto', repTipo_caja: 'Problema con caja / dinero', repTipo_sugerencia: 'Sugerencia', repTipo_otro: 'Otro',
+      repEstado_pendiente: 'Pendiente', repEstado_en_revision: 'En revisión', repEstado_resuelto: 'Resuelto',
+      repRol_gerente: 'Gerente', repRol_cajero: 'Cajero',
+      repEnviado: 'Reporte enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
+      btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaDe: 'Página :p de :t · :n cortes',
     },
     en: {
       tagline: 'Manager panel', placeholderUsuario: 'Username', placeholderClave: 'Password',
@@ -547,6 +611,18 @@
       historialDevoluciones: 'Recorded returns', tipoDevolucion: 'Return', tipoCancelacion: 'Cancellation',
       devueltoLabel: 'returned', canceladaPor: 'Cancellation reason',
       labelFotoProducto: 'Product photo', thFoto: 'Photo', fotoActualizada: 'Photo updated',
+      navReportes: 'Reports', repHeading: 'Reports to the administrator', repNuevoHeading: 'New report', repListaHeading: 'Branch reports',
+      repDesc: 'Let the administrator know about a failure, a missing product, a register problem or a suggestion. Your cashiers\' reports also appear here.',
+      repThFecha: 'Date', repThEstado: 'Status',
+      repLabelTipo: 'Type', repLabelAsunto: 'Subject', repLabelDescripcion: 'Description',
+      repPhAsunto: 'E.g. The printer does not print receipts', repPhDescripcion: 'Tell the administrator what happened, when, and which register or product…',
+      repBtnEnviar: 'Send report', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: "Administrator's reply",
+      repSinReportes: 'No reports yet.', repSinRespuesta: 'No reply yet', repTu: 'You', repUsuarioEliminado: 'Deleted user',
+      repTipo_falla: 'System failure', repTipo_faltante: 'Missing product', repTipo_caja: 'Register / cash problem', repTipo_sugerencia: 'Suggestion', repTipo_otro: 'Other',
+      repEstado_pendiente: 'Pending', repEstado_en_revision: 'In review', repEstado_resuelto: 'Resolved',
+      repRol_gerente: 'Manager', repRol_cajero: 'Cashier',
+      repEnviado: 'Report sent to the administrator', repAlertCompleta: 'Write the subject and the description.',
+      btnAnterior: 'Previous', btnSiguiente: 'Next', paginaDe: 'Page :p of :t · :n cash counts',
     }
   };
   let idioma = '{{ app()->getLocale() }}';
@@ -562,6 +638,7 @@
     navProductos: svgMenu('<path d="M16 16h6"/><path d="M19 13v6"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/>'),
     navHistorial: svgMenu('<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>'),
     navCorte: svgMenu('<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>'),
+    navReportes: svgMenu('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v2"/><path d="M12 13h.01"/>'),
   };
 
   const secciones = [
@@ -573,6 +650,7 @@
     { id: 'historial', key: 'navHistorial' },
     // El cajero hace su corte; aquí el gerente consulta el historial de cortes
     { id: 'corte', key: 'navCorte' },
+    { id: 'reportes', key: 'navReportes' },
   ];
   let seccionActual = 'mi-sucursal';
 
@@ -635,6 +713,56 @@
     if (id === 'productos') { renderProductos(); cargarProductos().then(renderProductos); }
     if (id === 'historial') { renderHistorial(); cargarHistorial().then(renderHistorial); }
     if (id === 'corte') { renderCortes(); cargarCortes().then(renderCortes); }
+    if (id === 'reportes') { renderReportes(); cargarReportes().then(renderReportes); }
+  }
+
+  /* ---------- REPORTES AL ADMINISTRADOR ---------- */
+  const TIPOS_REPORTE = ['falla', 'faltante', 'caja', 'sugerencia', 'otro'];
+
+  async function cargarReportes() {
+    try { reportes = await api('/gerente/reportes'); }
+    catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  function renderReportes() {
+    const sel = document.getElementById('repTipo');
+    const previo = sel.value;
+    sel.innerHTML = TIPOS_REPORTE.map(tp => `<option value="${tp}">${t('repTipo_' + tp)}</option>`).join('');
+    if (previo) sel.value = previo;
+
+    document.getElementById('tablaReportes').innerHTML = reportes.length
+      ? reportes.map(r => `
+        <tr>
+          <td>${formatearFecha(r.fecha)}</td>
+          <td>${r.mio ? t('repTu') : esc(r.autor ?? t('repUsuarioEliminado'))}${r.rol_autor && !r.mio ? `<div class="rep-desc">${t('repRol_' + r.rol_autor)}</div>` : ''}</td>
+          <td>${t('repTipo_' + r.tipo)}</td>
+          <td><strong>${esc(r.asunto)}</strong><div class="rep-desc">${esc(r.descripcion)}</div></td>
+          <td><span class="badge rep-${r.estado}">${t('repEstado_' + r.estado)}</span></td>
+          <td>${r.respuesta ? `${esc(r.respuesta)}<div class="rep-desc">${formatearFecha(r.fecha_respuesta)}</div>` : `<span class="rep-desc">${t('repSinRespuesta')}</span>`}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="6" style="color:var(--muted);">${t('repSinReportes')}</td></tr>`;
+  }
+
+  async function enviarReporte() {
+    const tipo = document.getElementById('repTipo').value;
+    const asunto = document.getElementById('repAsunto').value.trim();
+    const descripcion = document.getElementById('repDescripcion').value.trim();
+    if (!asunto || !descripcion) { mostrarToast(t('repAlertCompleta'), 'error'); return; }
+
+    const btn = document.getElementById('btnEnviarReporte');
+    btn.disabled = true;   // evita mandar el mismo reporte dos veces con doble clic
+    try {
+      await api('/gerente/reportes', 'POST', { tipo, asunto, descripcion });
+      document.getElementById('repAsunto').value = '';
+      document.getElementById('repDescripcion').value = '';
+      await cargarReportes();
+      renderReportes();
+      mostrarToast(t('repEnviado'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   /* ---------- MI SUCURSAL ---------- */
@@ -661,9 +789,9 @@
     document.getElementById('tablaInventario').innerHTML = productos.filter(p => p.activo).map(p => `
       <tr>
         <td>${p.foto
-          ? `<img src="${p.foto}" alt="${p.nombre}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
+          ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
           : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}</td>
-        <td>${p.nombre}</td>
+        <td>${esc(p.nombre)}</td>
         <td>${p.stock}</td>
         <td><input type="number" id="ajuste-${p.id}" placeholder="+/-"></td>
         <td><button class="btn btn-primario btn-sm" onclick="ajustarStock(${p.id})">${t('btnAplicar')}</button></td>
@@ -690,16 +818,16 @@
   function renderCompras() {
     const select = document.getElementById('compraProducto');
     const seleccionado = select.value;
-    select.innerHTML = productos.filter(p => p.activo).map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    select.innerHTML = productos.filter(p => p.activo).map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
     if (seleccionado) select.value = seleccionado; // no perder la selección al refrescar
 
     // El servidor ya las manda de la más reciente a la más antigua
     document.getElementById('tablaCompras').innerHTML = compras.map(c => `
       <tr>
         <td>${formatearFecha(c.fecha)}</td>
-        <td>${c.foto ? `<img src="${c.foto}" alt="${c.producto}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<span style="color:var(--muted-light);">—</span>`}</td>
-        <td>${c.producto}</td><td>${c.cantidad}</td>
-        <td>${dinero(c.costo)}</td><td>${dinero(c.total)}</td><td>${c.proveedor || '—'}</td>
+        <td>${c.foto ? `<img src="${esc(c.foto)}" alt="${esc(c.producto)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<span style="color:var(--muted-light);">—</span>`}</td>
+        <td>${esc(c.producto)}</td><td>${c.cantidad}</td>
+        <td>${dinero(c.costo)}</td><td>${dinero(c.total)}</td><td>${esc(c.proveedor || '—')}</td>
       </tr>`).join('') || `<tr><td colspan="7" style="color:var(--muted-light);">${t('sinCompras')}</td></tr>`;
   }
 
@@ -733,24 +861,36 @@
     return `<span class="diferencia-row ${clase}" style="padding:0;display:inline">${texto} ${dinero(Math.abs(c.diferencia))}</span>`;
   }
 
+  /* Controles "Anterior / Página X de Y / Siguiente" del historial de cortes (50 por página) */
+  function renderPaginacionCortes() {
+    const { pagina, paginas, total } = paginaCortes;
+    document.getElementById('paginacionCortes').innerHTML = total <= 0 ? '' : `
+      <button class="btn btn-primario btn-sm" onclick="irPaginaCortes(${pagina - 1})" ${pagina <= 1 ? 'disabled' : ''}>‹ ${t('btnAnterior')}</button>
+      <span>${t('paginaDe').replace(':p', pagina).replace(':t', paginas).replace(':n', total)}</span>
+      <button class="btn btn-primario btn-sm" onclick="irPaginaCortes(${pagina + 1})" ${pagina >= paginas ? 'disabled' : ''}>${t('btnSiguiente')} ›</button>`;
+  }
+
+  function irPaginaCortes(n) {
+    cargarCortes(n).then(renderCortes);
+  }
+
   function renderCortes() {
-    // Tarjetas de resumen: turnos abiertos HOY, netos de devoluciones
-    const hoy = new Date().toDateString();
-    const deHoy = cortes.filter(c => new Date(c.apertura).toDateString() === hoy);
-    const efectivo = deHoy.reduce((s, c) => s + c.ventas_efectivo - c.devoluciones_efectivo, 0);
-    const tarjeta = deHoy.reduce((s, c) => s + c.ventas_tarjeta - c.devoluciones_tarjeta, 0);
+    // Tarjetas de resumen: turnos abiertos HOY, netos de devoluciones (los calcula el servidor:
+    // así no dependen de la página del historial que se esté viendo)
+    const { efectivo, tarjeta } = cortesHoy;
     document.getElementById('resEfectivo').textContent = dinero(efectivo);
     document.getElementById('resTarjeta').textContent = dinero(tarjeta);
     document.getElementById('resTotal').textContent = dinero(efectivo + tarjeta);
 
     document.getElementById('tablaCortes').innerHTML = cortes.map(c => `
       <tr>
-        <td>${c.cajero ?? '—'}</td><td>${c.caja ?? '—'}</td>
+        <td>${esc(c.cajero ?? '—')}</td><td>${c.caja ?? '—'}</td>
         <td>${formatearFecha(c.apertura)}</td><td>${c.cierre ? formatearFecha(c.cierre) : '—'}</td>
         <td>${dinero(c.monto_inicial)}</td><td>${c.num_ventas} · ${dinero(c.total)}</td>
         <td>${dinero(c.efectivo_esperado)}</td><td>${c.efectivo_contado === null ? '—' : dinero(c.efectivo_contado)}</td>
         <td>${celdaDiferencia(c)}</td>
       </tr>`).join('') || `<tr><td colspan="9" style="color:var(--muted-light);">${t('sinCortes')}</td></tr>`;
+    renderPaginacionCortes();
   }
 
   /* ---------- REGISTRO DE CAJAS ---------- */
@@ -759,7 +899,7 @@
       <tr>
         <td>${t('thCaja')} ${c.numero}</td>
         <td><button class="btn btn-sm ${c.activa ? 'btn-exito' : 'btn-peligro'}" onclick="toggleCaja(${c.id})" title="${c.activa ? t('btnDesactivar') : t('btnActivar')}" aria-label="${c.activa ? t('btnDesactivar') : t('btnActivar')}">${ICONO_POWER}</button></td>
-        <td>${c.en_turno ? `<span class="badge badge-tarjeta">${t('badgeAbierta')}</span> ${c.cajero ?? ''}` : t('libre')}</td>
+        <td>${c.en_turno ? `<span class="badge badge-tarjeta">${t('badgeAbierta')}</span> ${esc(c.cajero ?? '')}` : t('libre')}</td>
         <td><button class="btn btn-peligro btn-sm" onclick="eliminarCaja(${c.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button></td>
       </tr>`).join('') || `<tr><td colspan="4" style="color:var(--muted-light);">${t('sinCajas')}</td></tr>`;
   }
@@ -810,10 +950,10 @@
       <tr>
         <td>
           ${p.foto
-            ? `<img src="${p.foto}" alt="${p.nombre}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
+            ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
             : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}
         </td>
-        <td>${p.nombre}</td>
+        <td>${esc(p.nombre)}</td>
         <td><input type="text" class="cat-input" id="cat-${p.id}" list="listaCategorias" maxlength="40" value="${escCat(p.categoria || '')}" placeholder="${t('sinCategoria')}"></td>
         <td><input type="number" id="precio-${p.id}" value="${p.precio}" step="0.01"></td>
         <td><input type="number" id="iva-${p.id}" value="${p.iva}" step="0.01"></td>
@@ -915,7 +1055,7 @@
       const abierta = ventaAbierta === v.folio;
       return `
       <tr>
-        <td>#${v.folio}</td><td>${formatearFecha(v.fecha)}</td><td>${v.cajero}</td><td>${v.caja ?? '—'}</td>
+        <td>#${v.folio}</td><td>${formatearFecha(v.fecha)}</td><td>${esc(v.cajero)}</td><td>${v.caja ?? '—'}</td>
         <td><span class="badge ${efectivo ? 'badge-efectivo' : 'badge-tarjeta'}">${efectivo ? t('badgeEfectivo') : t('badgeTarjeta')}</span></td>
         <td>${dinero(v.neto)}${v.devuelto > 0 ? `<br><span style="color:var(--muted);font-size:0.72rem;">${dinero(v.total)} − ${dinero(v.devuelto)} ${t('devueltoLabel')}</span>` : ''}</td>
         <td>${badgeEstadoVenta(v)}</td>
@@ -933,7 +1073,7 @@
 
     const filas = v.items.map(i => `
       <tr>
-        <td>${i.producto}</td><td>${i.cantidad}</td><td>${i.devuelto}</td><td>${dinero(i.precio_unitario)}</td>
+        <td>${esc(i.producto)}</td><td>${i.cantidad}</td><td>${i.devuelto}</td><td>${dinero(i.precio_unitario)}</td>
         <td>${!cancelada && i.disponible > 0
           ? `<input type="number" id="dev-${i.id_detalle}" min="0" max="${i.disponible}" placeholder="0">`
           : '—'}</td>
@@ -945,12 +1085,12 @@
         <tr>
           <td>${formatearFecha(d.fecha)}</td>
           <td>${d.tipo === 'cancelacion' ? t('tipoCancelacion') : t('tipoDevolucion')}</td>
-          <td>${d.producto ?? '—'} × ${d.cantidad}</td><td>${dinero(d.monto)}</td>
-          <td>${d.motivo}</td><td>${d.usuario ?? ''}</td>
+          <td>${esc(d.producto ?? '—')} × ${d.cantidad}</td><td>${dinero(d.monto)}</td>
+          <td>${esc(d.motivo)}</td><td>${esc(d.usuario ?? '')}</td>
         </tr>`).join('')}</table>` : '';
 
     const acciones = cancelada
-      ? `<p class="desc">${t('canceladaPor')}: ${v.motivo_cancelacion ?? '—'}</p>`
+      ? `<p class="desc">${t('canceladaPor')}: ${esc(v.motivo_cancelacion ?? '—')}</p>`
       : `<div class="fila-form">
           <div class="campo"><label>${t('labelMotivo')}</label><input type="text" id="devMotivo" maxlength="255" placeholder="${t('placeholderMotivo')}"></div>
           ${pendiente ? `<button class="btn btn-primario" onclick="devolverPiezas(${v.folio})">${t('btnDevolverSel')}</button>` : ''}

@@ -91,6 +91,12 @@
     "If the account exists and is not verified, a new code was sent.": "If the account exists and is not verified, a new code was sent.",
     "Please verify your email before logging in.": "Please verify your email before logging in.",
     "Contact must contain exactly 10 digits.": "Contact must contain exactly 10 digits.",
+    "Business name": "Business name",
+    "Business name is required.": "Business name is required.",
+    "Business name cannot exceed 150 characters.": "Business name cannot exceed 150 characters.",
+    "Too many login attempts. Try again in :seconds seconds.": "Too many login attempts. Try again in :seconds seconds.",
+    "Too many incorrect codes. Request a new code.": "Too many incorrect codes. For your security the code was cancelled: request a new one.",
+    "Please wait :seconds seconds before requesting another code.": "Please wait :seconds seconds before requesting another code."
     "Invitation sent successfully.": "Invitation sent successfully.",
     "You have been invited to Nexora": "You have been invited to Nexora",
     "Accept your Nexora invitation": "Accept your Nexora invitation",

@@ -2,30 +2,40 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\UsaNegocioDelUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Inventario;
 use App\Models\Producto;
 use App\Models\Sucursal;
 use App\Models\User;
 use App\Models\Venta;
+use Illuminate\Http\Request;
 
 class ResumeController extends Controller
 {
-    public function index()
+    use UsaNegocioDelUsuario;
+
+    /** Totales SOLO del negocio del admin. */
+    public function index(Request $request)
     {
+        $idNegocio = $this->idNegocio($request);
+        $susSucursales = fn ($q) => $q->select('id_sucursal')->from('sucursal')->where('id_negocio', $idNegocio);
+        $usuarios = fn () => User::where('id_negocio', $idNegocio);
+        $ventas = fn () => Venta::whereIn('id_sucursal', $susSucursales);
+
         return [
-            'sucursales' => Sucursal::count(),
+            'sucursales' => Sucursal::where('id_negocio', $idNegocio)->count(),
             'usuarios' => [
-                'total'           => User::count(),
-                'administradores' => User::where('id_rol', 1)->count(),
-                'gerentes'        => User::where('id_rol', 2)->count(),
-                'cajeros'         => User::where('id_rol', 3)->count(),
+                'total'           => $usuarios()->count(),
+                'administradores' => $usuarios()->where('id_rol', 1)->count(),
+                'gerentes'        => $usuarios()->where('id_rol', 2)->count(),
+                'cajeros'         => $usuarios()->where('id_rol', 3)->count(),
             ],
-            'productos'   => Producto::count(),
+            'productos'   => Producto::where('id_negocio', $idNegocio)->count(),
             // Netas: se resta lo devuelto/cancelado
-            'ventas_hoy'  => Venta::totalNeto(Venta::whereDate('fecha_hora', now()->toDateString())),
-            'ventas_mes'  => Venta::totalNeto(Venta::whereMonth('fecha_hora', now()->month)->whereYear('fecha_hora', now()->year)),
-            'stock_bajo'  => Inventario::whereColumn('existencias', '<=', 'stock_minimo')->count(),
+            'ventas_hoy'  => Venta::totalNeto($ventas()->whereDate('fecha_hora', now()->toDateString())),
+            'ventas_mes'  => Venta::totalNeto($ventas()->whereMonth('fecha_hora', now()->month)->whereYear('fecha_hora', now()->year)),
+            'stock_bajo'  => Inventario::whereIn('id_sucursal', $susSucursales)->whereColumn('existencias', '<=', 'stock_minimo')->count(),
         ];
     }
 }

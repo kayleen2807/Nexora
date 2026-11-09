@@ -99,6 +99,12 @@
     "If the account exists and is not verified, a new code was sent.": "Si la cuenta existe y no está verificada, se envió un código nuevo.",
     "Please verify your email before logging in.": "Verifica tu correo antes de iniciar sesión.",
     "Contact must contain exactly 10 digits.": "El contacto debe tener exactamente 10 números.",
+    "Business name": "Nombre de tu negocio",
+    "Business name is required.": "El nombre del negocio es obligatorio.",
+    "Business name cannot exceed 150 characters.": "El nombre del negocio no puede tener más de 150 caracteres.",
+    "Too many login attempts. Try again in :seconds seconds.": "Demasiados intentos de inicio de sesión. Intenta de nuevo en :seconds segundos.",
+    "Too many incorrect codes. Request a new code.": "Demasiados códigos incorrectos. Por seguridad el código se anuló: solicita uno nuevo.",
+    "Please wait :seconds seconds before requesting another code.": "Espera :seconds segundos antes de solicitar otro código."
     "Invitation sent successfully.": "Invitación enviada correctamente.",
     "You have been invited to Nexora": "Has recibido una invitación a Nexora",
     "Accept your Nexora invitation": "Acepta tu invitación de Nexora",

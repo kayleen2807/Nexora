@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Negocio;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Database\QueryException;
@@ -32,6 +33,7 @@ class RegisterController extends Controller
         $request->merge(['correo' => strtolower(trim((string) $request->input('correo')))]);
 
         $validated = $request->validate([
+            'nombre_negocio' => ['required', 'string', 'max:150'],
             'nombre' => ['required', 'string', 'max:150'],
             'apellido' => ['required', 'string', 'max:150'],
             'fecha_nacimiento' => [
@@ -51,6 +53,8 @@ class RegisterController extends Controller
             'acepta_terminos' => ['accepted'],
             'acepta_privacidad' => ['accepted'],
         ], [
+            'nombre_negocio.required' => __('Business name is required.'),
+            'nombre_negocio.max' => __('Business name cannot exceed 150 characters.'),
             'nombre.required' => __('Name is required.'),
             'nombre.max' => __('Name cannot exceed 150 characters.'),
             'apellido.required' => __('First surname is required.'),
@@ -70,12 +74,12 @@ class RegisterController extends Controller
             'acepta_privacidad.accepted' => __('You must accept the Privacy Notice.'),
         ]);
 
-        /** Rol y usuario se crean en una sola transacción para evitar un rol huérfano si algo falla */
+        /** Rol, usuario (dueño) y su negocio se crean en una sola transacción: o todo o nada */
         try {
             $user = DB::transaction(function () use ($validated) {
                 $rol = Rol::firstOrCreate(['nombre' => 'administrador']);
 
-                return User::create([
+                $user = User::create([
                     'nombre' => $validated['nombre'],
                     'apellido' => $validated['apellido'],
                     'fecha_nacimiento' => $validated['fecha_nacimiento'],
@@ -84,6 +88,14 @@ class RegisterController extends Controller
                     'id_rol' => $rol->id_rol,
                     'id_sucursal' => null,
                 ]);
+
+                $negocio = Negocio::create([
+                    'nombre' => trim($validated['nombre_negocio']),
+                    'id_propietario' => $user->id_usuario,
+                ]);
+                $user->update(['id_negocio' => $negocio->id_negocio]);
+
+                return $user;
             });
         } catch (QueryException $e) {
             // 23505 = unique_violation en Postgres; cubre la carrera entre la validación y el INSERT
