@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 
 class CorteController extends Controller
 {
+    use UsaNegocioDelUsuario;
 
     private const POR_PAGINA = 50;
 
