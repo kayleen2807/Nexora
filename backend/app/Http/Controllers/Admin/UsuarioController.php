@@ -6,11 +6,15 @@ use App\Http\Controllers\Concerns\UsaNegocioDelUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Sucursal;
 use App\Models\User;
+use App\Models\UserInvitation;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Services\EmailVerificationService;
+use App\Services\UserInvitationService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class UsuarioController extends Controller
 {
@@ -28,6 +32,16 @@ class UsuarioController extends Controller
             ->orderBy('id_usuario')
             ->get()
             ->map(fn ($u) => [
+        $usuarios = User::orderBy('id_usuario')->get();
+        $invitaciones = UserInvitation::whereIn('user_id', $usuarios->pluck('id_usuario'))
+            ->latest('id')
+            ->get()
+            ->groupBy('user_id');
+
+        return $usuarios->map(function ($u) use ($invitaciones) {
+            $invitacion = $invitaciones->get($u->id_usuario)?->first();
+
+            return [
                 'id' => $u->id_usuario,
                 'nombre' => trim($u->nombre . ' ' . $u->apellido),
                 'rol' => self::ROLES[$u->id_rol] ?? 'cajero',
@@ -54,10 +68,13 @@ class UsuarioController extends Controller
             "No puedes {$accion} tu propia cuenta.");
         abort_if((int) $usuario->id_rol === self::ROLES_INVERSO['admin'], 422,
             'El administrador es el dueño del negocio y no se puede modificar.');
+                'invitacionEstado' => $invitacion?->status ?? ($u->email_verified_at ? 'verified' : 'pending'),
+            ];
+        });
     }
 
     /** Mismos datos y reglas que el registro público (RegisterController), más rol y sucursal. */
-    public function store(Request $request, EmailVerificationService $verificationService)
+    public function store(Request $request, UserInvitationService $invitationService)
     {
         $request->merge(['correo' => strtolower(trim((string) $request->input('correo')))]);
 
@@ -70,6 +87,8 @@ class UsuarioController extends Controller
             // Un negocio tiene un solo administrador (su dueño): aquí solo se crean empleados
             'rol' => ['required', 'in:gerente,cajero'],
             'id_sucursal' => $this->reglaSucursal($request),
+            'rol' => ['required', 'in:admin,gerente,cajero'],
+            'id_sucursal' => ['nullable', 'integer', 'exists:sucursal,id_sucursal'],
         ], [
             'rol.in' => 'Solo puedes crear usuarios con rol Gerente o Cajero.',
             'id_sucursal.exists' => 'La sucursal no pertenece a tu negocio.',
@@ -86,15 +105,15 @@ class UsuarioController extends Controller
             'apellido' => $data['apellido'],
             'fecha_nacimiento' => $data['fecha_nacimiento'],
             'correo' => $data['correo'],
-            'contrasena' => $data['contrasena'], // se hashea sola por el cast del modelo
+            'contrasena' => Str::random(40),
             'id_rol' => self::ROLES_INVERSO[$data['rol']],
             'id_sucursal' => $data['id_sucursal'] ?? null,
             'id_negocio' => $this->idNegocio($request),
         ]);
 
-        $verificationService->send($usuario);
+        $invitationService->send($usuario, Auth::user());
 
-        return response()->json($usuario, 201);
+        return response()->json(['message' => __('Invitation sent successfully.')], 201);
     }
 
     public function actualizarRol(Request $request, User $usuario)

@@ -102,6 +102,10 @@
   .badge-admin { background: var(--badge-admin-bg); color: var(--badge-admin-text); }
   .badge-gerente { background: var(--badge-gerente-bg); color: var(--badge-gerente-text); }
   .badge-cajero { background: var(--badge-cajero-bg); color: var(--badge-cajero-text); }
+  .badge-invitacion-aceptada { background: var(--success-bg); color: var(--success-text); }
+  .badge-invitacion-pendiente { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-invitacion-vencida { background: var(--danger-bg); color: var(--danger-text); }
+  .badge-invitacion-verificada { background: var(--badge-gerente-bg); color: var(--badge-gerente-text); }
 
   /* Formulario en cuadrícula (Crear usuarios): mismos tamaños y colores que .fila-form */
   .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.9rem 1rem; }
@@ -257,14 +261,6 @@
 
           <h3 data-i18n="grupoAcceso">Acceso al sistema</h3>
           <div class="form-grid">
-            <div class="campo">
-              <label for="usrClave" data-i18n="labelContrasena">Contraseña</label>
-              <div class="campo-clave">
-                <input type="password" id="usrClave" autocomplete="new-password" placeholder="••••••••">
-                <button type="button" id="usrClaveToggle" onclick="toggleClaveUsuario()"></button>
-              </div>
-              <span class="ayuda" data-i18n="ayudaContrasena">Mínimo 8 caracteres, una mayúscula, un número y por lo menos un carácter especial.</span>
-            </div>
             <div class="campo"><label for="usrRol" data-i18n="labelRol">Rol</label>
               <!-- Cada negocio tiene un solo administrador (su dueño): aquí solo se crean empleados -->
               <select id="usrRol">
@@ -285,7 +281,7 @@
         <h2 data-i18n="usuariosHeading">Usuarios</h2>
         <p class="desc" data-i18n="usuariosDesc">Consulta o elimina las cuentas de acceso al sistema.</p>
         <div class="card">
-          <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thRol">Rol</th><th data-i18n="thSucursal">Sucursal</th><th></th></tr><tbody id="tablaUsuarios"></tbody></table>
+          <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thRol">Rol</th><th data-i18n="thSucursal">Sucursal</th><th data-i18n="thInvitacion">Invitación</th><th></th></tr><tbody id="tablaUsuarios"></tbody></table>
         </div>
       </div>
 
@@ -490,7 +486,7 @@
       navProveedores: 'Proveedores', navInventario: 'Inventario',
       sucursalesHeading: 'Registro de sucursales', sucursalesDesc: 'Da de alta nuevas sucursales o edita las existentes.', thGerente: 'Gerente',
       labelNombre: 'Nombre', labelDireccion: 'Dirección', labelApellido: 'Apellido', labelCorreo: 'Correo', btnAgregar: 'Agregar',
-      thNombre: 'Nombre', thDireccion: 'Dirección', btnGuardar: 'Guardar', btnEliminar: 'Eliminar', btnCancelar: 'Cancelar',
+      thNombre: 'Nombre', thDireccion: 'Dirección', thInvitacion: 'Invitación', estadoInvitacionAccepted: 'Aceptada', estadoInvitacionSent: 'Pendiente', estadoInvitacionViewed: 'Pendiente', estadoInvitacionExpired: 'Vencida', estadoInvitacionVerified: 'Verificada', btnGuardar: 'Guardar', btnEliminar: 'Eliminar', btnCancelar: 'Cancelar',
       alertNombreSucursal: 'Ingresa el nombre de la sucursal.', alertContactoInvalido: 'El contacto debe tener exactamente 10 números.', errorGuardarSucursal: 'No se pudo guardar la sucursal.', errorActualizarSucursal: 'No se pudo actualizar la sucursal.', sucursalAgregada: 'Sucursal agregada', sucursalActualizada: 'Sucursal actualizada', confirmEliminarSucursal: '¿Eliminar esta sucursal? Los usuarios asignados quedarán sin sucursal.',
       rolesHeading: 'Asignar roles', rolesDesc: 'Cambia el rol y la sucursal asignada a cada usuario.',
       thUsuario: 'Usuario', thRol: 'Rol', thSucursal: 'Sucursal', sinAsignar: '— Sin asignar —',
@@ -505,7 +501,7 @@
       ayudaContrasena: 'Mínimo 8 caracteres, una mayúscula, un número y por lo menos un carácter especial.',
       alertContrasenaInvalida: 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial.',
       alertMayorEdad: 'El usuario debe ser mayor de edad (18 años o más).', alertCorreoInvalido: 'El correo no tiene un formato válido.',
-      usuarioCreado: 'Usuario creado', errorCrearUsuario: 'No se pudo crear el usuario.',
+      usuarioCreado: 'Usuario creado', invitacionEnviada: 'Usuario creado e invitación enviada.', errorCrearUsuario: 'No se pudo crear el usuario.',
       mostrarContrasena: 'Mostrar contraseña', ocultarContrasena: 'Ocultar contraseña',
       errorGenerico: 'Ocurrió un error. Intenta de nuevo.',
       miNegocioHeading: 'Mi negocio', labelNombreNegocio: 'Nombre del negocio',
@@ -566,7 +562,7 @@
       navProveedores: 'Suppliers', navInventario: 'Inventory',
       sucursalesHeading: 'Branch registry', sucursalesDesc: 'Add new branches or edit existing ones.',
       labelNombre: 'Name', labelDireccion: 'Address', labelApellido: 'Last name', labelCorreo: 'Email', btnAgregar: 'Add',
-      thNombre: 'Name', thDireccion: 'Address', btnGuardar: 'Save', btnEliminar: 'Delete', btnCancelar: 'Cancel',
+      thNombre: 'Name', thDireccion: 'Address', thInvitacion: 'Invitation', estadoInvitacionAccepted: 'Accepted', estadoInvitacionSent: 'Pending', estadoInvitacionViewed: 'Pending', estadoInvitacionExpired: 'Expired', estadoInvitacionVerified: 'Verified', btnGuardar: 'Save', btnEliminar: 'Delete', btnCancelar: 'Cancel',
       alertNombreSucursal: 'Enter the branch name.', alertContactoInvalido: 'Contact must contain exactly 10 digits.', errorGuardarSucursal: 'The branch could not be saved.', errorActualizarSucursal: 'The branch could not be updated.', sucursalAgregada: 'Branch added', sucursalActualizada: 'Branch updated', confirmEliminarSucursal: 'Delete this branch? Assigned users will be left without a branch.',
       rolesHeading: 'Assign roles', rolesDesc: 'Change the role and assigned branch for each user.', thGerente: 'Manager',
       thUsuario: 'User', thRol: 'Role', thSucursal: 'Branch', sinAsignar: '— Unassigned —',
@@ -581,7 +577,7 @@
       ayudaContrasena: 'At least 8 characters, one uppercase letter, one number, and at least one special character.',
       alertContrasenaInvalida: 'The password needs at least 8 characters, one uppercase letter, one number, and one special character.',
       alertMayorEdad: 'The user must be an adult (18 or older).', alertCorreoInvalido: 'The email address is not valid.',
-      usuarioCreado: 'User created', errorCrearUsuario: 'The user could not be created.',
+      usuarioCreado: 'User created', invitacionEnviada: 'User created and invitation sent.', errorCrearUsuario: 'The user could not be created.',
       mostrarContrasena: 'Show password', ocultarContrasena: 'Hide password',
       errorGenerico: 'Something went wrong. Please try again.',
       miNegocioHeading: 'My business', labelNombreNegocio: 'Business name',
@@ -1040,12 +1036,17 @@
       const accion = u.esYo || u.rol === 'admin'
         ? ''
         : `<button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button>`;
+      const estadoInvitacion = u.invitacionEstado || 'pending';
+      const estadoClase = estadoInvitacion === 'accepted' ? 'badge-invitacion-aceptada' : estadoInvitacion === 'expired' ? 'badge-invitacion-vencida' : estadoInvitacion === 'verified' ? 'badge-invitacion-verificada' : 'badge-invitacion-pendiente';
+      const estadoTexto = t('estadoInvitacion' + estadoInvitacion.charAt(0).toUpperCase() + estadoInvitacion.slice(1));
       return `
       <tr>
         <td>${esc(u.nombre)} ${u.esYo ? etiquetaTu() : ''}</td>
         <td><span class="badge ${badgeClase}">${textoRol(u.rol)}</span></td>
         <td>${sucursal ? sucursal.nombre : '—'}</td>
         <td>${accion}</td>
+        <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
+        <td><button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button></td>
       </tr>`;
     }).join('');
   }
@@ -1059,21 +1060,6 @@
     select.value = elegida;
 
     document.getElementById('icoCrearUsuario').innerHTML = ICONOS_MENU.navCrearUsuarios;
-    pintarBotonClave();
-  }
-
-  function pintarBotonClave() {
-    const visible = document.getElementById('usrClave').type === 'text';
-    const boton = document.getElementById('usrClaveToggle');
-    boton.innerHTML = visible ? ICONO_OJO_TACHADO : ICONO_OJO;
-    boton.title = visible ? t('ocultarContrasena') : t('mostrarContrasena');
-    boton.setAttribute('aria-label', boton.title);
-  }
-
-  function toggleClaveUsuario() {
-    const input = document.getElementById('usrClave');
-    input.type = input.type === 'password' ? 'text' : 'password';
-    pintarBotonClave();
   }
 
   function esMayorDeEdad(fechaIso) {
@@ -1087,15 +1073,13 @@
     const apellido = document.getElementById('usrApellido').value.trim();
     const fecha_nacimiento = document.getElementById('usrNacimiento').value;
     const correo = document.getElementById('usrCorreo').value.trim().toLowerCase();
-    const contrasena = document.getElementById('usrClave').value;
     const rol = document.getElementById('usrRol').value;
     const sucVal = document.getElementById('usrSucursal').value;
 
     // Validación rápida en el navegador; el servidor vuelve a validar todo
-    if (!nombre || !apellido || !fecha_nacimiento || !correo || !contrasena) { mostrarToast(t('alertCompletaUsuario'), 'error'); return; }
+    if (!nombre || !apellido || !fecha_nacimiento || !correo) { mostrarToast(t('alertCompletaUsuario'), 'error'); return; }
     if (!document.getElementById('usrCorreo').checkValidity()) { mostrarToast(t('alertCorreoInvalido'), 'error'); return; }
     if (!esMayorDeEdad(fecha_nacimiento)) { mostrarToast(t('alertMayorEdad'), 'error'); return; }
-    if (!REGLA_CONTRASENA.test(contrasena)) { mostrarToast(t('alertContrasenaInvalida'), 'error'); return; }
 
     const res = await fetch('/administrador/usuarios', {
       method: 'POST',
@@ -1107,6 +1091,8 @@
       body: JSON.stringify({
         nombre, apellido, fecha_nacimiento, correo, contrasena, rol,
         id_sucursal: sucVal ? parseInt(sucVal) : null,
+        nombre, apellido, fecha_nacimiento, correo, rol,
+        id_sucursal: rol !== 'admin' && sucVal ? parseInt(sucVal) : null,
       }),
     });
 
@@ -1116,10 +1102,9 @@
       return;
     }
 
-    ['usrNombre', 'usrApellido', 'usrNacimiento', 'usrCorreo', 'usrClave'].forEach(id => { document.getElementById(id).value = ''; });
-    document.getElementById('usrClave').type = 'password';
+    ['usrNombre', 'usrApellido', 'usrNacimiento', 'usrCorreo'].forEach(id => { document.getElementById(id).value = ''; });
     renderCrearUsuario();
-    mostrarToast(t('usuarioCreado'), 'exito');
+    mostrarToast(t('invitacionEnviada'), 'exito');
     await cargarUsuarios();
   }
 
