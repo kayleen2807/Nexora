@@ -104,7 +104,7 @@
     "Business name cannot exceed 150 characters.": "El nombre del negocio no puede tener más de 150 caracteres.",
     "Too many login attempts. Try again in :seconds seconds.": "Demasiados intentos de inicio de sesión. Intenta de nuevo en :seconds segundos.",
     "Too many incorrect codes. Request a new code.": "Demasiados códigos incorrectos. Por seguridad el código se anuló: solicita uno nuevo.",
-    "Please wait :seconds seconds before requesting another code.": "Espera :seconds segundos antes de solicitar otro código."
+    "Please wait :seconds seconds before requesting another code.": "Espera :seconds segundos antes de solicitar otro código.",
     "Invitation sent successfully.": "Invitación enviada correctamente.",
     "You have been invited to Nexora": "Has recibido una invitación a Nexora",
     "Accept your Nexora invitation": "Acepta tu invitación de Nexora",
@@ -123,6 +123,7 @@
     "You were registered by :admin.": "Fuiste registrado por :admin.",
     "Use the button below to set your password and accept your registration.": "Usa el botón para definir tu contraseña y aceptar tu registro.",
     "This link expires in :count minutes.": "Este enlace vence en :count minutos.",
+    "This link expires in :count hours.": "Este enlace vence en :count horas.",
     "By using Nexora you accept the Terms and Conditions and Privacy Notice.": "Al utilizar Nexora aceptas los Términos y Condiciones y el Aviso de Privacidad.",
     "This invitation link is invalid or has expired.": "Este enlace de invitación no es válido o ha vencido.",
     "Your invitation was accepted. Please log in.": "Tu invitación fue aceptada. Inicia sesión.",

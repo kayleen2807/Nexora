@@ -16,6 +16,7 @@
     --accent: #ea580c; --accent-hover: #c2410c; --accent-bg-light: #fff1e6; --sidebar-hover: #f4f5f7;
     --danger-bg: #fee2e2; --danger-text: #dc2626; --danger-hover: #fecaca;
     --success-bg: #ffedd5; --success-text: #c2410c; --success-hover: #fed7aa;
+    --warning-bg: #fef3c7; --warning-text: #b45309;
     --badge-admin-bg: #ede9fe; --badge-admin-text: #6d28d9;
     --badge-gerente-bg: #dbeafe; --badge-gerente-text: #1d4ed8;
     --badge-cajero-bg: #fff3e0; --badge-cajero-text: #e8631f;
@@ -28,6 +29,7 @@
     --accent: #fb923c; --accent-hover: #fdba74; --accent-bg-light: #3a2210; --sidebar-hover: #232c3d;
     --danger-bg: #3f1d1d; --danger-text: #f87171; --danger-hover: #522525;
     --success-bg: #3b2410; --success-text: #fb923c; --success-hover: #4d2f14;
+    --warning-bg: #3a2e0f; --warning-text: #fbbf24;
     --badge-admin-bg: #2e1f4d; --badge-admin-text: #c4b5fd;
     --badge-gerente-bg: #1e2a4a; --badge-gerente-text: #93c5fd;
     --badge-cajero-bg: #3a2a1a; --badge-cajero-text: #fdba74;
@@ -486,7 +488,7 @@
       navProveedores: 'Proveedores', navInventario: 'Inventario',
       sucursalesHeading: 'Registro de sucursales', sucursalesDesc: 'Da de alta nuevas sucursales o edita las existentes.', thGerente: 'Gerente',
       labelNombre: 'Nombre', labelDireccion: 'Dirección', labelApellido: 'Apellido', labelCorreo: 'Correo', btnAgregar: 'Agregar',
-      thNombre: 'Nombre', thDireccion: 'Dirección', thInvitacion: 'Invitación', estadoInvitacionAccepted: 'Aceptada', estadoInvitacionSent: 'Pendiente', estadoInvitacionViewed: 'Pendiente', estadoInvitacionExpired: 'Vencida', estadoInvitacionVerified: 'Verificada', btnGuardar: 'Guardar', btnEliminar: 'Eliminar', btnCancelar: 'Cancelar',
+      thNombre: 'Nombre', thDireccion: 'Dirección', thInvitacion: 'Invitación', estadoInvitacionAccepted: 'Aceptada', estadoInvitacionSent: 'Pendiente', estadoInvitacionViewed: 'Pendiente', estadoInvitacionExpired: 'Vencida', estadoInvitacionVerified: 'Verificada', estadoInvitacionPending: 'Pendiente', estadoInvitacionRevoked: 'Reemplazada', btnReenviarInvitacion: 'Reenviar invitación', invitacionReenviada: 'Invitación reenviada (vale 48 horas).', btnGuardar: 'Guardar', btnEliminar: 'Eliminar', btnCancelar: 'Cancelar',
       alertNombreSucursal: 'Ingresa el nombre de la sucursal.', alertContactoInvalido: 'El contacto debe tener exactamente 10 números.', errorGuardarSucursal: 'No se pudo guardar la sucursal.', errorActualizarSucursal: 'No se pudo actualizar la sucursal.', sucursalAgregada: 'Sucursal agregada', sucursalActualizada: 'Sucursal actualizada', confirmEliminarSucursal: '¿Eliminar esta sucursal? Los usuarios asignados quedarán sin sucursal.',
       rolesHeading: 'Asignar roles', rolesDesc: 'Cambia el rol y la sucursal asignada a cada usuario.',
       thUsuario: 'Usuario', thRol: 'Rol', thSucursal: 'Sucursal', sinAsignar: '— Sin asignar —',
@@ -562,7 +564,7 @@
       navProveedores: 'Suppliers', navInventario: 'Inventory',
       sucursalesHeading: 'Branch registry', sucursalesDesc: 'Add new branches or edit existing ones.',
       labelNombre: 'Name', labelDireccion: 'Address', labelApellido: 'Last name', labelCorreo: 'Email', btnAgregar: 'Add',
-      thNombre: 'Name', thDireccion: 'Address', thInvitacion: 'Invitation', estadoInvitacionAccepted: 'Accepted', estadoInvitacionSent: 'Pending', estadoInvitacionViewed: 'Pending', estadoInvitacionExpired: 'Expired', estadoInvitacionVerified: 'Verified', btnGuardar: 'Save', btnEliminar: 'Delete', btnCancelar: 'Cancel',
+      thNombre: 'Name', thDireccion: 'Address', thInvitacion: 'Invitation', estadoInvitacionAccepted: 'Accepted', estadoInvitacionSent: 'Pending', estadoInvitacionViewed: 'Pending', estadoInvitacionExpired: 'Expired', estadoInvitacionVerified: 'Verified', estadoInvitacionPending: 'Pending', estadoInvitacionRevoked: 'Replaced', btnReenviarInvitacion: 'Resend invitation', invitacionReenviada: 'Invitation resent (valid for 48 hours).', btnGuardar: 'Save', btnEliminar: 'Delete', btnCancelar: 'Cancel',
       alertNombreSucursal: 'Enter the branch name.', alertContactoInvalido: 'Contact must contain exactly 10 digits.', errorGuardarSucursal: 'The branch could not be saved.', errorActualizarSucursal: 'The branch could not be updated.', sucursalAgregada: 'Branch added', sucursalActualizada: 'Branch updated', confirmEliminarSucursal: 'Delete this branch? Assigned users will be left without a branch.',
       rolesHeading: 'Assign roles', rolesDesc: 'Change the role and assigned branch for each user.', thGerente: 'Manager',
       thUsuario: 'User', thRol: 'Role', thSucursal: 'Branch', sinAsignar: '— Unassigned —',
@@ -643,6 +645,7 @@
   const REGLA_CONTRASENA = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
   const ICONO_CANDADO = svg('<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>');
   const ICONO_GUARDAR = svg('<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>');
+  const ICONO_CORREO = svg('<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>');
   const ICONO_BASURA = svg('<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>');
   const ICONOS_MENU = {
     navSistema: svg('<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>'),
@@ -1033,20 +1036,24 @@
       const sucursal = sucursales.find(s => s.id_sucursal === u.sucursalId);
       const badgeClase = u.rol === 'admin' ? 'badge-admin' : u.rol === 'gerente' ? 'badge-gerente' : 'badge-cajero';
       // El dueño no puede borrarse a sí mismo: en su fila no hay botón de eliminar
+      const estadoInvitacion = u.invitacionEstado || 'pending';
+      // Reenviar solo a empleados que aún no activan su cuenta (el servidor lo vuelve a validar)
+      const puedeReenviar = !u.esYo && u.rol !== 'admin' && !['accepted', 'verified'].includes(estadoInvitacion);
+      const reenviar = puedeReenviar
+        ? `<button class="btn btn-primario btn-sm" onclick="reenviarInvitacion(${u.id})" title="${t('btnReenviarInvitacion')}" aria-label="${t('btnReenviarInvitacion')}">${ICONO_CORREO}</button> `
+        : '';
       const accion = u.esYo || u.rol === 'admin'
         ? ''
-        : `<button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button>`;
-      const estadoInvitacion = u.invitacionEstado || 'pending';
+        : `${reenviar}<button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button>`;
       const estadoClase = estadoInvitacion === 'accepted' ? 'badge-invitacion-aceptada' : estadoInvitacion === 'expired' ? 'badge-invitacion-vencida' : estadoInvitacion === 'verified' ? 'badge-invitacion-verificada' : 'badge-invitacion-pendiente';
       const estadoTexto = t('estadoInvitacion' + estadoInvitacion.charAt(0).toUpperCase() + estadoInvitacion.slice(1));
       return `
       <tr>
         <td>${esc(u.nombre)} ${u.esYo ? etiquetaTu() : ''}</td>
         <td><span class="badge ${badgeClase}">${textoRol(u.rol)}</span></td>
-        <td>${sucursal ? sucursal.nombre : '—'}</td>
-        <td>${accion}</td>
+        <td>${sucursal ? esc(sucursal.nombre) : '—'}</td>
         <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
-        <td><button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button></td>
+        <td style="white-space:nowrap">${accion}</td>
       </tr>`;
     }).join('');
   }
@@ -1088,11 +1095,10 @@
         'Accept': 'application/json',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
       },
+      // Sin contraseña: la persona la crea desde el correo de invitación
       body: JSON.stringify({
-        nombre, apellido, fecha_nacimiento, correo, contrasena, rol,
-        id_sucursal: sucVal ? parseInt(sucVal) : null,
         nombre, apellido, fecha_nacimiento, correo, rol,
-        id_sucursal: rol !== 'admin' && sucVal ? parseInt(sucVal) : null,
+        id_sucursal: sucVal ? parseInt(sucVal) : null,
       }),
     });
 
@@ -1105,6 +1111,17 @@
     ['usrNombre', 'usrApellido', 'usrNacimiento', 'usrCorreo'].forEach(id => { document.getElementById(id).value = ''; });
     renderCrearUsuario();
     mostrarToast(t('invitacionEnviada'), 'exito');
+    await cargarUsuarios();
+  }
+
+  async function reenviarInvitacion(id) {
+    const res = await fetch('/administrador/usuarios/' + id + '/invitacion', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) { mostrarToast(data?.message ?? t('errorGenerico'), 'error'); return; }
+    mostrarToast(t('invitacionReenviada'), 'exito');
     await cargarUsuarios();
   }
 

@@ -7,7 +7,7 @@
 {{ __('Registration date: :date', ['date' => $registrationDate?->format('Y-m-d')]) }}
 {{ $url }}
 
-{{ __('This link expires in :count minutes.', ['count' => $expires]) }}
+{{ __('This link expires in :count hours.', ['count' => $expires]) }}
 
 {{ __('Terms and Conditions') }}: {{ $termsUrl }}
 {{ __('Privacy Notice') }}: {{ $privacyUrl }}

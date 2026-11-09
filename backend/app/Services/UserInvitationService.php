@@ -10,6 +10,9 @@ use Illuminate\Support\Str;
 
 class UserInvitationService
 {
+    /** Horas que dura el enlace de invitación (antes 5 minutos: no daba tiempo a revisar el correo). */
+    public const HORAS_VIGENCIA = 48;
+
     public function send(User $user, User $invitedBy): UserInvitation
     {
         UserInvitation::where('user_id', $user->id_usuario)
@@ -21,7 +24,7 @@ class UserInvitationService
             'user_id' => $user->id_usuario,
             'invited_by' => $invitedBy->id_usuario,
             'token_hash' => Hash::make($token),
-            'expires_at' => now()->addMinutes(5),
+            'expires_at' => now()->addHours(self::HORAS_VIGENCIA),
             'sent_at' => now(),
             'status' => 'sent',
         ]);

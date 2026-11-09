@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\User;
 use App\Models\UserInvitation;
+use App\Services\UserInvitationService;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -41,7 +42,7 @@ class UserInvitationNotification extends Notification
                 'branch' => $notifiable->sucursal?->nombre ?? __('Not assigned'),
                 'role' => ucfirst($notifiable->rol?->nombre ?? __('User')),
                 'registrationDate' => $this->invitation->created_at,
-                'expires' => 5,
+                'expires' => UserInvitationService::HORAS_VIGENCIA,
                 'termsUrl' => route('legal.terminos'),
                 'privacyUrl' => route('legal.privacidad'),
             ]);
