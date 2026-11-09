@@ -245,6 +245,68 @@
   .rep-pendiente { background: var(--danger-bg); color: var(--danger-text); }
   .rep-en_revision { background: var(--border-light); color: var(--muted); }
   .rep-resuelto { background: var(--success-bg); color: var(--success-text); }
+  /* ---------- CONFIGURACIÓN DE LA CUENTA ---------- */
+  .cfg-grid { display: grid; gap: 1rem; max-width: 780px; margin-top: 1rem; }
+  .cfg-card { background: var(--card-bg, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: 12px; padding: 1.25rem 1.4rem; box-shadow: 0 1px 3px var(--shadow, rgba(0,0,0,0.06)); }
+  .cfg-card h3 { margin: 0 0 0.2rem; font-size: 1rem; }
+  .cfg-card .cfg-sub { margin: 0 0 1rem; font-size: 0.82rem; color: var(--muted, #6b7280); }
+  .cfg-perfil { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.1rem; }
+  .cfg-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; flex-shrink: 0; }
+  .cfg-perfil b { display: block; font-size: 1rem; }
+  .cfg-perfil span { color: var(--muted, #6b7280); font-size: 0.82rem; }
+  .cfg-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.9rem; }
+  .cfg-campo { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.78rem; color: var(--muted, #6b7280); }
+  .cfg-campo input, .cfg-campo select, .cfg-fila select, .cfg-fila input[type="number"] { padding: 0.55rem 0.7rem; border: 1px solid var(--border, #d1d5db); border-radius: 8px; background: var(--card-bg, #fff); color: var(--text, inherit); font-size: 0.9rem; font-family: inherit; }
+  .cfg-campo input:disabled { opacity: 0.65; cursor: not-allowed; }
+  .cfg-campo small { font-size: 0.72rem; }
+  .cfg-acciones { margin-top: 1rem; display: flex; gap: 0.6rem; align-items: center; }
+  .cfg-pass { position: relative; display: flex; }
+  .cfg-pass input { flex: 1; padding-right: 2.4rem; }
+  .cfg-ojo { position: absolute; right: 0.35rem; top: 50%; transform: translateY(-50%); background: transparent; border: 0; cursor: pointer; color: var(--muted, #6b7280); padding: 0.3rem; display: flex; }
+  .cfg-ojo:hover { color: var(--accent); }
+  .cfg-fuerza { height: 6px; border-radius: 99px; background: var(--border, #e5e7eb); overflow: hidden; margin-top: 0.2rem; }
+  .cfg-fuerza i { display: block; height: 100%; width: 0; transition: width 0.2s, background 0.2s; }
+  .cfg-fuerza-txt { font-size: 0.72rem; min-height: 1em; }
+  .cfg-temas { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+  .cfg-tema { flex: 1; min-width: 150px; max-width: 220px; padding: 0.6rem; border: 2px solid var(--border, #d1d5db); border-radius: 12px; background: transparent; color: var(--text, inherit); cursor: pointer; text-align: left; font-family: inherit; }
+  .cfg-tema:hover { border-color: var(--accent); }
+  .cfg-tema.activo { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.18); }
+  .cfg-prev { display: flex; height: 54px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(128,128,128,0.35); margin-bottom: 0.5rem; }
+  .cfg-prev i { width: 28%; }
+  .cfg-prev b { flex: 1; margin: 7px; border-radius: 5px; }
+  .cfg-prev.claro { background: #f4f5f7; } .cfg-prev.claro i { background: #fff; } .cfg-prev.claro b { background: #fff; box-shadow: 0 0 0 1px #e5e7eb; }
+  .cfg-prev.oscuro { background: #0f1420; } .cfg-prev.oscuro i { background: #1a2233; } .cfg-prev.oscuro b { background: #1a2233; box-shadow: 0 0 0 1px #2d3748; }
+  .cfg-tema span { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600; }
+  .cfg-tema .cfg-prev { align-items: stretch; gap: 0; }
+  .cfg-tema .ico { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .cfg-bloque { margin-bottom: 1rem; }
+  .cfg-bloque > label { display: block; font-size: 0.78rem; color: var(--muted, #6b7280); margin-bottom: 0.4rem; }
+  .cfg-seg { display: inline-flex; border: 1px solid var(--border, #d1d5db); border-radius: 10px; overflow: hidden; }
+  .cfg-seg a { padding: 0.5rem 1.1rem; color: var(--text, inherit); text-decoration: none; font-size: 0.88rem; font-weight: 600; }
+  .cfg-seg a + a { border-left: 1px solid var(--border, #d1d5db); }
+  .cfg-seg a.activo { background: var(--accent); color: #fff; }
+  .cfg-fila { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-top: 1px solid var(--border, #e5e7eb); }
+  .cfg-fila:first-of-type { border-top: 0; }
+  .cfg-fila b { display: block; font-size: 0.9rem; font-weight: 600; }
+  .cfg-fila small { color: var(--muted, #6b7280); font-size: 0.76rem; }
+  .cfg-fila input[type="number"] { width: 110px; }
+  .cfg-switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+  .cfg-switch input { opacity: 0; width: 100%; height: 100%; position: absolute; margin: 0; cursor: pointer; z-index: 1; }
+  .cfg-switch span { position: absolute; inset: 0; background: var(--border, #cbd5e1); border-radius: 99px; transition: background 0.2s; }
+  .cfg-switch span::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+  .cfg-switch input:checked + span { background: var(--accent); }
+  .cfg-switch input:checked + span::after { transform: translateX(18px); }
+  .cfg-info { display: flex; justify-content: space-between; gap: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border, #e5e7eb); font-size: 0.85rem; }
+  .cfg-info small { color: var(--muted, #6b7280); display: block; }
+  .sidebar #btn-configuracion { margin-top: 0.6rem; border-top: 1px solid var(--border, #e5e7eb); }
+  .cfg-escudo { width: 40px; height: 40px; border-radius: 50%; background: var(--border, #e5e7eb); color: var(--muted, #6b7280); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, color 0.2s; }
+  .cfg-escudo .ico { width: 1.3em; height: 1.3em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .cfg-escudo.on { background: #dcfce7; color: #15803d; }
+  [data-theme="dark"] .cfg-escudo.on { background: #143621; color: #4ade80; }
+  .cfg-switch.verde input:checked + span { background: #16a34a; }
+  .cfg-2fa-estado { transition: color 0.2s; }
+  .cfg-2fa-estado.on { color: #15803d !important; font-weight: 600; }
+  [data-theme="dark"] .cfg-2fa-estado.on { color: #4ade80 !important; }
 </style>
 </head>
 <body>
@@ -282,6 +344,7 @@
     <div class="content">
 
       <!-- ---------- VENDER ---------- -->
+      <div class="seccion" id="sec-configuracion"></div>
       <div class="seccion" id="sec-vender">
         <!-- Sin turno abierto: primero se elige caja y fondo inicial -->
         <div class="card" id="aperturaBox" style="display:none">
@@ -493,6 +556,7 @@
   /* ---------- IDIOMA ---------- */
   const textos = {
     es: {
+      navConfiguracion: 'Configuración',
       tagline: 'Punto de venta multi-sucursal',
       placeholderUsuario: 'Usuario',
       placeholderClave: 'Contraseña',
@@ -574,6 +638,7 @@
       repEnviado: 'Reporte enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
     },
     en: {
+      navConfiguracion: 'Settings',
       tagline: 'Multi-branch point of sale',
       placeholderUsuario: 'Username',
       placeholderClave: 'Password',
@@ -662,6 +727,7 @@
   const svg = d => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
   const CARRITO = '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>';
   const ICONOS = {
+    navConfiguracion: svg('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'),
     carritoHeading: svg(CARRITO),
     navVender: svg(CARRITO),
     navCorte: svg('<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>'),
@@ -674,6 +740,327 @@
     navReportes: svg('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v2"/><path d="M12 13h.01"/>'),
   };
 
+
+  /* ================= CONFIGURACIÓN DE LA CUENTA ================= */
+  const CFG_ROL = 'cajero';
+  const CFG_ETIQUETA = { es: 'Cajero', en: 'Cashier' };
+  const CFG_TEXTOS = {
+  "es": {
+    "navConfiguracion": "Configuración",
+    "cfgTitulo": "Configuración",
+    "cfgDesc": "Administra tu cuenta, la seguridad y la apariencia.",
+    "perfilTitulo": "Perfil",
+    "perfilSub": "Así te identifican en el sistema.",
+    "lblNombre": "Nombre",
+    "lblApellido": "Apellido",
+    "lblCorreo": "Correo",
+    "guardarCambios": "Guardar cambios",
+    "perfilGuardado": "Perfil actualizado",
+    "nombreObligatorio": "El nombre es obligatorio",
+    "passTitulo": "Contraseña",
+    "passSub": "Usa al menos 8 caracteres. Mezcla letras, números y símbolos para que sea más segura.",
+    "lblPassActual": "Contraseña actual",
+    "lblPassNueva": "Nueva contraseña",
+    "lblPassConfirmar": "Confirmar nueva contraseña",
+    "cambiarPass": "Cambiar contraseña",
+    "passFalta": "Escribe tu contraseña actual",
+    "passCorta": "La nueva contraseña debe tener al menos 8 caracteres",
+    "passNoCoincide": "Las contraseñas no coinciden",
+    "passIgual": "La nueva contraseña debe ser distinta a la actual",
+    "passCambiada": "Contraseña actualizada",
+    "fuerzaDebil": "Seguridad: débil",
+    "fuerzaMedia": "Seguridad: media",
+    "fuerzaFuerte": "Seguridad: fuerte",
+    "verPass": "Mostrar u ocultar contraseña",
+    "aparienciaTitulo": "Apariencia e idioma",
+    "aparienciaSub": "El tema se aplica al instante en este dispositivo.",
+    "lblTema": "Tema",
+    "temaClaro": "Claro",
+    "temaOscuro": "Oscuro",
+    "lblIdioma": "Idioma",
+    "lblMoneda": "Moneda",
+    "monedaTxt": "Peso mexicano (MXN)",
+    "monedaHint": "Todos los precios se muestran en pesos mexicanos.",
+    "prefSub": "Se guardan en este dispositivo.",
+    "prefGuardada": "Preferencia guardada",
+    "errorGuardar": "No se pudo guardar. Inténtalo de nuevo.",
+    "dosPasosTitulo": "Verificación en dos pasos",
+    "dosPasosSub": "Agrega una capa extra de seguridad al iniciar sesión.",
+    "dosPasosActiva": "Activada",
+    "dosPasosInactiva": "Desactivada",
+    "dosPasosHint": "Te pedirá un código extra, además de tu contraseña.",
+    "prefTitulo": "Preferencias del cajero",
+    "correoHint": "El correo es tu usuario; para cambiarlo pídelo al administrador."
+  },
+  "en": {
+    "navConfiguracion": "Settings",
+    "cfgTitulo": "Settings",
+    "cfgDesc": "Manage your account, security and appearance.",
+    "perfilTitulo": "Profile",
+    "perfilSub": "This is how you are identified in the system.",
+    "lblNombre": "First name",
+    "lblApellido": "Last name",
+    "lblCorreo": "Email",
+    "guardarCambios": "Save changes",
+    "perfilGuardado": "Profile updated",
+    "nombreObligatorio": "First name is required",
+    "passTitulo": "Password",
+    "passSub": "Use at least 8 characters. Mix letters, numbers and symbols to make it stronger.",
+    "lblPassActual": "Current password",
+    "lblPassNueva": "New password",
+    "lblPassConfirmar": "Confirm new password",
+    "cambiarPass": "Change password",
+    "passFalta": "Enter your current password",
+    "passCorta": "The new password must be at least 8 characters long",
+    "passNoCoincide": "The passwords do not match",
+    "passIgual": "The new password must be different from the current one",
+    "passCambiada": "Password updated",
+    "fuerzaDebil": "Strength: weak",
+    "fuerzaMedia": "Strength: medium",
+    "fuerzaFuerte": "Strength: strong",
+    "verPass": "Show or hide password",
+    "aparienciaTitulo": "Appearance and language",
+    "aparienciaSub": "The theme is applied instantly on this device.",
+    "lblTema": "Theme",
+    "temaClaro": "Light",
+    "temaOscuro": "Dark",
+    "lblIdioma": "Language",
+    "lblMoneda": "Currency",
+    "monedaTxt": "Mexican peso (MXN)",
+    "monedaHint": "All prices are shown in Mexican pesos.",
+    "prefSub": "They are saved on this device.",
+    "prefGuardada": "Preference saved",
+    "errorGuardar": "Could not save. Please try again.",
+    "dosPasosTitulo": "Two-step verification",
+    "dosPasosSub": "Add an extra layer of security when you sign in.",
+    "dosPasosActiva": "Enabled",
+    "dosPasosInactiva": "Disabled",
+    "dosPasosHint": "It will ask for an extra code, besides your password.",
+    "prefTitulo": "Cashier preferences",
+    "correoHint": "Your email is your username; ask the administrator to change it."
+  }
+};
+  const ct = k => (CFG_TEXTOS[idioma] || CFG_TEXTOS.es)[k] ?? k;
+  const CFG_PREFS = [];
+  const CFG_CLAVE = 'nexora-pref-' + CFG_ROL;
+  const cfgEsc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cfgIcono = d => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+  const CFG_OJO = '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>';
+  const CFG_OJO_NO = '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>';
+  const CFG_SOL = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>';
+  const CFG_LUNA = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>';
+
+  /* --- preferencias del rol (se guardan en este dispositivo) --- */
+  function cfgLeerPrefs() { try { return JSON.parse(localStorage.getItem(CFG_CLAVE)) || {}; } catch (e) { return {}; } }
+  function cfgPref(id) {
+    const guardadas = cfgLeerPrefs();
+    return id in guardadas ? guardadas[id] : CFG_PREFS.find(p => p.id === id).defecto;
+  }
+  function cfgGuardarPref(id, valor) {
+    const guardadas = cfgLeerPrefs();
+    guardadas[id] = valor;
+    try { localStorage.setItem(CFG_CLAVE, JSON.stringify(guardadas)); } catch (e) {}
+    cfgAplicarPrefs();
+    mostrarToast(ct('prefGuardada'), 'exito');
+  }
+
+  function cfgAplicarPrefs() {}
+  function cfgIniciar() {}
+
+  /* --- perfil y contraseña (los guarda el servidor) --- */
+  let cfgPerfil = null;
+
+  async function cfgApi(url, metodo = 'GET', cuerpo = null) {
+    const opciones = { method: metodo, headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } };
+    if (cuerpo !== null) { opciones.headers['Content-Type'] = 'application/json'; opciones.body = JSON.stringify(cuerpo); }
+    const resp = await fetch(url, opciones);
+    const data = resp.status === 204 ? null : await resp.json().catch(() => null);
+    if (!resp.ok) {
+      const primero = data && data.errors ? Object.values(data.errors)[0][0] : null;
+      throw new Error(primero || (data && data.message) || ct('errorGuardar'));
+    }
+    return data;
+  }
+
+  async function cfgCargarPerfil() {
+    try { cfgPerfil = await cfgApi('/configuracion/perfil'); }
+    catch (e) { cfgPerfil = cfgPerfil || { nombre: '', apellido: '', correo: '', rol: '', sucursal: '' }; }
+  }
+
+  function cfgIniciales() {
+    return (((cfgPerfil.nombre || '')[0] || '') + ((cfgPerfil.apellido || '')[0] || '')).toUpperCase() || '?';
+  }
+
+  function cfgRefrescarCabecera() {
+    document.getElementById('cfgAvatar').textContent = cfgIniciales();
+    document.getElementById('cfgNombreCompleto').textContent = (cfgPerfil.nombre + ' ' + cfgPerfil.apellido).trim();
+  }
+
+  async function cfgGuardarPerfil() {
+    const nombre = document.getElementById('cfgNombre').value.trim();
+    const apellido = document.getElementById('cfgApellido').value.trim();
+    if (!nombre) { mostrarToast(ct('nombreObligatorio'), 'error'); return; }
+    try {
+      await cfgApi('/configuracion/perfil', 'PUT', { nombre, apellido });
+      cfgPerfil = Object.assign({}, cfgPerfil, { nombre, apellido });
+      cfgRefrescarCabecera();
+      mostrarToast(ct('perfilGuardado'), 'exito');
+    } catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  function cfgVerPass(id, boton) {
+    const campo = document.getElementById(id);
+    const oculto = campo.type === 'password';
+    campo.type = oculto ? 'text' : 'password';
+    boton.innerHTML = cfgIcono(oculto ? CFG_OJO_NO : CFG_OJO);
+  }
+
+  function cfgFuerza() {
+    const p = document.getElementById('cfgPassNueva').value;
+    let puntos = 0;
+    if (p.length >= 8) puntos++;
+    if (p.length >= 12) puntos++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) puntos++;
+    if (/\d/.test(p)) puntos++;
+    if (/[^A-Za-z0-9]/.test(p)) puntos++;
+    const nivel = !p ? 0 : puntos <= 1 ? 1 : puntos <= 3 ? 2 : 3;
+    const barra = document.getElementById('cfgFuerzaBarra');
+    barra.style.width = ['0%', '33%', '66%', '100%'][nivel];
+    barra.style.background = ['transparent', '#dc2626', '#f59e0b', '#16a34a'][nivel];
+    document.getElementById('cfgFuerzaTxt').textContent = nivel ? ct(['', 'fuerzaDebil', 'fuerzaMedia', 'fuerzaFuerte'][nivel]) : '';
+  }
+
+  async function cfgCambiarPass() {
+    const actual = document.getElementById('cfgPassActual').value;
+    const nueva = document.getElementById('cfgPassNueva').value;
+    const confirmar = document.getElementById('cfgPassConfirmar').value;
+    if (!actual) { mostrarToast(ct('passFalta'), 'error'); return; }
+    if (nueva.length < 8) { mostrarToast(ct('passCorta'), 'error'); return; }
+    if (nueva !== confirmar) { mostrarToast(ct('passNoCoincide'), 'error'); return; }
+    if (nueva === actual) { mostrarToast(ct('passIgual'), 'error'); return; }
+    try {
+      await cfgApi('/configuracion/password', 'PUT', { password_actual: actual, password_nueva: nueva, password_nueva_confirmation: confirmar });
+      ['cfgPassActual', 'cfgPassNueva', 'cfgPassConfirmar'].forEach(id => { document.getElementById(id).value = ''; });
+      cfgFuerza();
+      mostrarToast(ct('passCambiada'), 'exito');
+    } catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  /* --- tema e idioma --- */
+  function cfgElegirTema(tema) {
+    // Reutiliza toggleTema(), que ya guarda la preferencia como lo hace tu panel
+    const actual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    if (tema !== actual) toggleTema();
+    cfgMarcarTema();
+  }
+  function cfgMarcarTema() {
+    const oscuro = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.querySelectorAll('.cfg-tema').forEach(b => b.classList.toggle('activo', (b.dataset.tema === 'dark') === oscuro));
+  }
+  new MutationObserver(cfgMarcarTema).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  // En el panel real los enlaces de idioma llevan a la ruta de Laravel; si el enlace es "#" (demo) se cambia en la página.
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[data-lang]');
+    if (a && a.getAttribute('href') === '#') { e.preventDefault(); idioma = a.dataset.lang; aplicarIdioma(); }
+  });
+
+
+  /* --- verificación en dos pasos (por ahora solo visual) --- */
+  let cfg2faActivo = false;
+  const CFG_ESCUDO = '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>';
+
+  function cfgToggle2fa(activo) {
+    cfg2faActivo = activo;
+    document.getElementById('cfgEscudo').classList.toggle('on', activo);
+    const txt = document.getElementById('cfg2faEstado');
+    txt.classList.toggle('on', activo);
+    txt.textContent = ct(activo ? 'dosPasosActiva' : 'dosPasosInactiva');
+  }
+
+  /* --- pantalla --- */
+  function cfgFilaPref(p) {
+    let control = '';
+    if (p.tipo === 'switch') {
+      control = `<label class="cfg-switch"><input type="checkbox" ${cfgPref(p.id) ? 'checked' : ''} onchange="cfgGuardarPref('${p.id}', this.checked)"><span></span></label>`;
+    } else if (p.tipo === 'select') {
+      const actual = String(cfgPref(p.id));
+      control = `<select onchange="cfgGuardarPref('${p.id}', this.value)">${p.opciones().map(o => `<option value="${cfgEsc(o.valor)}" ${String(o.valor) === actual ? 'selected' : ''}>${cfgEsc(o.texto)}</option>`).join('')}</select>`;
+    } else {
+      control = `<input type="number" min="${p.min ?? 0}" step="${p.step ?? 1}" value="${cfgEsc(cfgPref(p.id))}" onchange="cfgGuardarPref('${p.id}', parseFloat(this.value) || 0)">`;
+    }
+    return `<div class="cfg-fila"><div><b>${ct('pref_' + p.id)}</b><small>${ct('prefHint_' + p.id)}</small></div>${control}</div>`;
+  }
+
+  async function renderConfiguracion() {
+    const cont = document.getElementById('sec-configuracion');
+    if (!cfgPerfil) { cont.innerHTML = ''; await cfgCargarPerfil(); }
+    const rolTexto = cfgPerfil.rol || CFG_ETIQUETA[idioma] || CFG_ETIQUETA.es;
+    const campoPass = (id, etiqueta, extra = '') => `
+      <div class="cfg-campo"><label for="${id}">${ct(etiqueta)}</label>
+        <div class="cfg-pass"><input type="password" id="${id}" autocomplete="${id === 'cfgPassActual' ? 'current-password' : 'new-password'}" ${extra}>
+          <button type="button" class="cfg-ojo" onclick="cfgVerPass('${id}', this)" title="${ct('verPass')}" aria-label="${ct('verPass')}">${cfgIcono(CFG_OJO)}</button></div></div>`;
+    cont.innerHTML = `
+      <h2>${ct('cfgTitulo')}</h2>
+      <p class="desc">${ct('cfgDesc')}</p>
+      <div class="cfg-grid">
+        <div class="cfg-card">
+          <h3>${ct('perfilTitulo')}</h3><p class="cfg-sub">${ct('perfilSub')}</p>
+          <div class="cfg-perfil"><div class="cfg-avatar" id="cfgAvatar">${cfgEsc(cfgIniciales())}</div>
+            <div><b id="cfgNombreCompleto">${cfgEsc((cfgPerfil.nombre + ' ' + cfgPerfil.apellido).trim())}</b><span>${cfgEsc(rolTexto)}${cfgPerfil.sucursal ? ' · ' + cfgEsc(cfgPerfil.sucursal) : ''}</span></div></div>
+          <div class="cfg-form">
+            <div class="cfg-campo"><label for="cfgNombre">${ct('lblNombre')}</label><input type="text" id="cfgNombre" maxlength="80" value="${cfgEsc(cfgPerfil.nombre)}"></div>
+            <div class="cfg-campo"><label for="cfgApellido">${ct('lblApellido')}</label><input type="text" id="cfgApellido" maxlength="80" value="${cfgEsc(cfgPerfil.apellido)}"></div>
+            <div class="cfg-campo"><label for="cfgCorreo">${ct('lblCorreo')}</label><input type="email" id="cfgCorreo" value="${cfgEsc(cfgPerfil.correo)}" disabled><small>${ct('correoHint')}</small></div>
+          </div>
+          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgGuardarPerfil()">${ct('guardarCambios')}</button></div>
+        </div>
+
+        <div class="cfg-card">
+          <h3>${ct('passTitulo')}</h3><p class="cfg-sub">${ct('passSub')}</p>
+          <div class="cfg-form">
+            ${campoPass('cfgPassActual', 'lblPassActual')}
+            ${campoPass('cfgPassNueva', 'lblPassNueva', 'oninput="cfgFuerza()"')}
+            ${campoPass('cfgPassConfirmar', 'lblPassConfirmar')}
+            <div class="cfg-campo"><div class="cfg-fuerza"><i id="cfgFuerzaBarra"></i></div><span class="cfg-fuerza-txt" id="cfgFuerzaTxt"></span></div>
+          </div>
+          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgCambiarPass()">${ct('cambiarPass')}</button></div>
+        </div>
+
+        <div class="cfg-card">
+          <h3>${ct('dosPasosTitulo')}</h3><p class="cfg-sub">${ct('dosPasosSub')}</p>
+          <div class="cfg-fila">
+            <div style="display:flex; align-items:center; gap:0.8rem;">
+              <span class="cfg-escudo ${cfg2faActivo ? 'on' : ''}" id="cfgEscudo">${cfgIcono(CFG_ESCUDO)}</span>
+              <div><b>${ct('dosPasosTitulo')}</b><small class="cfg-2fa-estado ${cfg2faActivo ? 'on' : ''}" id="cfg2faEstado">${ct(cfg2faActivo ? 'dosPasosActiva' : 'dosPasosInactiva')}</small><small style="display:block">${ct('dosPasosHint')}</small></div>
+            </div>
+            <label class="cfg-switch verde"><input type="checkbox" ${cfg2faActivo ? 'checked' : ''} onchange="cfgToggle2fa(this.checked)" aria-label="${ct('dosPasosTitulo')}"><span></span></label>
+          </div>
+        </div>
+
+        <div class="cfg-card">
+          <h3>${ct('aparienciaTitulo')}</h3><p class="cfg-sub">${ct('aparienciaSub')}</p>
+          <div class="cfg-bloque"><label>${ct('lblTema')}</label>
+            <div class="cfg-temas">
+              <button type="button" class="cfg-tema" data-tema="light" onclick="cfgElegirTema('light')"><span class="cfg-prev claro"><i></i><b></b></span><span>${cfgIcono(CFG_SOL)}${ct('temaClaro')}</span></button>
+              <button type="button" class="cfg-tema" data-tema="dark" onclick="cfgElegirTema('dark')"><span class="cfg-prev oscuro"><i></i><b></b></span><span>${cfgIcono(CFG_LUNA)}${ct('temaOscuro')}</span></button>
+            </div></div>
+          <div class="cfg-bloque"><label>${ct('lblIdioma')}</label>
+            <div class="cfg-seg">
+              <a href="{{ route('lang.switch', 'es') }}" data-lang="es" class="${idioma === 'es' ? 'activo' : ''}">Español</a>
+              <a href="{{ route('lang.switch', 'en') }}" data-lang="en" class="${idioma === 'en' ? 'activo' : ''}">English</a>
+            </div></div>
+          <div class="cfg-info"><div><b>${ct('lblMoneda')}</b><small>${ct('monedaHint')}</small></div><span>${ct('monedaTxt')}</span></div>
+        </div>
+
+        ${CFG_PREFS.length ? `<div class="cfg-card">
+          <h3>${ct('prefTitulo')}</h3><p class="cfg-sub">${ct('prefSub')}</p>
+          ${CFG_PREFS.map(cfgFilaPref).join('')}
+        </div>` : ''}
+      </div>`;
+    cfgMarcarTema();
+  }
+
   const secciones = [
     { id: 'vender', key: 'navVender' },
     { id: 'corte', key: 'navCorte' },
@@ -682,6 +1069,7 @@
     // { id: 'compras', key: 'navCompras' },
     // { id: 'productos', key: 'navProductos' },
   ];
+  secciones.push({ id: 'configuracion', key: 'navConfiguracion' });
   let seccionActual = 'vender';
 
   /* ---------- TEMA CLARO / OSCURO ---------- */
@@ -739,6 +1127,7 @@
 
   function mostrarSeccion(id, soloRefrescar) {
     seccionActual = id;
+    if (id === 'configuracion') renderConfiguracion();
     secciones.forEach(s => {
       document.getElementById('sec-' + s.id).classList.toggle('activa', s.id === id);
       document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === id);
@@ -1184,6 +1573,7 @@
     document.getElementById('modalOverlay').classList.remove('activo');
     if (_resolverModal) _resolverModal(resultado);
   }
+  cfgIniciar();
 </script>
 
 </body>
