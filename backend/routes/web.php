@@ -129,6 +129,7 @@ Route::middleware(['auth', 'rol:administrador'])
         Route::post('/usuarios', [UsuarioController::class, 'store']);
         Route::put('/usuarios/{usuario}/rol', [UsuarioController::class, 'actualizarRol']);
         Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy']);
+        Route::post('/usuarios/{usuario}/invitacion', [UsuarioController::class, 'reenviarInvitacion']);
 
         Route::get('/inventario', [InventarioController::class, 'index']);
 

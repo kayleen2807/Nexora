@@ -11,9 +11,8 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use App\Services\EmailVerificationService;
 use App\Services\UserInvitationService;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class UsuarioController extends Controller
@@ -23,31 +22,40 @@ class UsuarioController extends Controller
     private const ROLES = [1 => 'admin', 2 => 'gerente', 3 => 'cajero'];
     private const ROLES_INVERSO = ['admin' => 1, 'gerente' => 2, 'cajero' => 3];
 
-    /** Solo las personas del negocio del admin. `esYo` marca la cuenta del propio admin. */
+    /**
+     * Solo las personas del negocio del admin. `esYo` marca la cuenta del propio admin e
+     * `invitacionEstado` el estado de su última invitación por correo (sent, viewed, accepted,
+     * expired, revoked) o, si nunca se le invitó, si ya verificó su correo.
+     */
     public function index(Request $request)
     {
         $yo = $this->usuario($request)->id_usuario;
 
-        return User::where('id_negocio', $this->idNegocio($request))
+        $usuarios = User::where('id_negocio', $this->idNegocio($request))
             ->orderBy('id_usuario')
-            ->get()
-            ->map(fn ($u) => [
-        $usuarios = User::orderBy('id_usuario')->get();
+            ->get();
         $invitaciones = UserInvitation::whereIn('user_id', $usuarios->pluck('id_usuario'))
             ->latest('id')
             ->get()
             ->groupBy('user_id');
 
-        return $usuarios->map(function ($u) use ($invitaciones) {
+        return $usuarios->map(function ($u) use ($invitaciones, $yo) {
             $invitacion = $invitaciones->get($u->id_usuario)?->first();
+            $estado = $invitacion?->status ?? ($u->email_verified_at ? 'verified' : 'pending');
+            // Una invitación que venció sin abrirse se reporta como vencida aunque nadie la haya revisado
+            if (in_array($estado, ['sent', 'viewed'], true) && $invitacion->expires_at?->isPast()) {
+                $estado = 'expired';
+            }
 
             return [
                 'id' => $u->id_usuario,
-                'nombre' => trim($u->nombre . ' ' . $u->apellido),
+                'nombre' => trim($u->nombre.' '.$u->apellido),
                 'rol' => self::ROLES[$u->id_rol] ?? 'cajero',
                 'sucursalId' => $u->id_sucursal,
                 'esYo' => $u->id_usuario === $yo,
-            ]);
+                'invitacionEstado' => $estado,
+            ];
+        });
     }
 
     /** Regla: la sucursal elegida debe ser del mismo negocio. */
@@ -68,9 +76,6 @@ class UsuarioController extends Controller
             "No puedes {$accion} tu propia cuenta.");
         abort_if((int) $usuario->id_rol === self::ROLES_INVERSO['admin'], 422,
             'El administrador es el dueño del negocio y no se puede modificar.');
-                'invitacionEstado' => $invitacion?->status ?? ($u->email_verified_at ? 'verified' : 'pending'),
-            ];
-        });
     }
 
     /** Mismos datos y reglas que el registro público (RegisterController), más rol y sucursal. */
@@ -83,12 +88,10 @@ class UsuarioController extends Controller
             'apellido' => ['required', 'string', 'max:150'],
             'fecha_nacimiento' => ['required', 'date', 'before_or_equal:'.now()->subYears(18)->toDateString()],
             'correo' => ['required', 'email', 'max:150', 'unique:usuario,correo'],
-            'contrasena' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/'],
+            // Sin contraseña: la persona invitada la crea desde el enlace del correo (UserInvitationController)
             // Un negocio tiene un solo administrador (su dueño): aquí solo se crean empleados
             'rol' => ['required', 'in:gerente,cajero'],
             'id_sucursal' => $this->reglaSucursal($request),
-            'rol' => ['required', 'in:admin,gerente,cajero'],
-            'id_sucursal' => ['nullable', 'integer', 'exists:sucursal,id_sucursal'],
         ], [
             'rol.in' => 'Solo puedes crear usuarios con rol Gerente o Cajero.',
             'id_sucursal.exists' => 'La sucursal no pertenece a tu negocio.',
@@ -96,8 +99,6 @@ class UsuarioController extends Controller
             'fecha_nacimiento.date' => __('Date of birth is invalid.'),
             'fecha_nacimiento.before_or_equal' => __('You must be at least 18 years old to register.'),
             'correo.unique' => __('This email address is already registered.'),
-            'contrasena.min' => __('Password must be at least 8 characters.'),
-            'contrasena.regex' => __('Password must include an uppercase letter, a number, and a special character.'),
         ]);
 
         $usuario = User::create([
@@ -105,15 +106,37 @@ class UsuarioController extends Controller
             'apellido' => $data['apellido'],
             'fecha_nacimiento' => $data['fecha_nacimiento'],
             'correo' => $data['correo'],
+            // Temporal e imposible de adivinar; se reemplaza cuando acepta la invitación (el cast la hashea)
             'contrasena' => Str::random(40),
             'id_rol' => self::ROLES_INVERSO[$data['rol']],
             'id_sucursal' => $data['id_sucursal'] ?? null,
             'id_negocio' => $this->idNegocio($request),
         ]);
 
-        $invitationService->send($usuario, Auth::user());
+        $invitationService->send($usuario, $this->usuario($request));
 
         return response()->json(['message' => __('Invitation sent successfully.')], 201);
+    }
+
+    /**
+     * Vuelve a mandar la invitación (la anterior queda revocada). Solo a empleados del
+     * negocio que aún no la han aceptado; máximo una vez por minuto por usuario.
+     */
+    public function reenviarInvitacion(Request $request, User $usuario, UserInvitationService $invitationService)
+    {
+        $this->asegurarEditable($request, $usuario, 'reenviar la invitación de');
+
+        $aceptada = UserInvitation::where('user_id', $usuario->id_usuario)->where('status', 'accepted')->exists();
+        abort_if($aceptada || $usuario->email_verified_at, 422, 'Este usuario ya activó su cuenta; no necesita otra invitación.');
+
+        $llave = 'reenvio-invitacion|'.$usuario->id_usuario;
+        abort_if(RateLimiter::tooManyAttempts($llave, 1), 422,
+            'Espera '.RateLimiter::availableIn($llave).' segundos antes de reenviar otra invitación a este usuario.');
+        RateLimiter::hit($llave, 60);
+
+        $invitationService->send($usuario, $this->usuario($request));
+
+        return response()->json(['message' => __('Invitation sent successfully.')]);
     }
 
     public function actualizarRol(Request $request, User $usuario)
@@ -151,6 +174,9 @@ class UsuarioController extends Controller
             DB::transaction(function () use ($usuario) {
                 Sucursal::where('id_gerente', $usuario->id_usuario)
                     ->update(['id_gerente' => null]);
+
+                // user_invitations no tiene llave foránea: se limpian a mano para no dejar huérfanas
+                UserInvitation::where('user_id', $usuario->id_usuario)->delete();
 
                 $usuario->delete();
             });

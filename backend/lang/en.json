@@ -96,7 +96,7 @@
     "Business name cannot exceed 150 characters.": "Business name cannot exceed 150 characters.",
     "Too many login attempts. Try again in :seconds seconds.": "Too many login attempts. Try again in :seconds seconds.",
     "Too many incorrect codes. Request a new code.": "Too many incorrect codes. For your security the code was cancelled: request a new one.",
-    "Please wait :seconds seconds before requesting another code.": "Please wait :seconds seconds before requesting another code."
+    "Please wait :seconds seconds before requesting another code.": "Please wait :seconds seconds before requesting another code.",
     "Invitation sent successfully.": "Invitation sent successfully.",
     "You have been invited to Nexora": "You have been invited to Nexora",
     "Accept your Nexora invitation": "Accept your Nexora invitation",
@@ -115,6 +115,7 @@
     "You were registered by :admin.": "You were registered by :admin.",
     "Use the button below to set your password and accept your registration.": "Use the button below to set your password and accept your registration.",
     "This link expires in :count minutes.": "This link expires in :count minutes.",
+    "This link expires in :count hours.": "This link expires in :count hours.",
     "By using Nexora you accept the Terms and Conditions and Privacy Notice.": "By using Nexora you accept the Terms and Conditions and Privacy Notice.",
     "This invitation link is invalid or has expired.": "This invitation link is invalid or has expired.",
     "Your invitation was accepted. Please log in.": "Your invitation was accepted. Please log in.",
