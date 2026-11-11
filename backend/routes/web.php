@@ -116,6 +116,19 @@ Route::middleware('auth')->group(function (){
         ->middleware('rol:cajero')->name('panel.cajero');
 
 });
+
+
+//Cambio de nombre y contraseña desde configuración
+Route::middleware('auth')
+    ->prefix('configuracion')
+    ->group(function () {
+        Route::get('/perfil', [ConfiguracionController::class, 'perfil']);
+        Route::put('/perfil', [ConfiguracionController::class, 'actualizarPerfil']);
+        Route::put('/password', [ConfiguracionController::class, 'cambiarPassword'])
+            ->middleware('throttle:6,1');
+    });
+ 
+
 //Admin
 Route::middleware(['auth', 'rol:administrador'])
     ->prefix('administrador')
