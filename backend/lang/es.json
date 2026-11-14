@@ -76,7 +76,6 @@
     "Google sign-in is not configured yet.": "El acceso con Google aún no está configurado.",
     "Could not sign in with Google. Please try again.": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
     "Your Google email is not verified.": "Tu correo de Google no está verificado.",
-<<<<<<< Updated upstream
     "Verify your Nexora email": "Verifica tu correo de Nexora",
     "Security": "Seguridad",
     "Protect your account.": "Protege tu cuenta.",
@@ -118,7 +117,6 @@
     "Branch": "Sucursal",
     "Role": "Rol",
     "Not assigned": "Sin asignar",
-    "User": "Usuario",
     "Registration date": "Fecha de registro",
     "Accept registration": "Aceptar registro",
     "You were registered by :admin.": "Fuiste registrado por :admin.",
@@ -128,8 +126,6 @@
     "By using Nexora you accept the Terms and Conditions and Privacy Notice.": "Al utilizar Nexora aceptas los Términos y Condiciones y el Aviso de Privacidad.",
     "This invitation link is invalid or has expired.": "Este enlace de invitación no es válido o ha vencido.",
     "Your invitation was accepted. Please log in.": "Tu invitación fue aceptada. Inicia sesión.",
-    "Terms and Conditions": "Términos y Condiciones",
-    "Privacy Notice": "Aviso de Privacidad",
     "I accept the": "Acepto los",
     "I agree to the": "Acepto el",
     "and the": "y el",
@@ -139,8 +135,7 @@
     "Hello :name.": "Hola :name.",
     "Branch: :branch": "Sucursal: :branch",
     "Role: :role": "Rol: :role",
-    "Registration date: :date": "Fecha de registro: :date"
-=======
+    "Registration date: :date": "Fecha de registro: :date",
     "Welcome": "Bienvenido",
     "Welcome to Nexora": "Bienvenido a Nexora",
     "Sign in or create an account to get started.": "Inicia sesión o crea una cuenta para comenzar.",
@@ -171,5 +166,4 @@
     "The message is required.": "El mensaje es obligatorio.",
     "The message must be at least 10 characters.": "El mensaje debe tener al menos 10 caracteres.",
     "The message cannot exceed 2000 characters.": "El mensaje no puede tener más de 2000 caracteres."
->>>>>>> Stashed changes
 }
