@@ -59,7 +59,8 @@
 
         {{-- Portada --}}
         <section class="welcome-hero">
-            <div class="brand-mark" aria-label="Nexora">
+            {{-- Columna izquierda: logo y, debajo, NEXORA + sistema de punto de venta + gestión centralizada --}}
+            <div class="welcome-hero__brand" aria-label="Nexora">
                 <div class="logo-badge">
                     <img src="{{ asset('img/nexora-logo-cropped.png') }}" alt="Nexora - Sistema de punto de venta">
                 </div>
@@ -67,18 +68,21 @@
                     <p>NEXORA</p>
                     <span>{{ __('Point of Sale System') }}</span>
                 </div>
-            </div>
-
-            <div class="panel-copy">
                 <p class="eyebrow">{{ __('Centralized Management') }}</p>
-                <h1>{{ __('POS to grow with organization.') }}</h1>
-                <p>{{ __('Manage sales, inventory and branches from a clear and fast experience.') }}</p>
             </div>
 
-            <div class="welcome-features" aria-label="Beneficios">
-                <span><i class="bi bi-cart-check"></i> {{ __('Sales') }}</span>
-                <span><i class="bi bi-box-seam"></i> {{ __('Inventory') }}</span>
-                <span><i class="bi bi-shop"></i> {{ __('Branches') }}</span>
+            {{-- Columna derecha: título, descripción y etiquetas --}}
+            <div class="welcome-hero__copy">
+                <div class="panel-copy">
+                    <h1>{{ __('POS to grow with organization.') }}</h1>
+                    <p>{{ __('Manage sales, inventory and branches from a clear and fast experience.') }}</p>
+                </div>
+
+                <div class="welcome-features" aria-label="Beneficios">
+                    <span><i class="bi bi-cart-check"></i> {{ __('Sales') }}</span>
+                    <span><i class="bi bi-box-seam"></i> {{ __('Inventory') }}</span>
+                    <span><i class="bi bi-shop"></i> {{ __('Branches') }}</span>
+                </div>
             </div>
         </section>
 
