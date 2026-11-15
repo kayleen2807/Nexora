@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AyudaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -35,6 +36,7 @@ use App\Http\Controllers\Gerente\ReporteController as GerenteReporteController;
 use App\Http\Controllers\Cajero\ReporteController as CajeroReporteController;
 use App\Http\Controllers\ConfiguracionController;
 
+
 //Ruta para la funcion del idioma(local)
 Route::get('/lang/{locale}', function ($locale){
     
@@ -58,7 +60,7 @@ Route::view('/terminos', 'legal.terminos')->name('legal.terminos');
 Route::view('/privacidad', 'legal.privacidad')->name('legal.privacidad');
 
 //Ruta para el login y para cerrar sesion
-Route::get('/', fn () => redirect()->route('login'));
+Route::view('/', 'auth.bienvenida')->name('bienvenida');
 
 // Sirve los archivos públicos también en el servidor local de Windows, donde
 // el servidor PHP puede no resolver correctamente el junction public/storage.
@@ -115,6 +117,12 @@ Route::middleware('auth')->group(function (){
     
     Route::get('/cajero', fn() => view('auth.cajero'))
         ->middleware('rol:cajero')->name('panel.cajero');
+
+    //Ayuda: solo con sesión iniciada
+    Route::get('/ayuda', [AyudaController::class, 'create'])->name('ayuda');
+    Route::post('/ayuda', [AyudaController::class, 'store'])
+        ->middleware('throttle:5,10')
+        ->name('ayuda.enviar');
 
 });
 
