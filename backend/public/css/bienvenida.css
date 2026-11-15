@@ -1,8 +1,6 @@
 html { scroll-behavior: smooth; }
 
-/* =========================================================
-   Bienvenida: una sola pantalla (sin contenedor derecho)
-   ========================================================= */
+/* Bienvenida: una sola pantalla (sin contenedor derecho)*/
 .welcome-page {
     position: relative;
     min-height: 100dvh;
@@ -301,9 +299,7 @@ html { scroll-behavior: smooth; }
     }
 }
 
-/* =========================================================
-   Página de ayuda (/ayuda)
-   ========================================================= */
+/* Página de ayuda (/ayuda) */
 :root {
     --success: #1f8a4c;
 }
