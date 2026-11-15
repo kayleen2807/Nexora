@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\UserInvitationController;
 use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\DosPasosController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +76,11 @@ Route::post('/login', [LoginController::class, 'login']);
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+//Segundo paso del login (código por correo) para cuentas con la verificación en dos pasos activa
+Route::get('/dos-pasos', [DosPasosController::class, 'show'])->name('dos-pasos.show');
+Route::post('/dos-pasos', [DosPasosController::class, 'verificar'])->middleware('throttle:10,1')->name('dos-pasos.verificar');
+Route::post('/dos-pasos/reenviar', [DosPasosController::class, 'reenviar'])->name('dos-pasos.reenviar');
+
 //Registro
 Route::get('/register', [RegisterController::class, 'showRegisterForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
@@ -135,6 +141,10 @@ Route::middleware('auth')
         Route::put('/perfil', [ConfiguracionController::class, 'actualizarPerfil']);
         Route::put('/password', [ConfiguracionController::class, 'cambiarPassword'])
             ->middleware('throttle:6,1');
+        // Verificación en dos pasos: pedir el código al correo y confirmarlo (activar o desactivar)
+        Route::post('/dos-pasos/codigo', [ConfiguracionController::class, 'enviarCodigoDosPasos']);
+        Route::put('/dos-pasos', [ConfiguracionController::class, 'confirmarDosPasos'])
+            ->middleware('throttle:10,1');
     });
  
 

@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\TerminaInicioSesion;
 use App\Http\Controllers\Controller;
+use App\Services\DosPasosService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\RateLimiter;
 
 class LoginController extends Controller
 {
+    use TerminaInicioSesion;
+
     /** Intentos fallidos permitidos por minuto (por correo + IP). */
     private const MAX_INTENTOS = 5;
 
@@ -28,7 +30,7 @@ class LoginController extends Controller
     /**
      * Autenticar al usuario contra la tabla "usuario".
      */
-    public function login(Request $request): RedirectResponse
+    public function login(Request $request, DosPasosService $dosPasos): RedirectResponse
     {
         /**
          * Credenciales requeridos para el login (usuario y contra) y se compruebam si estan vacios
@@ -87,22 +89,16 @@ class LoginController extends Controller
                 ->withErrors(['correo' => __('Please verify your email before logging in.')]);
         }
 
-        /** Si funciona crea una nueva sesion y lo redirige a la sesion correcta (depende del rol */
-        $request->session()->regenerate();
-
-        $idiomaActual = $request->cookie('idioma') ?? config('app.locale');
-
-        Session::put('locale', $idiomaActual);
-        Cookie::queue('idioma', $idiomaActual, 525600);
-
         /** @var User $usuario */
         $usuario = Auth::user();
 
-        if ($idiomaActual !== $usuario->idioma) {
-            $usuario->update(['idioma' => $idiomaActual]);
+        /** Verificación en dos pasos activa: la contraseña no basta, falta el código del correo */
+        if ($usuario->dos_pasos_activo) {
+            return $this->pedirSegundoPaso($request, $usuario, $request->boolean('remember'), 'login', $dosPasos);
         }
 
-        return redirect()->route('dashboard');
+        /** Si funciona crea una nueva sesion y lo redirige a la sesion correcta (depende del rol); ver TerminaInicioSesion */
+        return $this->terminarInicioSesion($request, $usuario, 'login');
     }
 
     /**

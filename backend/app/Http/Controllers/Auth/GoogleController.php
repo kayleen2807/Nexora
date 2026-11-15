@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\TerminaInicioSesion;
 use App\Http\Controllers\Controller;
 use App\Models\Negocio;
 use App\Models\Rol;
 use App\Models\User;
+use App\Services\DosPasosService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -22,6 +22,8 @@ use Throwable;
  */
 class GoogleController extends Controller
 {
+    use TerminaInicioSesion;
+
     private const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
     private const TOKEN_URL = 'https://oauth2.googleapis.com/token';
     private const USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
@@ -57,7 +59,7 @@ class GoogleController extends Controller
      * Paso 2: Google regresa aquí con un "code". Lo cambiamos por los datos del usuario,
      * buscamos (o creamos) su cuenta en la tabla "usuario" y abrimos sesión.
      */
-    public function callback(Request $request): RedirectResponse
+    public function callback(Request $request, DosPasosService $dosPasos): RedirectResponse
     {
         // El usuario canceló o Google devolvió un error
         if ($request->filled('error')) {
@@ -150,15 +152,15 @@ class GoogleController extends Controller
             });
         }
 
+        // Verificación en dos pasos activa: Google confirma quién es, pero aún falta el código del correo
+        if ($usuario->dos_pasos_activo) {
+            return $this->pedirSegundoPaso($request, $usuario, false, 'google', $dosPasos);
+        }
+
         Auth::login($usuario);
-        $request->session()->regenerate();
 
-        // Mismo manejo de idioma que LoginController
-        $idiomaActual = $request->cookie('idioma') ?? $usuario->idioma ?? config('app.locale');
-        Session::put('locale', $idiomaActual);
-        Cookie::queue('idioma', $idiomaActual, 525600);
-
-        return redirect()->intended(route('dashboard'));
+        // Sesión nueva + idioma (el mismo manejo que había aquí) + panel según el rol; ver TerminaInicioSesion
+        return $this->terminarInicioSesion($request, $usuario, 'google');
     }
 
     private function fail(?string $mensaje = null): RedirectResponse

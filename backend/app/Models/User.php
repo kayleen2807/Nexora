@@ -22,12 +22,15 @@ use App\Notifications\ResetPasswordNotification;
  * @property int|null $id_sucursal
  * @property int|null $id_negocio negocio al que pertenece (el admin: el negocio del que es dueño)
  * @property string $idioma
+ * @property bool $dos_pasos_activo verificación en dos pasos por correo (se cambia solo con forceFill, desde DosPasosService)
+ * @property string|null $dos_pasos_codigo código de inicio de sesión ENCRIPTADO (Hash)
+ * @property \Illuminate\Support\Carbon|null $dos_pasos_expira
  * @property-read Rol|null $rol
  * @property-read Sucursal|null $sucursal
  * @property-read Negocio|null $negocio
  */
 #[Fillable(['nombre', 'apellido', 'fecha_nacimiento', 'correo', 'contrasena', 'id_rol', 'id_sucursal', 'id_negocio', 'idioma', 'email_verified_at', 'email_verification_code', 'email_verification_expires_at'])]
-#[Hidden(['contrasena', 'remember_token'])]
+#[Hidden(['contrasena', 'remember_token', 'dos_pasos_codigo'])]
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -94,6 +97,8 @@ class User extends Authenticatable
             'fecha_nacimiento' => 'date',
             'email_verified_at' => 'datetime',
             'email_verification_expires_at' => 'datetime',
+            'dos_pasos_activo' => 'boolean',
+            'dos_pasos_expira' => 'datetime',
         ];
     }
 }

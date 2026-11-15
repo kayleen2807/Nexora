@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <title>Nexora - Punto de Venta</title>
 @include('partials.favicon')
 <script src="{{ asset('js/theme.js') }}"></script>
@@ -172,11 +173,24 @@
   .paginacion { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; margin-top: 0.9rem; font-size: 0.82rem; color: var(--muted); }
   .paginacion .btn:disabled { opacity: 0.45; cursor: default; }
 
-  /* ---------- MENÚ LATERAL FIJO ----------
-     Los botones del menú se quedan a la vista al bajar (sticky). El fondo blanco y la línea de la
-     columna los pinta .layout, para que sigan llegando hasta abajo aunque el menú sea más corto. */
-  .layout { background: linear-gradient(to right, var(--card-bg) 199px, var(--border-light) 199px 200px, transparent 200px); }
-  .sidebar { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; }
+  /* ---------- PANTALLA FIJA (barra de arriba y menú no se mueven) ----------
+     El panel mide exactamente lo que la ventana (100vh) y la página ya no se desplaza: solo el área
+     de contenido (y el menú, si no cabe) tiene su propia barra de desplazamiento. */
+  .pos-view { display: flex; flex-direction: column; height: 100vh; min-height: 0; overflow: hidden; }
+  .topbar { flex-shrink: 0; }
+  .layout { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .sidebar { overflow-y: auto; }
+  .content { overflow-y: auto; }
+
+  /* ---------- IDIOMA Y TEMA EN LA BARRA (mismos íconos que el login) ---------- */
+  .idioma-switch { display: inline-flex; border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; overflow: hidden; }
+  .topbar .idioma-switch a { padding: 0.3rem 0.75rem; font-size: 0.78rem; font-weight: 600; color: var(--topbar-text); opacity: 0.7; text-decoration: none; }
+  .topbar .idioma-switch a:hover { opacity: 1; }
+  .topbar .idioma-switch a.activo { background: var(--accent); color: #fff; opacity: 1; }
+  .tema-toggle i { line-height: 1; background: linear-gradient(135deg, #ffd45a, #f58a1f); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tema-toggle .icon-sun { display: none; }
+  [data-theme="dark"] .tema-toggle .icon-sun { display: block; }
+  [data-theme="dark"] .tema-toggle .icon-moon { display: none; }
 
   .pago-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
   .pago-section h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--muted); }
@@ -346,9 +360,13 @@
     <div class="topbar-derecha">
       <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
       <div class="esquina-superior">
-        @php $otroIdioma = app()->getLocale() === 'es' ? 'en' : 'es'; @endphp
-        <a class="idioma-toggle" id="idiomaTogglePanel" href="{{ route('lang.switch', $otroIdioma) }}" title="Change language">{{ strtoupper($otroIdioma) }}</a>
-        <button class="tema-toggle" id="temaTogglePos" onclick="toggleTema()" title="Cambiar tema">🌙</button>
+        <!-- Los dos idiomas a la vista; el activo va resaltado (recarga la página con lang.switch) -->
+        <div class="idioma-switch" role="group" aria-label="Idioma / Language">
+          <a href="{{ route('lang.switch', 'es') }}" class="{{ app()->getLocale() === 'es' ? 'activo' : '' }}" lang="es">Español</a>
+          <a href="{{ route('lang.switch', 'en') }}" class="{{ app()->getLocale() === 'en' ? 'activo' : '' }}" lang="en">English</a>
+        </div>
+        <!-- Mismo botón de tema que el login (Bootstrap Icons): el CSS muestra la luna en claro y el sol en oscuro -->
+        <button class="tema-toggle" id="temaTogglePos" onclick="toggleTema()" title="Cambiar tema" aria-label="Cambiar tema"><i class="bi bi-sun-fill icon-sun"></i><i class="bi bi-moon-fill icon-moon"></i></button>
       </div>
     </div>
   </div>
@@ -846,6 +864,17 @@
     "dosPasosActiva": "Activada",
     "dosPasosInactiva": "Desactivada",
     "dosPasosHint": "Te pedirá un código extra, además de tu contraseña.",
+    "dosPasosPideActivar": "Te enviamos un código a tu correo. Escríbelo para activar la verificación en dos pasos.",
+    "dosPasosPideDesactivar": "Te enviamos un código a tu correo. Escríbelo para desactivar la verificación en dos pasos.",
+    "dosPasosLblCodigo": "Código de 6 dígitos",
+    "dosPasosBtnActivar": "Activar",
+    "dosPasosBtnDesactivar": "Desactivar",
+    "dosPasosReenviar": "Reenviar código",
+    "dosPasosCancelar": "Cancelar",
+    "dosPasosCodigoEnviado": "Te enviamos un código a tu correo.",
+    "dosPasosCodigoInvalido": "Escribe el código de 6 dígitos.",
+    "dosPasosActivadaOk": "Verificación en dos pasos activada. La próxima vez que entres te pediremos un código.",
+    "dosPasosDesactivadaOk": "Verificación en dos pasos desactivada.",
     "prefTitulo": "Preferencias del cajero",
     "correoHint": "El correo es tu usuario; para cambiarlo pídelo al administrador."
   },
@@ -893,6 +922,17 @@
     "dosPasosActiva": "Enabled",
     "dosPasosInactiva": "Disabled",
     "dosPasosHint": "It will ask for an extra code, besides your password.",
+    "dosPasosPideActivar": "We sent a code to your email. Enter it to turn on two-step verification.",
+    "dosPasosPideDesactivar": "We sent a code to your email. Enter it to turn off two-step verification.",
+    "dosPasosLblCodigo": "6-digit code",
+    "dosPasosBtnActivar": "Turn on",
+    "dosPasosBtnDesactivar": "Turn off",
+    "dosPasosReenviar": "Resend code",
+    "dosPasosCancelar": "Cancel",
+    "dosPasosCodigoEnviado": "We sent a code to your email.",
+    "dosPasosCodigoInvalido": "Enter the 6-digit code.",
+    "dosPasosActivadaOk": "Two-step verification turned on. Next time you sign in we will ask for a code.",
+    "dosPasosDesactivadaOk": "Two-step verification turned off.",
     "prefTitulo": "Cashier preferences",
     "correoHint": "Your email is your username; ask the administrator to change it."
   }
@@ -940,7 +980,7 @@
   }
 
   async function cfgCargarPerfil() {
-    try { cfgPerfil = await cfgApi('/configuracion/perfil'); }
+    try { cfgPerfil = await cfgApi('/configuracion/perfil'); cfg2faActivo = !!cfgPerfil.dos_pasos; }
     catch (e) { cfgPerfil = cfgPerfil || { nombre: '', apellido: '', correo: '', rol: '', sucursal: '' }; }
   }
 
@@ -1023,16 +1063,59 @@
   });
 
 
-  /* --- verificación en dos pasos (por ahora solo visual) --- */
-  let cfg2faActivo = false;
+  /* --- verificación en dos pasos (código por correo; backend: ConfiguracionController + DosPasosService) --- */
+  let cfg2faActivo = false;     // estado REAL de la cuenta (viene de /configuracion/perfil)
+  let cfg2faPendiente = null;   // true/false mientras se espera el código para activar/desactivar; null = nada pendiente
   const CFG_ESCUDO = '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>';
 
-  function cfgToggle2fa(activo) {
-    cfg2faActivo = activo;
+  /* Pinta el interruptor con el estado real y, si hay un cambio pendiente, el campo del código */
+  function cfgPintar2fa() {
+    const activo = cfg2faActivo;
     document.getElementById('cfgEscudo').classList.toggle('on', activo);
     const txt = document.getElementById('cfg2faEstado');
     txt.classList.toggle('on', activo);
     txt.textContent = ct(activo ? 'dosPasosActiva' : 'dosPasosInactiva');
+    document.getElementById('cfg2faSwitch').checked = activo;   // no se mueve hasta confirmar con el código
+
+    document.getElementById('cfg2faConfirmar').innerHTML = cfg2faPendiente === null ? '' : `
+      <p class="cfg-sub" style="margin-top:0.9rem;">${ct(cfg2faPendiente ? 'dosPasosPideActivar' : 'dosPasosPideDesactivar')}</p>
+      <div class="cfg-form"><div class="cfg-campo"><label for="cfg2faCodigo">${ct('dosPasosLblCodigo')}</label>
+        <input type="text" id="cfg2faCodigo" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" onkeydown="if (event.key === 'Enter') cfgConfirmar2fa()"></div></div>
+      <div class="cfg-acciones">
+        <button class="btn btn-primario" onclick="cfgConfirmar2fa()">${ct(cfg2faPendiente ? 'dosPasosBtnActivar' : 'dosPasosBtnDesactivar')}</button>
+        <button class="btn" onclick="cfgToggle2fa(${cfg2faPendiente})">${ct('dosPasosReenviar')}</button>
+        <button class="btn" onclick="cfgCancelar2fa()">${ct('dosPasosCancelar')}</button>
+      </div>`;
+  }
+
+  /* Al mover el interruptor (o "Reenviar código"): el servidor manda el código al correo */
+  async function cfgToggle2fa(activar) {
+    try {
+      await cfgApi('/configuracion/dos-pasos/codigo', 'POST', { activar });
+      cfg2faPendiente = activar;
+      mostrarToast(ct('dosPasosCodigoEnviado'), 'exito');
+    } catch (e) { mostrarToast(e.message, 'error'); }
+    cfgPintar2fa();
+    document.getElementById('cfg2faCodigo')?.focus();
+  }
+
+  /* Confirma el cambio con el código que llegó al correo */
+  async function cfgConfirmar2fa() {
+    const codigo = document.getElementById('cfg2faCodigo').value.trim();
+    if (!/^\d{6}$/.test(codigo)) { mostrarToast(ct('dosPasosCodigoInvalido'), 'error'); return; }
+    try {
+      const r = await cfgApi('/configuracion/dos-pasos', 'PUT', { activar: cfg2faPendiente, codigo });
+      cfg2faActivo = !!r.dos_pasos;
+      cfg2faPendiente = null;
+      if (cfgPerfil) cfgPerfil.dos_pasos = cfg2faActivo;
+      mostrarToast(ct(cfg2faActivo ? 'dosPasosActivadaOk' : 'dosPasosDesactivadaOk'), 'exito');
+      cfgPintar2fa();
+    } catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  function cfgCancelar2fa() {
+    cfg2faPendiente = null;
+    cfgPintar2fa();
   }
 
   /* --- pantalla --- */
@@ -1050,6 +1133,7 @@
   }
 
   async function renderConfiguracion() {
+    cfg2faPendiente = null;   // al volver a la sección no queda un cambio a medias (la tarjeta se pinta de nuevo)
     const cont = document.getElementById('sec-configuracion');
     if (!cfgPerfil) { cont.innerHTML = ''; await cfgCargarPerfil(); }
     const rolTexto = cfgPerfil.rol || CFG_ETIQUETA[idioma] || CFG_ETIQUETA.es;
@@ -1091,8 +1175,9 @@
               <span class="cfg-escudo ${cfg2faActivo ? 'on' : ''}" id="cfgEscudo">${cfgIcono(CFG_ESCUDO)}</span>
               <div><b>${ct('dosPasosTitulo')}</b><small class="cfg-2fa-estado ${cfg2faActivo ? 'on' : ''}" id="cfg2faEstado">${ct(cfg2faActivo ? 'dosPasosActiva' : 'dosPasosInactiva')}</small><small style="display:block">${ct('dosPasosHint')}</small></div>
             </div>
-            <label class="cfg-switch verde"><input type="checkbox" ${cfg2faActivo ? 'checked' : ''} onchange="cfgToggle2fa(this.checked)" aria-label="${ct('dosPasosTitulo')}"><span></span></label>
+            <label class="cfg-switch verde"><input type="checkbox" id="cfg2faSwitch" ${cfg2faActivo ? 'checked' : ''} onchange="cfgToggle2fa(this.checked)" aria-label="${ct('dosPasosTitulo')}"><span></span></label>
           </div>
+          <div id="cfg2faConfirmar"></div>
         </div>
 
         <div class="cfg-card">
@@ -1131,12 +1216,8 @@
 
   /* ---------- TEMA CLARO / OSCURO ---------- */
   function aplicarTema(tema) {
+    // El sol o la luna del botón los cambia el CSS según data-theme (ya no se reescribe el texto del botón)
     document.documentElement.setAttribute('data-theme', tema);
-    const icono = tema === 'dark' ? '☀️' : '🌙';
-    const btnLogin = document.getElementById('temaToggleLogin');
-    const btnPos = document.getElementById('temaTogglePos');
-    if (btnLogin) btnLogin.textContent = icono;
-    if (btnPos) btnPos.textContent = icono;
   }
 
   function toggleTema() {
