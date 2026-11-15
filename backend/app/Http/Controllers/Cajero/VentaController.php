@@ -39,6 +39,8 @@ class VentaController extends Controller
                 'nombre' => $i->producto->nombre,
                 'foto' => $i->producto->foto ? Storage::disk('public')->url($i->producto->foto) : null,
                 'precio' => $i->precioFinal($i->producto),
+                // Sin IVA: el carrito calcula el subtotal con la misma fórmula que store()
+                'precio_base' => $i->precioBase($i->producto),
                 'stock' => $i->existencias,
                 'categoria' => $i->categoria?->nombre,
             ]);

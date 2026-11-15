@@ -97,7 +97,7 @@
   .topbar { background: var(--topbar-bg); color: var(--topbar-text); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
   .topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
   .topbar .brand .logo-sm { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
-  .topbar .sucursal { font-weight: 400; font-size: 0.85rem; color: #cbd2d9; margin-left: 8px; }
+  .topbar .sucursal { font-weight: 400; font-size: 1.1rem; color: #cbd2d9; margin-left: 8px; }
   .topbar-derecha { display: flex; align-items: center; gap: 10px; }
   .topbar a { color: var(--topbar-text); text-decoration: none; font-size: 0.9rem; cursor: pointer; }
 
@@ -163,6 +163,20 @@
   .vacio { font-size: 0.85rem; color: var(--muted-light); padding: 0.5rem 0; }
   .total-box #total { margin-left: 0.4rem; }
   .total-box { margin-top: 1rem; font-size: 1.3rem; font-weight: 700; text-align: right; color: var(--text); }
+  /* Subtotal (sin IVA) e IVA del carrito, más discretos que el total */
+  .desglose-box { margin-top: 0.75rem; font-size: 0.85rem; color: var(--muted); }
+  .desglose-box div { display: flex; justify-content: space-between; padding: 0.15rem 0; }
+  .desglose-box + .total-box { margin-top: 0.35rem; }
+
+  /* ---------- PAGINACIÓN DE TABLAS (variables del tema) ---------- */
+  .paginacion { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; margin-top: 0.9rem; font-size: 0.82rem; color: var(--muted); }
+  .paginacion .btn:disabled { opacity: 0.45; cursor: default; }
+
+  /* ---------- MENÚ LATERAL FIJO ----------
+     Los botones del menú se quedan a la vista al bajar (sticky). El fondo blanco y la línea de la
+     columna los pinta .layout, para que sigan llegando hasta abajo aunque el menú sea más corto. */
+  .layout { background: linear-gradient(to right, var(--card-bg) 199px, var(--border-light) 199px 200px, transparent 200px); }
+  .sidebar { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; }
 
   .pago-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
   .pago-section h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--muted); }
@@ -370,6 +384,10 @@
           <div class="carrito">
             <h2 data-i18n="carritoHeading">Carrito</h2>
             <div id="carritoItems"></div>
+            <div class="desglose-box">
+              <div><span data-i18n="ticketSubtotal">Subtotal</span><span id="subtotalCarrito">$0.00 MXN</span></div>
+              <div><span data-i18n="ticketIva">IVA</span><span id="ivaCarrito">$0.00 MXN</span></div>
+            </div>
             <div class="total-box"><span data-i18n="totalLabel">Total: $</span><span id="total">$0.00 MXN</span></div>
 
             <div class="pago-section">
@@ -624,6 +642,7 @@
       alertEfectivoContado: 'Ingresa el efectivo contado.', confirmCerrarCaja: '¿Cerrar tu caja? Después ya no podrás vender en este turno.',
       btnCerrarConfirm: 'Cerrar caja', corteRealizado: 'Corte realizado. Caja cerrada.',
       ticketSubtotal: 'Subtotal', ticketIva: 'IVA', ticketCajero: 'Cajero',
+      btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaTabla: 'Página :p de :t · :n registros',
       btnCancelar: 'Cancelar', btnEliminar: 'Eliminar',
       navReportes: 'Reportes', repHeading: 'Reportes al administrador', repNuevoHeading: 'Nuevo reporte', repListaHeading: 'Mis reportes',
       repDesc: 'Avisa al administrador de una falla, un faltante de producto, un problema con la caja o una sugerencia.',
@@ -706,6 +725,7 @@
       alertEfectivoContado: 'Enter the cash counted.', confirmCerrarCaja: 'Close your register? You will not be able to sell in this shift afterwards.',
       btnCerrarConfirm: 'Close register', corteRealizado: 'Cash count done. Register closed.',
       ticketSubtotal: 'Subtotal', ticketIva: 'Tax', ticketCajero: 'Cashier',
+      btnAnterior: 'Previous', btnSiguiente: 'Next', paginaTabla: 'Page :p of :t · :n records',
       btnCancelar: 'Cancel', btnEliminar: 'Delete',
       navReportes: 'Reports', repHeading: 'Reports to the administrator', repNuevoHeading: 'New report', repListaHeading: 'My reports',
       repDesc: 'Let the administrator know about a failure, a missing product, a register problem or a suggestion.',
@@ -725,6 +745,43 @@
 
   /* ---------- ICONOS SVG ---------- */
   const svg = d => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+
+  /* ---------- PAGINACIÓN DE TABLAS (en el navegador) ----------
+     Cada render pinta la tabla completa y luego llama paginarTabla(idTbody): aquí solo se OCULTAN
+     las filas que no son de la página actual y se dibujan los botones Anterior / Siguiente debajo.
+     Declaradas aquí arriba porque aplicarIdioma() ya pinta las secciones al cargar la página. */
+  const FILAS_POR_PAGINA = 10;
+  const paginasTablas = {};   // { idTbody: { pagina, clave } }
+
+  function paginarTabla(idTbody, clave = '') {
+    const tbody = document.getElementById(idTbody);
+    if (!tbody) return;
+    const estado = paginasTablas[idTbody] ?? (paginasTablas[idTbody] = { pagina: 1, clave });
+    if (estado.clave !== clave) { estado.pagina = 1; estado.clave = clave; }
+
+    const filas = [...tbody.rows];
+    const paginas = Math.max(1, Math.ceil(filas.length / FILAS_POR_PAGINA));
+    estado.pagina = Math.min(Math.max(1, estado.pagina), paginas);
+    const desde = (estado.pagina - 1) * FILAS_POR_PAGINA;
+    filas.forEach((fila, i) => { fila.style.display = (i >= desde && i < desde + FILAS_POR_PAGINA) ? '' : 'none'; });
+
+    let controles = document.getElementById('pag-' + idTbody);
+    if (!controles) {
+      controles = document.createElement('div');
+      controles.className = 'paginacion';
+      controles.id = 'pag-' + idTbody;
+      tbody.closest('table').after(controles);
+    }
+    controles.innerHTML = paginas <= 1 ? '' : `
+      <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina - 1})" ${estado.pagina <= 1 ? 'disabled' : ''}>‹ ${t('btnAnterior')}</button>
+      <span>${t('paginaTabla').replace(':p', estado.pagina).replace(':t', paginas).replace(':n', filas.length)}</span>
+      <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina + 1})" ${estado.pagina >= paginas ? 'disabled' : ''}>${t('btnSiguiente')} ›</button>`;
+  }
+
+  function irPaginaTabla(idTbody, n) {
+    paginasTablas[idTbody].pagina = n;
+    paginarTabla(idTbody, paginasTablas[idTbody].clave);
+  }
   const CARRITO = '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>';
   const ICONOS = {
     navConfiguracion: svg('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'),
@@ -1163,6 +1220,7 @@
           <td>${r.respuesta ? `${esc(r.respuesta)}<div class="rep-desc">${formatearFecha(r.fecha_respuesta)}</div>` : `<span class="rep-desc">${t('repSinRespuesta')}</span>`}</td>
         </tr>`).join('')
       : `<tr><td colspan="5" style="color:var(--muted);">${t('repSinReportes')}</td></tr>`;
+    paginarTabla('tablaReportes');
   }
 
   async function enviarReporte() {
@@ -1326,6 +1384,11 @@
       : `<div class="vacio">${t('carritoVacio')}</div>`;
 
     document.getElementById('total').textContent = dinero(total);
+    // Misma fórmula que el servidor (Cajero\VentaController@store): subtotal = suma de precio sin IVA × cantidad,
+    // redondeada por línea; IVA = total − subtotal. Así el carrito y el ticket dan las mismas cifras.
+    const subtotal = carrito.reduce((s, i) => s + Math.round((i.precio_base ?? i.precio) * i.cantidad * 100) / 100, 0);
+    document.getElementById('subtotalCarrito').textContent = dinero(subtotal);
+    document.getElementById('ivaCarrito').textContent = dinero(total - subtotal);
 
     const cambioRow = document.getElementById('cambioRow');
     let puedeCobrar = carrito.length > 0;

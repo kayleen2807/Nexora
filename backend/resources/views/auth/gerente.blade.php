@@ -59,7 +59,7 @@
   .topbar { background: var(--topbar-bg); color: var(--topbar-text); padding: 0.85rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
   .topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
   .topbar .brand .logo-sm { width: 28px; height: 28px; border-radius: 7px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-  .topbar .sucursal { font-weight: 400; font-size: 0.8rem; color: #cbd2d9; margin-left: 8px; }
+  .topbar .sucursal { font-weight: 400; font-size: 1.05rem; color: #cbd2d9; margin-left: 8px; }
   .topbar-derecha { display: flex; align-items: center; gap: 10px; }
   .topbar a { color: var(--topbar-text); text-decoration: none; font-size: 0.85rem; cursor: pointer; }
 
@@ -167,7 +167,15 @@
   .rep-resuelto { background: var(--success-bg); color: var(--success-text); }
   /* ---------- PAGINACIÓN DE CORTES (regla nueva; variables del tema) ---------- */
   .paginacion { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; margin-top: 0.9rem; font-size: 0.82rem; color: var(--muted); }
+  /* Cortes: las columnas de montos (fondo, ventas, esperado, contado, diferencia) no se parten en dos renglones */
+  #tablaCortes td:nth-child(n+5) { white-space: nowrap; }
   .paginacion .btn:disabled { opacity: 0.45; cursor: default; }
+
+  /* ---------- MENÚ LATERAL FIJO ----------
+     Los botones del menú se quedan a la vista al bajar (sticky). El fondo blanco y la línea de la
+     columna los pinta .layout, para que sigan llegando hasta abajo aunque el menú sea más corto. */
+  .layout { background: linear-gradient(to right, var(--card-bg) 219px, var(--border-light) 219px 220px, transparent 220px); }
+  .sidebar { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; }
   /* ---------- CONFIGURACIÓN DE LA CUENTA ---------- */
   .cfg-grid { display: grid; gap: 1rem; max-width: 780px; margin-top: 1rem; }
   .cfg-card { background: var(--card-bg, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: 12px; padding: 1.25rem 1.4rem; box-shadow: 0 1px 3px var(--shadow, rgba(0,0,0,0.06)); }
@@ -311,7 +319,7 @@
         <div class="card">
           <h3 data-i18n="comprasRegistradasHeading">Compras registradas</h3>
           <table>
-            <tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thFoto">Foto</th><th data-i18n="thProducto">Producto</th><th data-i18n="thCantidad">Cantidad</th><th data-i18n="thCostoUnit">Costo unit.</th><th data-i18n="thTotal">Total</th><th data-i18n="thProveedor">Proveedor</th></tr>
+            <tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thFoto">Foto</th><th data-i18n="thProducto">Producto</th><th data-i18n="thCantidad">Cantidad</th><th><span data-i18n="thCostoUnit">Costo unit.</span> (MXN)</th><th><span data-i18n="thTotal">Total</span> (MXN)</th><th data-i18n="thProveedor">Proveedor</th></tr>
             <tbody id="tablaCompras"></tbody>
           </table>
         </div>
@@ -330,8 +338,8 @@
           <table>
             <tr>
               <th data-i18n="thCajero">Cajero</th><th data-i18n="thCaja">Caja</th><th data-i18n="thApertura">Apertura</th><th data-i18n="thCierre">Cierre</th>
-              <th data-i18n="thFondo">Fondo</th><th data-i18n="thVentas">Ventas</th><th data-i18n="thEsperado">Esperado</th>
-              <th data-i18n="thContado">Contado</th><th data-i18n="thDiferencia">Diferencia</th>
+              <th><span data-i18n="thFondo">Fondo</span> (MXN)</th><th><span data-i18n="thVentas">Ventas</span> (MXN)</th><th><span data-i18n="thEsperado">Esperado</span> (MXN)</th>
+              <th><span data-i18n="thContado">Contado</span> (MXN)</th><th><span data-i18n="thDiferencia">Diferencia</span> (MXN)</th>
             </tr>
             <tbody id="tablaCortes"></tbody>
           </table>
@@ -379,7 +387,7 @@
               <th data-i18n="thCategoria">Categoría</th>
               <th data-i18n="thPrecioBase">Precio base</th>
               <th data-i18n="thIva">IVA %</th>
-              <th data-i18n="thPrecioFinal">Precio final</th>
+              <th><span data-i18n="thPrecioFinal">Precio final</span> (MXN)</th>
               <th data-i18n="thEstado">Estado</th>
               <th></th>
               <th></th>
@@ -394,7 +402,7 @@
         <p class="desc" data-i18n="historialDesc">Todas las ventas registradas en esta sucursal. Desde aquí puedes devolver piezas o cancelar una venta.</p>
         <div class="card">
           <table>
-            <tr><th data-i18n="thFolio">Folio</th><th data-i18n="thFecha">Fecha</th><th data-i18n="thCajero">Cajero</th><th data-i18n="thCaja">Caja</th><th data-i18n="thMetodo">Método</th><th data-i18n="thTotal">Total</th><th data-i18n="thEstado">Estado</th><th></th></tr>
+            <tr><th data-i18n="thFolio">Folio</th><th data-i18n="thFecha">Fecha</th><th data-i18n="thCajero">Cajero</th><th data-i18n="thCaja">Caja</th><th data-i18n="thMetodo">Método</th><th><span data-i18n="thTotal">Total</span> (MXN)</th><th data-i18n="thEstado">Estado</th><th></th></tr>
             <tbody id="tablaHistorial"></tbody>
           </table>
         </div>
@@ -506,6 +514,8 @@
   }
 
   const dinero = n => '$' + Number(n).toFixed(2) + ' MXN';
+  // En las tablas la moneda va en el encabezado ("Total (MXN)") para que el monto no se parta en dos renglones
+  const monto = n => '$' + Number(n).toFixed(2);
 
   /* ---------- CATEGORÍAS (las escribe el gerente; cada negocio tiene las suyas) ---------- */
   const escCat = c => String(c).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -538,6 +548,49 @@
   const ICONO_POWER = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>';
   const ICONO_BAN = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>';
   const ICONO_BASURA = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+
+  /* ---------- PAGINACIÓN DE TABLAS (en el navegador) ----------
+     Cada render pinta la tabla completa y luego llama paginarTabla(idTbody): aquí solo se OCULTAN
+     las filas que no son de la página actual y se dibujan los botones Anterior / Siguiente debajo.
+     "clave" describe el filtro con el que se pintó (ej. la categoría): si cambia, se regresa a la
+     página 1. Declaradas aquí arriba porque aplicarIdioma() ya pinta tablas al cargar la página. */
+  const FILAS_POR_PAGINA = 10;
+  const paginasTablas = {};   // { idTbody: { pagina, clave } }
+
+  function paginarTabla(idTbody, clave = '') {
+    const tbody = document.getElementById(idTbody);
+    if (!tbody) return;
+    const estado = paginasTablas[idTbody] ?? (paginasTablas[idTbody] = { pagina: 1, clave });
+    if (estado.clave !== clave) { estado.pagina = 1; estado.clave = clave; }
+
+    // Una fila con class="fila-anexa" (el panel de devolución abierto) cuenta junto con la venta de arriba
+    const grupos = [];
+    [...tbody.rows].forEach(fila => {
+      if (fila.classList.contains('fila-anexa') && grupos.length) grupos[grupos.length - 1].push(fila);
+      else grupos.push([fila]);
+    });
+    const paginas = Math.max(1, Math.ceil(grupos.length / FILAS_POR_PAGINA));
+    estado.pagina = Math.min(Math.max(1, estado.pagina), paginas);   // p. ej. si se borró la última fila de la última página
+    const desde = (estado.pagina - 1) * FILAS_POR_PAGINA;
+    grupos.forEach((grupo, i) => grupo.forEach(fila => { fila.style.display = (i >= desde && i < desde + FILAS_POR_PAGINA) ? '' : 'none'; }));
+
+    let controles = document.getElementById('pag-' + idTbody);
+    if (!controles) {
+      controles = document.createElement('div');
+      controles.className = 'paginacion';
+      controles.id = 'pag-' + idTbody;
+      tbody.closest('table').after(controles);
+    }
+    controles.innerHTML = paginas <= 1 ? '' : `
+      <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina - 1})" ${estado.pagina <= 1 ? 'disabled' : ''}>‹ ${t('btnAnterior')}</button>
+      <span>${t('paginaTabla').replace(':p', estado.pagina).replace(':t', paginas).replace(':n', grupos.length)}</span>
+      <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina + 1})" ${estado.pagina >= paginas ? 'disabled' : ''}>${t('btnSiguiente')} ›</button>`;
+  }
+
+  function irPaginaTabla(idTbody, n) {
+    paginasTablas[idTbody].pagina = n;
+    paginarTabla(idTbody, paginasTablas[idTbody].clave);
+  }
 
   /* ---------- IDIOMA ---------- */
   const textos = {
@@ -614,6 +667,7 @@
       repRol_gerente: 'Gerente', repRol_cajero: 'Cajero',
       repEnviado: 'Reporte enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
       btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaDe: 'Página :p de :t · :n cortes',
+      paginaTabla: 'Página :p de :t · :n registros',
     },
     en: {
       tagline: 'Manager panel', placeholderUsuario: 'Username', placeholderClave: 'Password',
@@ -688,6 +742,7 @@
       repRol_gerente: 'Manager', repRol_cajero: 'Cashier',
       repEnviado: 'Report sent to the administrator', repAlertCompleta: 'Write the subject and the description.',
       btnAnterior: 'Previous', btnSiguiente: 'Next', paginaDe: 'Page :p of :t · :n cash counts',
+      paginaTabla: 'Page :p of :t · :n records',
     }
   };
   let idioma = '{{ app()->getLocale() }}';
@@ -1078,6 +1133,7 @@
           <td>${r.respuesta ? `${esc(r.respuesta)}<div class="rep-desc">${formatearFecha(r.fecha_respuesta)}</div>` : `<span class="rep-desc">${t('repSinRespuesta')}</span>`}</td>
         </tr>`).join('')
       : `<tr><td colspan="6" style="color:var(--muted);">${t('repSinReportes')}</td></tr>`;
+    paginarTabla('tablaReportes');
   }
 
   async function enviarReporte() {
@@ -1118,7 +1174,9 @@
     document.getElementById('msVentasMes').textContent = dinero(Number(miSucursal.ventas_mes));
     document.getElementById('msDireccion').textContent = miSucursal.direccion || '—';
     document.getElementById('msContacto').textContent = miSucursal.contacto || '—';
-    document.getElementById('msEstado').textContent = miSucursal.estado || '—';
+    // La BD guarda 'activa' / 'inactiva' en minúsculas: se muestra el texto traducido ("Activa", "Active")
+    const estados = { activa: t('estadoActiva'), inactiva: t('estadoInactiva') };
+    document.getElementById('msEstado').textContent = estados[miSucursal.estado] ?? (miSucursal.estado || '—');
   }
 
   /* ---------- INVENTARIO ---------- */
@@ -1133,6 +1191,7 @@
         <td><input type="number" id="ajuste-${p.id}" placeholder="+/-"></td>
         <td><button class="btn btn-primario btn-sm" onclick="ajustarStock(${p.id})">${t('btnAplicar')}</button></td>
       </tr>`).join('');
+    paginarTabla('tablaInventario');
   }
 
   async function ajustarStock(id) {
@@ -1164,8 +1223,9 @@
         <td>${formatearFecha(c.fecha)}</td>
         <td>${c.foto ? `<img src="${esc(c.foto)}" alt="${esc(c.producto)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<span style="color:var(--muted-light);">—</span>`}</td>
         <td>${esc(c.producto)}</td><td>${c.cantidad}</td>
-        <td>${dinero(c.costo)}</td><td>${dinero(c.total)}</td><td>${esc(c.proveedor || '—')}</td>
+        <td>${monto(c.costo)}</td><td>${monto(c.total)}</td><td>${esc(c.proveedor || '—')}</td>
       </tr>`).join('') || `<tr><td colspan="7" style="color:var(--muted-light);">${t('sinCompras')}</td></tr>`;
+    paginarTabla('tablaCompras');
   }
 
   async function registrarCompra() {
@@ -1195,7 +1255,7 @@
     let clase = 'cuadrado', texto = t('cajaCuadrada');
     if (c.diferencia > 0) { clase = 'sobrante'; texto = t('sobrante'); }
     if (c.diferencia < 0) { clase = 'faltante'; texto = t('faltante'); }
-    return `<span class="diferencia-row ${clase}" style="padding:0;display:inline">${texto} ${dinero(Math.abs(c.diferencia))}</span>`;
+    return `<span class="diferencia-row ${clase}" style="padding:0;display:inline">${texto} ${monto(Math.abs(c.diferencia))}</span>`;
   }
 
   /* Controles "Anterior / Página X de Y / Siguiente" del historial de cortes (50 por página) */
@@ -1223,8 +1283,8 @@
       <tr>
         <td>${esc(c.cajero ?? '—')}</td><td>${c.caja ?? '—'}</td>
         <td>${formatearFecha(c.apertura)}</td><td>${c.cierre ? formatearFecha(c.cierre) : '—'}</td>
-        <td>${dinero(c.monto_inicial)}</td><td>${c.num_ventas} · ${dinero(c.total)}</td>
-        <td>${dinero(c.efectivo_esperado)}</td><td>${c.efectivo_contado === null ? '—' : dinero(c.efectivo_contado)}</td>
+        <td>${monto(c.monto_inicial)}</td><td>${c.num_ventas} · ${monto(c.total)}</td>
+        <td>${monto(c.efectivo_esperado)}</td><td>${c.efectivo_contado === null ? '—' : monto(c.efectivo_contado)}</td>
         <td>${celdaDiferencia(c)}</td>
       </tr>`).join('') || `<tr><td colspan="9" style="color:var(--muted-light);">${t('sinCortes')}</td></tr>`;
     renderPaginacionCortes();
@@ -1239,6 +1299,7 @@
         <td>${c.en_turno ? `<span class="badge badge-tarjeta">${t('badgeAbierta')}</span> ${esc(c.cajero ?? '')}` : t('libre')}</td>
         <td><button class="btn btn-peligro btn-sm" onclick="eliminarCaja(${c.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button></td>
       </tr>`).join('') || `<tr><td colspan="4" style="color:var(--muted-light);">${t('sinCajas')}</td></tr>`;
+    paginarTabla('tablaCajas');
   }
 
   async function agregarCaja() {
@@ -1294,7 +1355,7 @@
         <td><input type="text" class="cat-input" id="cat-${p.id}" list="listaCategorias" maxlength="40" value="${escCat(p.categoria || '')}" placeholder="${t('sinCategoria')}"></td>
         <td><input type="number" id="precio-${p.id}" value="${p.precio}" step="0.01"></td>
         <td><input type="number" id="iva-${p.id}" value="${p.iva}" step="0.01"></td>
-        <td id="final-${p.id}">${dinero((p.precio * (1 + p.iva / 100)))}</td>
+        <td id="final-${p.id}">${monto((p.precio * (1 + p.iva / 100)))}</td>
         <td><button class="btn btn-sm ${p.activo ? 'btn-exito' : 'btn-peligro'}" onclick="toggleActivo(${p.id})" title="${p.activo ? t('btnDarBaja') : t('btnReactivar')}" aria-label="${p.activo ? t('btnDarBaja') : t('btnReactivar')}">${ICONO_POWER}</button></td>
         <td><button class="btn btn-primario btn-sm" onclick="guardarProducto(${p.id})" title="${t('btnGuardar')}" aria-label="${t('btnGuardar')}">${ICONO_GUARDAR}</button></td>
         <td>
@@ -1304,6 +1365,7 @@
           </label>
         </td>
       </tr>`).join('');
+    paginarTabla('tablaProductos', filtroCat);   // otra categoría → página 1
   }
 
   async function subirFoto(id, inputEl) {
@@ -1394,12 +1456,13 @@
       <tr>
         <td>#${v.folio}</td><td>${formatearFecha(v.fecha)}</td><td>${esc(v.cajero)}</td><td>${v.caja ?? '—'}</td>
         <td><span class="badge ${efectivo ? 'badge-efectivo' : 'badge-tarjeta'}">${efectivo ? t('badgeEfectivo') : t('badgeTarjeta')}</span></td>
-        <td>${dinero(v.neto)}${v.devuelto > 0 ? `<br><span style="color:var(--muted);font-size:0.72rem;">${dinero(v.total)} − ${dinero(v.devuelto)} ${t('devueltoLabel')}</span>` : ''}</td>
+        <td>${monto(v.neto)}${v.devuelto > 0 ? `<br><span style="color:var(--muted);font-size:0.72rem;">${monto(v.total)} − ${monto(v.devuelto)} ${t('devueltoLabel')}</span>` : ''}</td>
         <td>${badgeEstadoVenta(v)}</td>
         <td><button class="btn btn-sm" onclick="gestionarVenta(${v.folio})">${abierta ? t('btnOcultar') : t('btnGestionar')}</button></td>
       </tr>
-      ${abierta && detalleVenta ? `<tr><td colspan="8">${panelDevolucion()}</td></tr>` : ''}`;
+      ${abierta && detalleVenta ? `<tr class="fila-anexa"><td colspan="8">${panelDevolucion()}</td></tr>` : ''}`;
     }).join('') || `<tr><td colspan="8" style="color:var(--muted-light);">${t('sinVentas')}</td></tr>`;
+    paginarTabla('tablaHistorial');
   }
 
   /* Panel bajo la venta: piezas a devolver por línea, motivo y botones */
@@ -1410,7 +1473,7 @@
 
     const filas = v.items.map(i => `
       <tr>
-        <td>${esc(i.producto)}</td><td>${i.cantidad}</td><td>${i.devuelto}</td><td>${dinero(i.precio_unitario)}</td>
+        <td>${esc(i.producto)}</td><td>${i.cantidad}</td><td>${i.devuelto}</td><td>${monto(i.precio_unitario)}</td>
         <td>${!cancelada && i.disponible > 0
           ? `<input type="number" id="dev-${i.id_detalle}" min="0" max="${i.disponible}" placeholder="0">`
           : '—'}</td>
@@ -1436,7 +1499,7 @@
 
     return `
       <table>
-        <tr><th>${t('thProducto')}</th><th>${t('thVendidos')}</th><th>${t('thDevueltos')}</th><th>${t('thPrecioUnit')}</th><th>${t('thDevolver')}</th></tr>
+        <tr><th>${t('thProducto')}</th><th>${t('thVendidos')}</th><th>${t('thDevueltos')}</th><th>${t('thPrecioUnit')} (MXN)</th><th>${t('thDevolver')}</th></tr>
         ${filas}
       </table>
       <div style="margin-top:0.75rem;">${acciones}</div>

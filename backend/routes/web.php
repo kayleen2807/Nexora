@@ -33,6 +33,7 @@ use App\Http\Controllers\Cajero\VentaController as CajeroVentaController;
 use App\Http\Controllers\Admin\ReporteController as AdminReporteController;
 use App\Http\Controllers\Gerente\ReporteController as GerenteReporteController;
 use App\Http\Controllers\Cajero\ReporteController as CajeroReporteController;
+use App\Http\Controllers\ConfiguracionController;
 
 //Ruta para la funcion del idioma(local)
 Route::get('/lang/{locale}', function ($locale){
@@ -157,6 +158,9 @@ Route::middleware(['auth', 'rol:administrador'])
 
         Route::get('/negocio', [NegocioController::class, 'show']);
         Route::put('/negocio', [NegocioController::class, 'update']);
+        Route::get('/negocios', [NegocioController::class, 'index']);
+        Route::post('/negocios', [NegocioController::class, 'store']);
+        Route::put('/negocios/{negocio}/activar', [NegocioController::class, 'activar']);
 
         Route::get('/reportes', [AdminReporteController::class, 'index']);
         Route::put('/reportes/{reporte}', [AdminReporteController::class, 'update']);

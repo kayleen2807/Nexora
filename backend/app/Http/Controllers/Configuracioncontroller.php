@@ -11,13 +11,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class ConfiguracionController extends Controller
 {
-    /** Columna donde se guarda la contraseña encriptada. Cámbiala si en tu tabla se llama distinto. */
-    private const COLUMNA_PASSWORD = 'password';
+    /** Columna donde se guarda la contraseña encriptada (en la tabla usuario se llama "contrasena"). */
+    private const COLUMNA_PASSWORD = 'contrasena';
 
     /* GET /configuracion/perfil — lo que muestra la pantalla */
     public function perfil(Request $request)
@@ -39,6 +38,10 @@ class ConfiguracionController extends Controller
         $datos = $request->validate([
             'nombre'   => ['required', 'string', 'max:80'],
             'apellido' => ['nullable', 'string', 'max:80'],
+        ], [
+            'nombre.required' => 'Escribe tu nombre.',
+            'nombre.max'      => 'El nombre puede tener máximo 80 caracteres.',
+            'apellido.max'    => 'El apellido puede tener máximo 80 caracteres.',
         ]);
 
         $usuario = $request->user();
@@ -62,6 +65,8 @@ class ConfiguracionController extends Controller
             // Mismas reglas que el registro: 8+ caracteres, una mayúscula, un número y un carácter especial
             'password_nueva'  => ['required', 'string', 'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/', 'confirmed', 'different:password_actual'],
         ], [
+            'password_actual.required' => 'Escribe tu contraseña actual.',
+            'password_nueva.required'  => 'Escribe la nueva contraseña.',
             'password_nueva.regex'     => 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial.',
             'password_nueva.confirmed' => 'Las contraseñas no coinciden.',
             'password_nueva.different' => 'La nueva contraseña debe ser distinta a la actual.',
@@ -69,23 +74,22 @@ class ConfiguracionController extends Controller
 
         $usuario = $request->user();
 
-        // 0) Cuentas que entran con Google, o invitaciones aún no aceptadas, no tienen contraseña guardada
-        if (empty($usuario->{self::COLUMNA_PASSWORD})) {
-            return response()->json([
-                'message' => 'Tu cuenta no tiene una contraseña propia (entra con Google o aún no aceptas la invitación).',
-            ], 422);
-        }
-
-        // 1) La contraseña actual tiene que ser correcta (se compara contra la encriptada guardada)
+        // 1) La contraseña actual tiene que ser correcta (se compara contra la encriptada guardada).
+        //    Las cuentas creadas con Google tienen una contraseña aleatoria que nadie conoce (la columna es
+        //    NOT NULL): para tener una propia usan "¿Olvidaste tu contraseña?" en el inicio de sesión.
         if (!Hash::check($request->password_actual, $usuario->{self::COLUMNA_PASSWORD})) {
+            $mensaje = 'La contraseña actual no es correcta. Si entras con Google, crea una con "¿Olvidaste tu contraseña?" en el inicio de sesión.';
+
             return response()->json([
-                'message' => 'La contraseña actual no es correcta.',
-                'errors'  => ['password_actual' => ['La contraseña actual no es correcta.']],
+                'message' => $mensaje,
+                'errors'  => ['password_actual' => [$mensaje]],
             ], 422);
         }
 
-        // 2) Se guarda ENCRIPTADA, nunca como texto normal
-        $usuario->{self::COLUMNA_PASSWORD} = Hash::make($request->password_nueva);
+        // 2) Se guarda ENCRIPTADA: el modelo User tiene el cast 'contrasena' => 'hashed', que la encripta
+        //    sola al asignarla. Por eso NO se usa Hash::make() aquí (se encriptaría dos veces y ya no
+        //    se podría iniciar sesión).
+        $usuario->{self::COLUMNA_PASSWORD} = $request->password_nueva;
         $usuario->save();
 
         // 3) Opcional: cierra la sesión en los demás dispositivos (requiere el middleware

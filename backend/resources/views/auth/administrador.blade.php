@@ -57,7 +57,7 @@
   .topbar { background: var(--topbar-bg); color: var(--topbar-text); padding: 0.85rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
   .topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
   .topbar .brand .logo-sm { width: 28px; height: 28px; border-radius: 7px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-  .topbar .sucursal { font-weight: 400; font-size: 0.8rem; color: #cbd2d9; margin-left: 8px; }
+  .topbar .sucursal { font-weight: 400; font-size: 1.05rem; color: #cbd2d9; margin-left: 8px; }
   .topbar-derecha { display: flex; align-items: center; gap: 10px; }
   .topbar a { color: var(--topbar-text); text-decoration: none; font-size: 0.85rem; cursor: pointer; }
 
@@ -84,6 +84,9 @@
   th, td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border-light); text-align: left; font-size: 0.85rem; }
   th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; }
   td input, td select { padding: 0.35rem; border: 1px solid var(--border); border-radius: 5px; font-size: 0.82rem; background: var(--card-bg); color: var(--text); }
+  /* Sucursales: cada campo se ajusta al ancho de su columna para que la fila no se salga de la tarjeta */
+  #tablaSucursales input, #tablaSucursales select { width: 100%; min-width: 0; }
+  #tablaSucursales .acciones-sucursal { white-space: nowrap; width: 1%; }
 
   .fila-form { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: end; }
   .fila-form .campo { display: flex; flex-direction: column; gap: 4px; }
@@ -180,7 +183,25 @@
   .contador-menu { margin-left: 6px; padding: 0 7px; border-radius: 20px; background: var(--danger-text); color: #fff; font-size: 0.7rem; font-weight: 700; }
   /* ---------- PAGINACIÓN DE CORTES (regla nueva; variables del tema) ---------- */
   .paginacion { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; margin-top: 0.9rem; font-size: 0.82rem; color: var(--muted); }
+  /* Cortes: las columnas de montos (fondo, ventas, esperado, contado, diferencia) no se parten en dos renglones */
+  #tablaCortes td:nth-child(n+5) { white-space: nowrap; }
   .paginacion .btn:disabled { opacity: 0.45; cursor: default; }
+  /* Etiquetas de color en la columna Diferencia de los cortes y en el estado de las ventas */
+  .badge-turno { background: var(--badge-gerente-bg); color: var(--badge-gerente-text); }
+  .badge-sobrante, .badge-completada { background: var(--success-bg); color: var(--success-text); }
+  .badge-faltante, .badge-cancelada { background: var(--danger-bg); color: var(--danger-text); }
+  .badge-cuadrada { background: var(--border-light); color: var(--muted); }
+  .badge-dev-parcial { background: var(--warning-bg); color: var(--warning-text); }
+  #tablaCortes .badge, #tablaVentas .badge { white-space: nowrap; }
+
+  /* ---------- MENÚ LATERAL FIJO ----------
+     Los botones del menú se quedan a la vista al bajar (sticky). El fondo blanco y la línea de la
+     columna los pinta .layout, para que sigan llegando hasta abajo aunque el menú sea más corto. */
+  .layout { background: linear-gradient(to right, var(--card-bg) 219px, var(--border-light) 219px 220px, transparent 220px); }
+  .sidebar { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; }
+
+  /* Mis negocios (tarjeta "Mi negocio") */
+  .negocios-desc { font-size: 0.8rem; color: var(--muted); margin: -0.6rem 0 0.9rem; }
 
   /* ---------- CONFIGURACIÓN DE LA CUENTA ---------- */
   .cfg-grid { display: grid; gap: 1rem; max-width: 780px; margin-top: 1rem; }
@@ -265,7 +286,7 @@
 </div>
 <div class="panel-view" id="panelView">
   <div class="topbar">
-    <div class="brand">Nexora <span class="sucursal"><span data-i18n="topbarTitulo"> — Panel de Administrador</span> · <span id="topbarNegocio"></span></span></div>
+    <div class="brand">Nexora <span class="sucursal"><span data-i18n="topbarTitulo"> — Panel de Administrador</span> · <span id="topbarNegocio">{{ auth()->user()->negocio->nombre ?? '' }}</span></span></div>
     <div class="topbar-derecha">
       <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
       <div class="esquina-superior">
@@ -299,7 +320,7 @@
           </div>
         </div>
         <div class="card">
-          <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thDireccion">Dirección</th><th data-i18n="thContacto">Contacto</th><th data-i18n="thEstado">Estado</th><th data-i18n="thGerente">Gerente</th><th></th><th></th></tr><tbody id="tablaSucursales"></tbody></table>
+          <table><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thDireccion">Dirección</th><th data-i18n="thContacto">Contacto</th><th data-i18n="thEstado">Estado</th><th data-i18n="thGerente">Gerente</th><th></th></tr><tbody id="tablaSucursales"></tbody></table>
         </div>
       </div>
 
@@ -320,7 +341,7 @@
           <div class="form-grid">
             <div class="campo"><label for="usrNombre" data-i18n="labelNombre">Nombre</label><input type="text" id="usrNombre" maxlength="150" autocomplete="off" data-i18n-placeholder="labelNombre" placeholder="Nombre"></div>
             <div class="campo"><label for="usrApellido" data-i18n="labelApellido">Apellido</label><input type="text" id="usrApellido" maxlength="150" autocomplete="off" data-i18n-placeholder="labelApellido" placeholder="Apellido"></div>
-            <div class="campo"><label for="usrNacimiento" data-i18n="labelFechaNacimiento">Fecha de nacimiento</label><input type="date" id="usrNacimiento" max="2008-01-01"></div>
+            <div class="campo"><label for="usrNacimiento" data-i18n="labelFechaNacimiento">Fecha de nacimiento</label><input type="date" id="usrNacimiento" max="{{ now()->subYears(18)->toDateString() }}"></div>
             <div class="campo"><label for="usrCorreo" data-i18n="labelCorreo">Correo</label><input type="email" id="usrCorreo" maxlength="150" autocomplete="off" placeholder="correo@nexora.com"></div>
           </div>
 
@@ -387,7 +408,7 @@
             <tr>
               <th data-i18n="thFoto">Foto</th>
               <th data-i18n="thProducto">Producto</th>
-              <th data-i18n="thPrecio">Precio</th>
+              <th><span data-i18n="thPrecio">Precio</span> (MXN)</th>
               <th data-i18n="thEstado">Estado</th>
               <th></th>
             </tr>
@@ -404,7 +425,7 @@
         </div>
         <p class="desc">Total en esta sucursal: <strong id="totalVentasSucursal">$0.00 MXN</strong></p>
         <div class="card">
-          <table><tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thCajero">Cajero</th><th data-i18n="thMetodoPago">Método de pago</th><th data-i18n="thTotal">Total</th><th data-i18n="thEstado">Estado</th></tr><tbody id="tablaVentas"></tbody></table>
+          <table><tr><th data-i18n="thFecha">Fecha</th><th data-i18n="thCajero">Cajero</th><th data-i18n="thMetodoPago">Método de pago</th><th><span data-i18n="thTotal">Total</span> (MXN)</th><th data-i18n="thEstado">Estado</th></tr><tbody id="tablaVentas"></tbody></table>
         </div>
       </div>
 
@@ -418,8 +439,8 @@
           <table>
             <tr>
               <th data-i18n="thCajero">Cajero</th><th data-i18n="thCaja">Caja</th><th data-i18n="thApertura">Apertura</th><th data-i18n="thCierre">Cierre</th>
-              <th data-i18n="thFondo">Fondo</th><th data-i18n="thVentas">Ventas</th><th data-i18n="thEsperado">Esperado</th>
-              <th data-i18n="thContado">Contado</th><th data-i18n="thDiferencia">Diferencia</th>
+              <th><span data-i18n="thFondo">Fondo</span> (MXN)</th><th><span data-i18n="thVentas">Ventas</span> (MXN)</th><th><span data-i18n="thEsperado">Esperado</span> (MXN)</th>
+              <th><span data-i18n="thContado">Contado</span> (MXN)</th><th><span data-i18n="thDiferencia">Diferencia</span> (MXN)</th>
             </tr>
             <tbody id="tablaCortes"></tbody>
           </table>
@@ -453,6 +474,20 @@
             <div class="campo"><label for="negocioNombre" data-i18n="labelNombreNegocio">Nombre del negocio</label><input type="text" id="negocioNombre" maxlength="150" style="min-width:260px;"></div>
             <button class="btn btn-primario" onclick="guardarNegocio()"><span id="icoGuardarNegocio" class="ico-texto"></span><span data-i18n="btnGuardar">Guardar</span></button>
           </div>
+
+          <hr class="form-separador">
+
+          <!-- Un mismo dueño puede tener varios negocios; cada uno con sus sucursales, productos y empleados -->
+          <h3 data-i18n="misNegociosHeading">Tus negocios</h3>
+          <p class="negocios-desc" data-i18n="misNegociosDesc">Cada negocio tiene sus propias sucursales, productos y empleados. Cambia de negocio para administrar otro.</p>
+          <div class="fila-form">
+            <div class="campo"><label for="negocioActivo" data-i18n="labelNegocioActivo">Negocio activo</label><select id="negocioActivo" style="min-width:260px;"></select></div>
+            <button class="btn btn-primario" onclick="cambiarNegocio()"><span id="icoCambiarNegocio" class="ico-texto"></span><span data-i18n="btnCambiarNegocio">Cambiar</span></button>
+          </div>
+          <div class="fila-form" style="margin-bottom:0;">
+            <div class="campo"><label for="nuevoNegocio" data-i18n="labelNuevoNegocio">Nuevo negocio</label><input type="text" id="nuevoNegocio" maxlength="150" data-i18n-placeholder="placeholderNuevoNegocio" placeholder="Ej. Papelería Sol" style="min-width:260px;"></div>
+            <button class="btn btn-primario" onclick="crearNegocio()"><span id="icoCrearNegocio" class="ico-texto"></span><span data-i18n="btnCrearNegocio">Crear negocio</span></button>
+          </div>
         </div>
         <div class="stats-grid">
           <div class="stat-card"><div class="valor" id="statSucursales">0</div><div class="etiqueta" data-i18n="statSucursales">Sucursales</div></div>
@@ -479,6 +514,7 @@
 
   let resumen = {};
   let negocio = null;
+  let misNegocios = [];   // negocios del dueño: [{ id, nombre, activo }]
 
   async function cargarResumen() {
     const res = await fetch('/administrador/resumen');
@@ -488,6 +524,11 @@
   async function cargarNegocio() {
     const res = await fetch('/administrador/negocio', { headers: { 'Accept': 'application/json' } });
     if (res.ok) negocio = await res.json();
+  }
+
+  async function cargarMisNegocios() {
+    const res = await fetch('/administrador/negocios', { headers: { 'Accept': 'application/json' } });
+    if (res.ok) misNegocios = await res.json();
   }
 
   let sucursales = [];
@@ -621,6 +662,13 @@
       repRol_gerente: 'Gerente', repRol_cajero: 'Cajero',
       repEnviado: 'Reporte enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
       btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaDe: 'Página :p de :t · :n cortes',
+      paginaTabla: 'Página :p de :t · :n registros',
+      misNegociosHeading: 'Tus negocios', misNegociosDesc: 'Cada negocio tiene sus propias sucursales, productos y empleados. Cambia de negocio para administrar otro.',
+      labelNegocioActivo: 'Negocio activo', btnCambiarNegocio: 'Cambiar', labelNuevoNegocio: 'Nuevo negocio',
+      placeholderNuevoNegocio: 'Ej. Papelería Sol', btnCrearNegocio: 'Crear negocio',
+      yaEnEseNegocio: 'Ya estás trabajando en ese negocio.', alertNombreNuevoNegocio: 'Escribe el nombre del nuevo negocio.',
+      confirmCrearNegocio: 'Se creará el negocio "{nombre}" (empieza vacío) y pasarás a trabajar en él. Tu negocio actual no cambia. ¿Continuar?',
+      fotoSubir: 'Subir foto',
     },
     en: {
       navConfiguracion: 'Settings',
@@ -698,6 +746,13 @@
       repRol_gerente: 'Manager', repRol_cajero: 'Cashier',
       repEnviado: 'Report sent to the administrator', repAlertCompleta: 'Write the subject and the description.',
       btnAnterior: 'Previous', btnSiguiente: 'Next', paginaDe: 'Page :p of :t · :n cash counts',
+      paginaTabla: 'Page :p of :t · :n records',
+      misNegociosHeading: 'Your businesses', misNegociosDesc: 'Each business has its own branches, products and staff. Switch businesses to manage another one.',
+      labelNegocioActivo: 'Active business', btnCambiarNegocio: 'Switch', labelNuevoNegocio: 'New business',
+      placeholderNuevoNegocio: 'e.g. Sun Stationery', btnCrearNegocio: 'Create business',
+      yaEnEseNegocio: 'You are already working in that business.', alertNombreNuevoNegocio: 'Enter the name of the new business.',
+      confirmCrearNegocio: 'The business "{nombre}" will be created (it starts empty) and you will switch to it. Your current business does not change. Continue?',
+      fotoSubir: 'Upload photo',
     }
   };
   let idioma = '{{ app()->getLocale() }}';
@@ -705,6 +760,8 @@
 
   /* -------- ICONOS --------- */
   const dinero = n => '$' + Number(n).toFixed(2) + ' MXN';
+  // En las tablas la moneda va en el encabezado ("Total (MXN)") para que el monto no se parta en dos renglones
+  const monto = n => '$' + Number(n).toFixed(2);
   const svg = d => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
   const CLIPBOARD_LIST = '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>';
   const ICONO_OJO = svg('<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>');
@@ -715,6 +772,54 @@
   const ICONO_GUARDAR = svg('<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>');
   const ICONO_CORREO = svg('<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>');
   const ICONO_BASURA = svg('<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>');
+  // Mismo ícono de "agregar foto" que usa el panel del gerente (antes aquí había un emoji 📷)
+  const ICONO_FOTO = svg('<path d="M15 8h.01"/><path d="m3 16 5-5c.928-.893 2.072-.893 3 0l4 4"/><path d="m14 14 1-1c.928-.893 2.072-.893 3 0l3 3"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M19 2v4"/><path d="M17 4h4"/>');
+  const ICONO_CAMBIAR = svg('<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>');
+  const ICONO_NUEVO = svg('<path d="M5 12h14"/><path d="M12 5v14"/>');
+
+  /* ---------- PAGINACIÓN DE TABLAS (en el navegador) ----------
+     Cada render pinta la tabla completa y luego llama paginarTabla(idTbody): aquí solo se OCULTAN
+     las filas que no son de la página actual y se dibujan los botones Anterior / Siguiente debajo.
+     "clave" describe el filtro con el que se pintó (sucursal, categoría…): si cambia, se regresa a la
+     página 1. Declaradas aquí arriba porque aplicarIdioma() ya pinta tablas al cargar la página. */
+  const FILAS_POR_PAGINA = 10;
+  const paginasTablas = {};   // { idTbody: { pagina, clave } }
+
+  function paginarTabla(idTbody, clave = '') {
+    const tbody = document.getElementById(idTbody);
+    if (!tbody) return;
+    const estado = paginasTablas[idTbody] ?? (paginasTablas[idTbody] = { pagina: 1, clave });
+    if (estado.clave !== clave) { estado.pagina = 1; estado.clave = clave; }
+
+    // Una fila con class="fila-anexa" (ej. un panel abierto bajo la fila) cuenta junto con la de arriba
+    const grupos = [];
+    [...tbody.rows].forEach(fila => {
+      if (fila.classList.contains('fila-anexa') && grupos.length) grupos[grupos.length - 1].push(fila);
+      else grupos.push([fila]);
+    });
+    const paginas = Math.max(1, Math.ceil(grupos.length / FILAS_POR_PAGINA));
+    estado.pagina = Math.min(Math.max(1, estado.pagina), paginas);   // p. ej. si se borró la última fila de la última página
+    const desde = (estado.pagina - 1) * FILAS_POR_PAGINA;
+    grupos.forEach((grupo, i) => grupo.forEach(fila => { fila.style.display = (i >= desde && i < desde + FILAS_POR_PAGINA) ? '' : 'none'; }));
+
+    let controles = document.getElementById('pag-' + idTbody);
+    if (!controles) {
+      controles = document.createElement('div');
+      controles.className = 'paginacion';
+      controles.id = 'pag-' + idTbody;
+      tbody.closest('table').after(controles);
+    }
+    controles.innerHTML = paginas <= 1 ? '' : `
+      <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina - 1})" ${estado.pagina <= 1 ? 'disabled' : ''}>‹ ${t('btnAnterior')}</button>
+      <span>${t('paginaTabla').replace(':p', estado.pagina).replace(':t', paginas).replace(':n', grupos.length)}</span>
+      <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina + 1})" ${estado.pagina >= paginas ? 'disabled' : ''}>${t('btnSiguiente')} ›</button>`;
+  }
+
+  function irPaginaTabla(idTbody, n) {
+    paginasTablas[idTbody].pagina = n;
+    paginarTabla(idTbody, paginasTablas[idTbody].clave);
+  }
+
   const ICONOS_MENU = {
     navConfiguracion: svg('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'),
     navSistema: svg('<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>'),
@@ -1083,14 +1188,15 @@
           : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}
         </td>
         <td>${esc(p.nombre)}</td>
-        <td>${dinero(p.precio)}</td>
+        <td>${monto(p.precio)}</td>
         <td><span class="badge ${p.activo ? 'badge-gerente' : 'badge-cajero'}">${p.activo ? t('estadoActiva') : t('estadoInactiva')}</span></td>
         <td>
-          <label class="btn btn-sm" style="background:var(--accent-bg-light);color:var(--accent-hover);cursor:pointer;" title="${t('labelFotoProducto')}">
-            📷 <input type="file" accept="image/*" style="display:none" onchange="subirFotoAdmin(${p.id}, this)">
+          <label class="btn btn-sm" style="background:var(--accent-bg-light);color:var(--accent-hover);cursor:pointer;" title="${t('labelFotoProducto')}" aria-label="${t('fotoSubir')}">
+            ${ICONO_FOTO}<input type="file" accept="image/*" style="display:none" onchange="subirFotoAdmin(${p.id}, this)">
           </label>
         </td>
       </tr>`).join('') || `<tr><td colspan="5" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+    paginarTabla('tablaProductosAdmin');
   }
 
   async function subirFotoAdmin(id, inputEl) {
@@ -1122,6 +1228,7 @@
     await cargarCortes();
     await cargarResumen();
     await cargarNegocio();
+    await cargarMisNegocios();
     await cargarReportes();
     mostrarSeccion('sistema');
   })();
@@ -1172,6 +1279,46 @@
     document.getElementById('icoGuardarNegocio').innerHTML = ICONO_GUARDAR;
     const input = document.getElementById('negocioNombre');
     if (negocio && document.activeElement !== input) input.value = negocio.nombre;
+    renderMisNegocios();
+  }
+
+  /* TUS NEGOCIOS: selector del negocio activo (conserva lo elegido al volver a pintar) */
+  function renderMisNegocios() {
+    document.getElementById('icoCambiarNegocio').innerHTML = ICONO_CAMBIAR;
+    document.getElementById('icoCrearNegocio').innerHTML = ICONO_NUEVO;
+    const select = document.getElementById('negocioActivo');
+    const elegido = select.value;
+    select.innerHTML = misNegocios.map(n => `<option value="${n.id}" ${n.activo ? 'selected' : ''}>${esc(n.nombre)}</option>`).join('');
+    if (elegido && misNegocios.some(n => String(n.id) === elegido)) select.value = elegido;
+  }
+
+  async function cambiarNegocio() {
+    const id = parseInt(document.getElementById('negocioActivo').value);
+    if (!id || misNegocios.find(n => n.activo)?.id === id) { mostrarToast(t('yaEnEseNegocio'), 'error'); return; }
+
+    const res = await fetch('/administrador/negocios/' + id + '/activar', {
+      method: 'PUT',
+      headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) { mostrarToast(data?.message ?? t('errorGenerico'), 'error'); return; }
+    // Sucursales, usuarios, ventas… todo el panel es de otro negocio: se recarga completo
+    location.reload();
+  }
+
+  async function crearNegocio() {
+    const nombre = document.getElementById('nuevoNegocio').value.trim();
+    if (!nombre) { mostrarToast(t('alertNombreNuevoNegocio'), 'error'); return; }
+    if (!(await confirmar(t('confirmCrearNegocio').replace('{nombre}', nombre), t('btnCrearNegocio')))) return;
+
+    const res = await fetch('/administrador/negocios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+      body: JSON.stringify({ nombre }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) { mostrarToast(data?.message ?? t('errorGenerico'), 'error'); return; }
+    location.reload();   // el servidor ya dejó el negocio nuevo como activo
   }
 
   /* MI NEGOCIO (nombre editable) */
@@ -1188,6 +1335,8 @@
     if (!res.ok) { mostrarToast(data?.message ?? t('errorGenerico'), 'error'); return; }
 
     negocio = data;
+    const activo = misNegocios.find(n => n.activo);
+    if (activo) { activo.nombre = data.nombre; renderMisNegocios(); }
     document.getElementById('topbarNegocio').textContent = data.nombre;
     mostrarToast(t('negocioActualizado'), 'exito');
   }
@@ -1206,9 +1355,12 @@
           </select>
         </td>
         <td><select id="sucGer-${s.id_sucursal}">${opcionesGerente(s.id_gerente)}</select></td>
-        <td><button class="btn btn-primario btn-sm" onclick="guardarSucursal(${s.id_sucursal})">${t('btnGuardar')}</button></td>
-        <td><button class="btn btn-peligro btn-sm" onclick="eliminarSucursal(${s.id_sucursal})">${t('btnEliminar')}</button></td>
+        <td class="acciones-sucursal">
+          <button class="btn btn-primario btn-sm" onclick="guardarSucursal(${s.id_sucursal})" title="${t('btnGuardar')}" aria-label="${t('btnGuardar')}">${ICONO_GUARDAR}</button>
+          <button class="btn btn-peligro btn-sm" onclick="eliminarSucursal(${s.id_sucursal})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button>
+        </td>
       </tr>`).join('');
+    paginarTabla('tablaSucursales');
   }
 
   async function agregarSucursal() {
@@ -1321,6 +1473,7 @@
         <td><button class="btn btn-primario btn-sm" onclick="guardarRol(${u.id})">${t('btnGuardar')}</button></td>
       </tr>`;
     }).join('');
+    paginarTabla('tablaRoles');
   }
 
   /* Explica en palabras qué implica el cambio, para confirmarlo antes de guardar */
@@ -1397,6 +1550,7 @@
         <td style="white-space:nowrap">${accion}</td>
       </tr>`;
     }).join('');
+    paginarTabla('tablaUsuarios');
   }
 
   /*  CREAR USUARIOS  */
@@ -1544,6 +1698,7 @@
           </tr>`;
         }).join('')
       : `<tr><td colspan="3" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+    paginarTabla('tablaInventarioGlobal', sucId);   // otra sucursal → página 1
   }
 
   /* Sekeccion de gerente  */
@@ -1571,10 +1726,13 @@
           <td>${new Date(v.fecha).toLocaleString()}</td>
           <td>${esc(v.cajero)}</td>
           <td>${esc(v.metodo_pago)}</td>
-          <td>${dinero(Number(v.total))}</td>
-          <td>${v.estado === 'cancelada' ? t('estadoCancelada') : (v.devuelto > 0 ? t('estadoDevParcial') : t('estadoCompletada'))}</td>
+          <td>${monto(Number(v.total))}</td>
+          <td>${v.estado === 'cancelada'
+            ? `<span class="badge badge-cancelada">${t('estadoCancelada')}</span>`
+            : (v.devuelto > 0 ? `<span class="badge badge-dev-parcial">${t('estadoDevParcial')}</span>` : `<span class="badge badge-completada">${t('estadoCompletada')}</span>`)}</td>
         </tr>`).join('')
       : `<tr><td colspan="5" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+    paginarTabla('tablaVentas', sucId);
   }
 
   /*  REPORTES de gerentes y cajeros (bandeja del dueño)  */
@@ -1636,6 +1794,7 @@
           <td><button class="btn btn-primario btn-sm" onclick="guardarReporte(${r.id})"><span class="ico-texto">${ICONO_GUARDAR}</span>${t('btnGuardar')}</button></td>
         </tr>`).join('')
       : `<tr><td colspan="8" style="color:var(--muted-light);">${t('repSinReportes')}</td></tr>`;
+    paginarTabla('tablaReportes', [fEstado, fTipo, fSucursal].join('|'));
   }
 
   async function guardarReporte(id) {
@@ -1673,13 +1832,14 @@
       filtro.innerHTML = opcionesSucursal();
     }
     const items = cortes;   // ya vienen filtrados por sucursal y paginados desde el servidor
-    const dinero = n => '$' + Number(n).toFixed(2) + ' MXN';
+    const dinero = monto;   // la moneda (MXN) va en los encabezados de esta tabla
 
+    // Todas las diferencias como etiqueta de color (antes "En turno" y "Caja cuadrada" eran texto plano)
     const diferencia = c => {
-      if (c.diferencia === null) return t('enTurno');
-      if (c.diferencia > 0) return `<span style="color:var(--success-text); font-weight:600;">${t('sobrante')} ${dinero(c.diferencia)}</span>`;
-      if (c.diferencia < 0) return `<span style="color:var(--danger-text); font-weight:600;">${t('faltante')} ${dinero(-c.diferencia)}</span>`;
-      return t('cajaCuadrada');
+      if (c.diferencia === null) return `<span class="badge badge-turno">${t('enTurno')}</span>`;
+      if (c.diferencia > 0) return `<span class="badge badge-sobrante">${t('sobrante')} ${dinero(c.diferencia)}</span>`;
+      if (c.diferencia < 0) return `<span class="badge badge-faltante">${t('faltante')} ${dinero(-c.diferencia)}</span>`;
+      return `<span class="badge badge-cuadrada">${t('cajaCuadrada')}</span>`;
     };
 
     document.getElementById('tablaCortes').innerHTML = items.length
