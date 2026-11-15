@@ -1,5 +1,8 @@
 html { scroll-behavior: smooth; }
 
+/* =========================================================
+   Bienvenida: una sola pantalla (sin contenedor derecho)
+   ========================================================= */
 .welcome-page {
     position: relative;
     min-height: 100dvh;
@@ -120,36 +123,46 @@ html { scroll-behavior: smooth; }
     color: var(--orange);
 }
 
-/* ---- Portada ---- */
+/* ---- Portada: logo a la izquierda, título a la derecha ---- */
 .welcome-hero {
     min-height: 100dvh;
+    display: grid;
+    grid-template-columns: minmax(240px, 360px) minmax(0, 660px);
+    justify-content: center;
+    align-items: center;
+    column-gap: clamp(40px, 6vw, 96px);
+    row-gap: 36px;
+    padding: 110px 58px 60px;
+}
+
+/* Logo con NEXORA, "Sistema de punto de venta" y "Gestión centralizada" debajo */
+.welcome-hero__brand {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 34px;
-    padding: 110px 58px 60px;
     text-align: center;
 }
-
-.welcome-hero .brand-mark {
-    width: auto;
-    max-width: 100%;
-    justify-content: center;
-    /* Corre el logo y NEXORA hacia la izquierda (el desplazamiento es la mitad de este margen). */
-    margin-right: clamp(0px, 14vw, 280px);
+.welcome-hero__brand .brand-wordmark {
+    margin-top: 26px;
+}
+.welcome-hero__brand .eyebrow {
+    margin: 16px 0 0;
 }
 
-.welcome-hero .panel-copy {
-    max-width: 720px;
-    margin-inline: auto;
+/* Título, descripción y etiquetas */
+.welcome-hero__copy {
+    text-align: left;
+}
+.welcome-hero__copy .panel-copy {
+    max-width: none;
 }
 
 .welcome-features {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 10px;
+    margin-top: 28px;
 }
 .welcome-features span {
     display: inline-flex;
@@ -254,15 +267,19 @@ html { scroll-behavior: smooth; }
         gap: 10px;
     }
 
+    /* En pantallas angostas la portada pasa a una sola columna, centrada. */
     .welcome-hero {
+        grid-template-columns: minmax(0, 1fr);
         padding: 130px 24px 56px;
-        gap: 28px;
+        row-gap: 32px;
     }
 
-    .welcome-hero .brand-mark {
-        flex-direction: column;
-        gap: 14px;
-        margin-right: 0;
+    .welcome-hero__copy {
+        text-align: center;
+    }
+
+    .welcome-features {
+        justify-content: center;
     }
 
     .about {
