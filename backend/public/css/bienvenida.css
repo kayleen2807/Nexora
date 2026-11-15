@@ -1,0 +1,349 @@
+html { scroll-behavior: smooth; }
+
+.welcome-page {
+    position: relative;
+    min-height: 100dvh;
+    color: var(--title);
+    background:
+        repeating-linear-gradient(115deg, transparent 0 140px, var(--brand-stripe) 140px 280px),
+        var(--brand-bg);
+}
+
+/* ---- Barra superior: menú + idiomas (a la izquierda del botón de tema) ---- */
+.welcome-topbar {
+    position: absolute;
+    top: 20px;
+    left: 58px;
+    right: 90px;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    min-height: 46px;
+}
+
+/* El selector de idioma deja de estar fijo en una esquina y se acomoda en la barra. */
+.welcome-topbar .language-switcher {
+    position: static;
+}
+
+.welcome-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.welcome-nav__link {
+    padding: 10px 14px;
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 160ms ease, color 160ms ease;
+}
+.welcome-nav__link:hover,
+.welcome-nav__link:focus-visible {
+    background: var(--pill-bg);
+    color: var(--title);
+    text-decoration: none;
+    outline: none;
+}
+
+.nav-dropdown {
+    position: relative;
+}
+
+/* Se redefine :hover porque la regla global button:hover es más específica que la clase sola. */
+.nav-dropdown__toggle {
+    width: auto;
+    height: 42px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 999px;
+    color: var(--white);
+    background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+    font-size: 14px;
+    box-shadow: 0 8px 16px rgba(207, 113, 16, 0.22);
+}
+.nav-dropdown__toggle:hover,
+.nav-dropdown__toggle:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(207, 113, 16, 0.3);
+    outline: none;
+}
+.nav-dropdown__toggle i {
+    transition: transform 160ms ease;
+}
+.nav-dropdown.is-open .nav-dropdown__toggle i {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown__list {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 210px;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    background: var(--card-bg);
+    box-shadow: var(--card-shadow);
+}
+.nav-dropdown__list[hidden] {
+    display: none;
+}
+.nav-dropdown__list a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    text-decoration: none;
+}
+.nav-dropdown__list a:hover,
+.nav-dropdown__list a:focus-visible {
+    background: color-mix(in srgb, var(--orange) 10%, transparent);
+    color: var(--title);
+    text-decoration: none;
+    outline: none;
+}
+.nav-dropdown__list i {
+    color: var(--orange);
+}
+
+/* ---- Portada ---- */
+.welcome-hero {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 34px;
+    padding: 110px 58px 60px;
+    text-align: center;
+}
+
+.welcome-hero .brand-mark {
+    width: auto;
+    max-width: 100%;
+    justify-content: center;
+    /* Corre el logo y NEXORA hacia la izquierda (el desplazamiento es la mitad de este margen). */
+    margin-right: clamp(0px, 14vw, 280px);
+}
+
+.welcome-hero .panel-copy {
+    max-width: 720px;
+    margin-inline: auto;
+}
+
+.welcome-features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+.welcome-features span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: var(--pill-bg);
+    color: var(--pill-text);
+    font-size: 12px;
+    font-weight: 700;
+}
+.welcome-features i { color: var(--orange); }
+
+/* ---- Sección "Acerca de Nexora" ---- */
+.about {
+    width: min(920px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 40px 44px;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    background: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    scroll-margin-top: 84px;
+}
+.welcome-page::after {
+    content: "";
+    display: block;
+    height: 56px;
+}
+
+.about h2 {
+    margin: 0;
+    color: var(--title);
+    font-size: clamp(28px, 2.6vw, 36px);
+    line-height: 1.15;
+}
+
+.about-lead {
+    margin: 14px 0 24px;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+}
+
+.about-card {
+    padding: 18px 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--input-bg);
+}
+.about-card i {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--orange);
+    font-size: 24px;
+}
+.about-card h3 {
+    margin: 0 0 6px;
+    color: var(--title);
+    font-size: 16px;
+}
+.about-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.about-note {
+    margin: 22px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.about-help {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    color: var(--title);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* ---- Pantallas angostas ---- */
+@media (max-width: 860px) {
+    /* La barra deja espacio al botón de tema y se acomoda en dos filas si no cabe. */
+    .welcome-topbar {
+        left: 20px;
+        right: 80px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .welcome-hero {
+        padding: 130px 24px 56px;
+        gap: 28px;
+    }
+
+    .welcome-hero .brand-mark {
+        flex-direction: column;
+        gap: 14px;
+        margin-right: 0;
+    }
+
+    .about {
+        padding: 28px 24px;
+    }
+}
+
+@media (max-width: 520px) {
+    .welcome-nav {
+        gap: 2px;
+    }
+    .welcome-nav__link {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+    .nav-dropdown__toggle {
+        padding: 0 12px;
+        font-size: 13px;
+    }
+}
+
+/* =========================================================
+   Página de ayuda (/ayuda)
+   ========================================================= */
+:root {
+    --success: #1f8a4c;
+}
+:root[data-theme="dark"] {
+    --success: #5fd08f;
+}
+
+.help-reply {
+    margin: 0 0 18px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+.help-reply strong {
+    color: var(--title);
+}
+
+.help-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    background: var(--input-bg);
+    font: inherit;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.help-textarea::placeholder {
+    color: var(--muted);
+}
+.help-textarea:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 4px rgba(239, 142, 25, 0.18);
+}
+
+.form-success {
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    border: 1px solid color-mix(in srgb, var(--success) 40%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--success) 10%, transparent);
+    color: var(--success);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.help-back {
+    display: block;
+    margin-top: 18px;
+    text-align: center;
+    font-size: 14px;
+}
