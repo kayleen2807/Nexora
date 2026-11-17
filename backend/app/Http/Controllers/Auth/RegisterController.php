@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Contracts\View\View;
 use App\Services\EmailVerificationService;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class RegisterController extends Controller
 {
@@ -74,9 +75,13 @@ class RegisterController extends Controller
             'acepta_privacidad.accepted' => __('You must accept the Privacy Notice.'),
         ]);
 
-        /** Rol, usuario (dueño) y su negocio se crean en una sola transacción: o todo o nada */
+        /**
+         * Rol, usuario (dueño), su negocio Y el correo con el código se hacen en una sola transacción: o todo
+         * o nada. Si el correo no sale (p. ej. contraseña de aplicación de Gmail incorrecta), no queda una
+         * cuenta a medias que después dice "este correo ya está registrado".
+         */
         try {
-            $user = DB::transaction(function () use ($validated) {
+            $user = DB::transaction(function () use ($validated, $verificationService) {
                 $rol = Rol::firstOrCreate(['nombre' => 'administrador']);
 
                 $user = User::create([
@@ -95,8 +100,16 @@ class RegisterController extends Controller
                 ]);
                 $user->update(['id_negocio' => $negocio->id_negocio]);
 
+                $verificationService->send($user);
+
                 return $user;
             });
+        } catch (TransportExceptionInterface $e) {
+            report($e);   // el detalle técnico queda en laravel.log
+
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors(['correo' => __('We could not send the verification code to :email. Your account was not created; please try again in a few minutes.', ['email' => $validated['correo']])]);
         } catch (QueryException $e) {
             // 23505 = unique_violation en Postgres; cubre la carrera entre la validación y el INSERT
             if ($e->getCode() !== '23505') {
@@ -107,8 +120,6 @@ class RegisterController extends Controller
                 'correo' => __('This email address is already registered.'),
             ]);
         }
-
-        $verificationService->send($user);
 
         return redirect()->route('verification.notice', ['correo' => $user->correo]);
     }

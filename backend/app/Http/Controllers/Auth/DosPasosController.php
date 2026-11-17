@@ -71,7 +71,7 @@ class DosPasosController extends Controller
             return back()->withErrors(['codigo' => __('Please wait :seconds seconds before requesting another code.', ['seconds' => $espera])]);
         }
 
-        $dosPasos->enviarCodigo($usuario, 'login');
+        $dosPasos->enviarCodigo($usuario);
 
         return back()->with('status', __('We sent you a new code.'));
     }

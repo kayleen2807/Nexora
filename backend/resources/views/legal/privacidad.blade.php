@@ -5,7 +5,7 @@
     $empresa = 'Nexora[PentaByte S.A. de C.V.]';
     $domicilio = '[UNIVERSIDAD DE COLIMA 180, COL. CENTRO, COLIMA, COLIMA, MÉXICO]';
     $addressEn = '[MIRAMA-NARANO, MANZANILLO COLIMA, MÉXICO]';
-    $correo = 'privacidad@nexora.example';
+    $correo = 'nexorahelp1@gmail.com';
     $actualizado = '21 de octubre de 2026';
     $updatedEn = 'October 21, 2026';
     $es = app()->getLocale() === 'es';

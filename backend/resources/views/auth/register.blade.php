@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/register.css') }}">
     <script src="{{ asset('js/theme.js') }}"></script>
+    <script src="{{ asset('js/requisitos-contrasena.js') }}"></script>
 </head>
 <body>
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="{{ __('Change theme') }}">
@@ -23,7 +24,7 @@
                 @php
                     $idiomas = [
                         'es' => '🇪🇸',
-                        'en' => '🇬🇧',
+                        'en' => '🇺🇸',
                     ];
                 @endphp
                 <div class="language-switcher">
@@ -104,7 +105,8 @@
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
-                        <small class="password-hint">{{ __('Password requirements') }}</small>
+                        {{-- Requisitos en vivo con barra de seguridad (public/js/requisitos-contrasena.js) --}}
+                        <div data-requisitos-de="password"></div>
 
                         <label for="password_confirmation">{{ __('Confirm password') }}</label>
                         <div class="password-field">
@@ -113,6 +115,7 @@
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
+                        <div data-coincide-con="password" data-confirmacion="password_confirmation"></div>
 
                         {{-- Aceptación obligatoria de Términos y Condiciones y Aviso de Privacidad.
                              Las casillas se habilitan solo después de abrir su enlace. --}}

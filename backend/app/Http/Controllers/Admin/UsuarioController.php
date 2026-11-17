@@ -14,6 +14,7 @@ use Illuminate\Validation\Rule;
 use App\Services\UserInvitationService;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class UsuarioController extends Controller
 {
@@ -101,21 +102,33 @@ class UsuarioController extends Controller
             'correo.unique' => __('This email address is already registered.'),
         ]);
 
-        $usuario = User::create([
-            'nombre' => $data['nombre'],
-            'apellido' => $data['apellido'],
-            'fecha_nacimiento' => $data['fecha_nacimiento'],
-            'correo' => $data['correo'],
-            // Temporal e imposible de adivinar; se reemplaza cuando acepta la invitación (el cast la hashea)
-            'contrasena' => Str::random(40),
-            'id_rol' => self::ROLES_INVERSO[$data['rol']],
-            'id_sucursal' => $data['id_sucursal'] ?? null,
-            'id_negocio' => $this->idNegocio($request),
-        ]);
+        // Crear la cuenta y mandar la invitación van JUNTOS: si el correo no sale (p. ej. contraseña de
+        // aplicación de Gmail incorrecta), se deshace todo y no queda una cuenta que nadie puede activar.
+        try {
+            DB::transaction(function () use ($data, $request, $invitationService) {
+                $usuario = User::create([
+                    'nombre' => $data['nombre'],
+                    'apellido' => $data['apellido'],
+                    'fecha_nacimiento' => $data['fecha_nacimiento'],
+                    'correo' => $data['correo'],
+                    // Temporal e imposible de adivinar; se reemplaza cuando acepta la invitación (el cast la hashea)
+                    'contrasena' => Str::random(40),
+                    'id_rol' => self::ROLES_INVERSO[$data['rol']],
+                    'id_sucursal' => $data['id_sucursal'] ?? null,
+                    'id_negocio' => $this->idNegocio($request),
+                ]);
 
-        $invitationService->send($usuario, $this->usuario($request));
+                $invitationService->send($usuario, $this->usuario($request));
+            });
+        } catch (TransportExceptionInterface $e) {
+            report($e);   // el detalle técnico queda en laravel.log
 
-        return response()->json(['message' => __('Invitation sent successfully.')], 201);
+            return response()->json([
+                'message' => 'No se pudo enviar la invitación a '.$data['correo'].'. Revisa la configuración del correo (.env) e inténtalo de nuevo; el usuario no se guardó.',
+            ], 503);
+        }
+
+        return response()->json(['message' => __('Invitation sent successfully.'), 'correo' => $data['correo']], 201);
     }
 
     /**

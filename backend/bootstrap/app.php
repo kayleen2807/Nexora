@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'rol' => \App\Http\Middleware\CheckRol::class,
         ]);
+
+        // En Railway la visita llega por HTTPS a su proxy y este la pasa a Laravel por HTTP.
+        // Confiar en el proxy hace que Laravel lea X-Forwarded-Proto y sepa que el original era HTTPS
+        // (enlaces de correos, invitaciones y el regreso de Google). En local no hay proxy: no cambia nada.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Las rutas de datos de los paneles (fetch desde JS) siempre responden JSON,

@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="{{ asset('password.css') }}">
     <link rel="stylesheet" href="{{ asset('css/password-flow.css') }}">
     <script src="{{ asset('js/theme.js') }}"></script>
+    <script src="{{ asset('js/requisitos-contrasena.js') }}"></script>
 </head>
 <body>
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="{{ __('Change theme') }}">
@@ -22,7 +23,7 @@
         <section class="recovery-shell" aria-label="{{ __('Set a new password') }}">
             <aside class="brand-panel">
                 <div class="language-switcher">
-                    @foreach (['es' => '🇪🇸', 'en' => '🇬🇧'] as $lang => $emoji)
+                    @foreach (['es' => '🇪🇸', 'en' => '🇺🇸'] as $lang => $emoji)
                         <a href="{{ route('lang.switch', $lang) }}" class="{{ app()->getLocale() === $lang ? 'active' : '' }}">
                             {{ $emoji }} {{ strtoupper($lang) }}
                         </a>
@@ -74,7 +75,8 @@
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
-                        <small class="password-hint">{{ __('Password requirements') }}</small>
+                        {{-- Requisitos en vivo con barra de seguridad (public/js/requisitos-contrasena.js) --}}
+                        <div data-requisitos-de="password"></div>
 
                         <label for="password_confirmation">{{ __('Confirm new password') }}</label>
                         <div class="password-field">
@@ -83,6 +85,7 @@
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
+                        <div data-coincide-con="password" data-confirmacion="password_confirmation"></div>
 
                         <button type="submit">{{ __('Reset password') }}</button>
                     </form>

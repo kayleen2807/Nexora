@@ -141,9 +141,8 @@ Route::middleware('auth')
         Route::put('/perfil', [ConfiguracionController::class, 'actualizarPerfil']);
         Route::put('/password', [ConfiguracionController::class, 'cambiarPassword'])
             ->middleware('throttle:6,1');
-        // Verificación en dos pasos: pedir el código al correo y confirmarlo (activar o desactivar)
-        Route::post('/dos-pasos/codigo', [ConfiguracionController::class, 'enviarCodigoDosPasos']);
-        Route::put('/dos-pasos', [ConfiguracionController::class, 'confirmarDosPasos'])
+        // Verificación en dos pasos: el interruptor la activa o desactiva directamente
+        Route::put('/dos-pasos', [ConfiguracionController::class, 'cambiarDosPasos'])
             ->middleware('throttle:10,1');
     });
  

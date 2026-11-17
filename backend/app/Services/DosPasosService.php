@@ -20,9 +20,6 @@ class DosPasosService
 
     private const MAX_INTENTOS = 5;
 
-    /** Para qué es el código: cambia el texto del correo. */
-    public const MOTIVOS = ['login', 'activar', 'desactivar'];
-
     /** Segundos que faltan para poder mandar otro código (0 = ya se puede). */
     public function esperaParaEnviar(User $usuario): int
     {
@@ -41,8 +38,8 @@ class DosPasosService
         return $usuario->dos_pasos_codigo && $usuario->dos_pasos_expira && now()->lessThan($usuario->dos_pasos_expira);
     }
 
-    /** Genera un código nuevo (anula el anterior), lo guarda encriptado y lo manda al correo. */
-    public function enviarCodigo(User $usuario, string $motivo): void
+    /** Genera un código nuevo de inicio de sesión (anula el anterior), lo guarda encriptado y lo manda al correo. */
+    public function enviarCodigo(User $usuario): void
     {
         foreach ($this->llavesEnvio($usuario) as [$llave, , $segundos]) {
             RateLimiter::hit($llave, $segundos);
@@ -58,7 +55,7 @@ class DosPasosService
         RateLimiter::clear($this->llaveIntentos($usuario));   // código nuevo = intentos desde cero
 
         // El correo sale en el idioma que el usuario tiene guardado
-        $usuario->notify((new DosPasosCodigoNotification($codigo, $motivo))->locale($usuario->idioma ?: config('app.locale')));
+        $usuario->notify((new DosPasosCodigoNotification($codigo))->locale($usuario->idioma ?: config('app.locale')));
     }
 
     /**

@@ -35,43 +35,14 @@ class ConfiguracionController extends Controller
     }
 
     /*
-     * POST /configuracion/dos-pasos/codigo {activar: bool} — manda al correo el código para confirmar el cambio.
-     * Activar o desactivar SIEMPRE pide un código: así se comprueba que el correo sí recibe los códigos
-     * (si no, al activarla nadie podría entrar) y que quien la apaga es la dueña del correo.
+     * PUT /configuracion/dos-pasos {activar: bool} — el interruptor de Configuración (decisión de Kay):
+     * activar y desactivar son inmediatos, sin código. Una vez activa, el código se pide en CADA inicio de
+     * sesión (LoginController / GoogleController → TerminaInicioSesion::pedirSegundoPaso).
      */
-    public function enviarCodigoDosPasos(Request $request, DosPasosService $dosPasos)
+    public function cambiarDosPasos(Request $request, DosPasosService $dosPasos)
     {
         $data = $request->validate(['activar' => ['required', 'boolean']]);
         $usuario = $request->user();
-        $activar = (bool) $data['activar'];
-
-        abort_if($activar === (bool) $usuario->dos_pasos_activo, 422,
-            $activar ? 'La verificación en dos pasos ya está activada.' : 'La verificación en dos pasos ya está desactivada.');
-
-        $espera = $dosPasos->esperaParaEnviar($usuario);
-        abort_if($espera > 0, 429, "Espera {$espera} segundos para pedir otro código.");
-
-        $dosPasos->enviarCodigo($usuario, $activar ? 'activar' : 'desactivar');
-
-        return response()->json(['ok' => true, 'minutos' => DosPasosService::MINUTOS_VIGENCIA]);
-    }
-
-    /* PUT /configuracion/dos-pasos {activar: bool, codigo} — confirma el cambio con el código del correo */
-    public function confirmarDosPasos(Request $request, DosPasosService $dosPasos)
-    {
-        $data = $request->validate([
-            'activar' => ['required', 'boolean'],
-            'codigo' => ['required', 'digits:6'],
-        ], [
-            'codigo.required' => 'Escribe el código que te llegó al correo.',
-            'codigo.digits' => 'El código tiene 6 dígitos.',
-        ]);
-        $usuario = $request->user();
-
-        $error = $dosPasos->verificar($usuario, $data['codigo']);
-        if ($error) {
-            return response()->json(['message' => $error, 'errors' => ['codigo' => [$error]]], 422);
-        }
 
         $dosPasos->cambiarEstado($usuario, (bool) $data['activar']);
 

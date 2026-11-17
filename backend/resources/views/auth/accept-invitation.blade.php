@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('password.css') }}">
     <link rel="stylesheet" href="{{ asset('css/password-flow.css') }}">
+    <script src="{{ asset('js/requisitos-contrasena.js') }}"></script>
     <script>
         (function () {
             var saved = null;
@@ -28,7 +29,7 @@
         <section class="recovery-shell" aria-label="{{ __('User invitation') }}">
             <aside class="brand-panel">
                 <div class="language-switcher">
-                    @foreach (['es' => '🇪🇸', 'en' => '🇬🇧'] as $lang => $emoji)
+                    @foreach (['es' => '🇪🇸', 'en' => '🇺🇸'] as $lang => $emoji)
                         <a href="{{ route('lang.switch', $lang) }}" class="{{ app()->getLocale() === $lang ? 'active' : '' }}">{{ $emoji }} {{ strtoupper($lang) }}</a>
                     @endforeach
                 </div>
@@ -56,12 +57,17 @@
                         @csrf
                         <label for="password">{{ __('New password') }}</label>
                         <div class="password-field"><input class="email-input" type="password" id="password" name="password" minlength="8" pattern="(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="{{ __('Password requirements') }}" required><button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="{{ __('Show password') }}"><i class="bi bi-eye"></i></button></div>
-                        <small class="password-hint">{{ __('Password requirements') }}</small>
+                        {{-- Requisitos en vivo con barra de seguridad (public/js/requisitos-contrasena.js) --}}
+                        <div data-requisitos-de="password"></div>
                         <label for="password_confirmation">{{ __('Confirm new password') }}</label>
                         <div class="password-field"><input class="email-input" type="password" id="password_confirmation" name="password_confirmation" required><button type="button" class="password-toggle" onclick="togglePassword('password_confirmation', this)" aria-label="{{ __('Show password') }}"><i class="bi bi-eye"></i></button></div>
-                        <label class="legal-check"><input type="checkbox" name="acepta_terminos" value="1" required> {{ __('I accept the') }} <a href="{{ route('legal.terminos') }}" target="_blank" rel="noopener">{{ __('Terms and Conditions') }}</a></label>
-                        <label class="legal-check"><input type="checkbox" name="acepta_privacidad" value="1" required> {{ __('I agree to the') }} <a href="{{ route('legal.privacidad') }}" target="_blank" rel="noopener">{{ __('Privacy Notice') }}</a></label>
-                        <button type="submit">{{ __('Accept registration') }}</button>
+                        <div data-coincide-con="password" data-confirmacion="password_confirmation"></div>
+
+                        {{-- Igual que en el registro: las casillas se habilitan solo después de abrir su enlace --}}
+                        <label class="legal-check {{ old('acepta_terminos') ? '' : 'is-locked' }}" for="acepta_terminos"><input type="checkbox" id="acepta_terminos" name="acepta_terminos" value="1" {{ old('acepta_terminos') ? 'checked' : 'disabled' }} required> <span>{!! __('I accept the :link', ['link' => '<a href="' . e(route('legal.terminos')) . '" target="_blank" rel="noopener" data-requires="acepta_terminos">' . e(__('Terms and Conditions')) . '</a>']) !!}</span></label>
+                        <label class="legal-check {{ old('acepta_privacidad') ? '' : 'is-locked' }}" for="acepta_privacidad"><input type="checkbox" id="acepta_privacidad" name="acepta_privacidad" value="1" {{ old('acepta_privacidad') ? 'checked' : 'disabled' }} required> <span>{!! __('I agree to the :link', ['link' => '<a href="' . e(route('legal.privacidad')) . '" target="_blank" rel="noopener" data-requires="acepta_privacidad">' . e(__('Privacy Notice')) . '</a>']) !!}</span></label>
+                        <small id="legal-hint" class="legal-hint">{{ __('Open and read both links to be able to accept them.') }}</small>
+                        <button type="submit" id="invitation-submit" disabled>{{ __('Accept registration') }}</button>
                     </form>
                     <a class="back-link" href="{{ route('login') }}">{{ __('Back to login') }}</a>
                 </div>
@@ -70,6 +76,59 @@
     </main>
     <script>
         function togglePassword(id, button) { const input = document.getElementById(id); const visible = input.type === 'text'; input.type = visible ? 'password' : 'text'; button.querySelector('i').className = visible ? 'bi bi-eye' : 'bi bi-eye-slash'; }
+
+        // Igual que register.blade.php: el botón se habilita con el formulario válido, las contraseñas iguales
+        // y las dos casillas marcadas; cada casilla se desbloquea al abrir su enlace (se recuerda en la pestaña).
+        (function () {
+            var form = document.querySelector('form');
+            var terms = document.getElementById('acepta_terminos');
+            var privacy = document.getElementById('acepta_privacidad');
+            var submitBtn = document.getElementById('invitation-submit');
+            var legalHint = document.getElementById('legal-hint');
+            var password = document.getElementById('password');
+            var confirmation = document.getElementById('password_confirmation');
+
+            function safeGet(key) { try { return sessionStorage.getItem(key); } catch (e) { return null; } }
+            function safeSet(key, value) { try { sessionStorage.setItem(key, value); } catch (e) {} }
+
+            function updateState() {
+                var legalOk = terms.checked && privacy.checked;
+                submitBtn.disabled = !(legalOk && form.checkValidity() && password.value === confirmation.value);
+            }
+
+            function refreshLegalHint() {
+                legalHint.style.display = form.querySelectorAll('.legal-check input:disabled').length ? 'block' : 'none';
+            }
+
+            document.querySelectorAll('a[data-requires]').forEach(function (link) {
+                var checkbox = document.getElementById(link.dataset.requires);
+                var row = checkbox.closest('.legal-check');
+                var key = 'leido_' + link.dataset.requires;
+
+                function unlock() {
+                    checkbox.disabled = false;
+                    row.classList.remove('is-locked');
+                    row.removeAttribute('title');
+                    safeSet(key, '1');
+                    refreshLegalHint();
+                    updateState();
+                }
+
+                if (safeGet(key) || checkbox.checked) {
+                    unlock();
+                } else {
+                    row.title = @json(__('First open and read the link'));
+                }
+                link.addEventListener('click', unlock);
+                link.addEventListener('auxclick', unlock); // clic con la rueda del mouse
+            });
+
+            form.addEventListener('input', updateState);
+            form.addEventListener('change', updateState);
+            window.addEventListener('pageshow', updateState);
+            refreshLegalHint();
+            updateState();
+        })();
         document.getElementById('theme-toggle').addEventListener('click', function () {
             var root = document.documentElement;
             var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';

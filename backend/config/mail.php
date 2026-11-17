@@ -65,6 +65,11 @@ return [
             'transport' => 'resend',
         ],
 
+        // API de Brevo (transporte registrado en AppServiceProvider); llave en BREVO_API_KEY
+        'brevo' => [
+            'transport' => 'brevo',
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="{{ asset('js/requisitos-contrasena.js') }}"></script>
 <title>Nexora - Punto de Venta</title>
 @include('partials.favicon')
 <script src="{{ asset('js/theme.js') }}"></script>
@@ -157,6 +158,14 @@
   .producto-card button { width: 100%; padding: 0.5rem; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
   .producto-card button:hover { background: var(--accent-hover); }
   .producto-card button:disabled { background: var(--disabled-bg); cursor: not-allowed; }
+  /* Tarjetas del mismo tamaño: todas las filas igual de altas, la foto/ícono ocupan lo mismo, la categoría
+     siempre reserva su renglón, el nombre usa máximo 2 renglones (… si es más largo) y el botón va abajo */
+  .productos-grid { grid-auto-rows: 1fr; }
+  .producto-card { display: flex; flex-direction: column; align-items: center; }
+  .producto-card .foto-producto, .producto-card .foto-placeholder { display: flex; flex-shrink: 0; margin: 0 auto 6px; }
+  .producto-card .cat { min-height: 1em; }
+  .producto-card .nombre { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; min-height: 2.5em; overflow-wrap: anywhere; }
+  .producto-card button { margin-top: auto; }
 
   .carrito { background: var(--card-bg); border-radius: 12px; padding: 1.25rem; height: fit-content; }
   .carrito-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-light); font-size: 0.85rem; }
@@ -191,6 +200,22 @@
   .tema-toggle .icon-sun { display: none; }
   [data-theme="dark"] .tema-toggle .icon-sun { display: block; }
   [data-theme="dark"] .tema-toggle .icon-moon { display: none; }
+  /* Botón "Cerrar sesión" (antes era un enlace de texto): mismo estilo de píldora que el selector de idioma */
+  .btn-salir { display: inline-flex; align-items: center; gap: 6px; padding: 0.32rem 0.85rem; border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; background: transparent; color: var(--topbar-text); font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+  .btn-salir:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .btn-salir .bi { font-size: 1rem; line-height: 1; }
+  /* ---------- OCULTAR / MOSTRAR EL MENÚ LATERAL (botón ☰ junto a "Nexora") ----------
+     La columna del menú se anima de su ancho a 0. Al ocultarse, el menú espera a que termine la
+     animación para volverse invisible (visibility también lo saca del orden del tabulador). */
+  .topbar .brand .btn-menu { width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: var(--topbar-text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: background 0.15s, border-color 0.15s; }
+  .topbar .brand .btn-menu:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.45); }
+  .topbar .brand .btn-menu .bi { line-height: 1; }
+  .layout { transition: grid-template-columns 0.25s ease; }
+  .sidebar { min-width: 0; overflow-x: hidden; transition: visibility 0s linear 0s; }
+  .layout.menu-oculto { grid-template-columns: 0 1fr; }
+  .layout.menu-oculto .sidebar { visibility: hidden; border-right-width: 0; transition-delay: 0.25s; }
+  .layout.sin-animacion, .layout.sin-animacion .sidebar { transition: none; }   /* al cargar la página */
+  @media (prefers-reduced-motion: reduce) { .layout, .sidebar { transition: none; } }
 
   .pago-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
   .pago-section h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--muted); }
@@ -230,6 +255,8 @@
   .resumen-card { background: var(--card-bg); border-radius: 12px; padding: 1rem; box-shadow: 0 1px 4px var(--shadow); }
   .resumen-card .label { font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
   .resumen-card .valor { font-size: 1.4rem; font-weight: 700; }
+  /* Corte de caja: cifras en naranja, igual que las tarjetas de Información general del admin */
+  #sec-corte .resumen-card .valor { color: var(--accent); }
   .diferencia-row { display: flex; justify-content: space-between; padding: 0.6rem 0; font-size: 0.95rem; }
   .diferencia-row.sobrante { color: var(--success-text); font-weight: 700; }
   .diferencia-row.faltante { color: var(--danger-text); font-weight: 700; }
@@ -356,9 +383,9 @@
 
 <div class="pos-view" id="posView">
   <div class="topbar">
-    <div class="brand">Nexora <span class="sucursal">— <span data-i18n="topbarPanelCajero">Punto de venta</span> · {{ auth()->user()->sucursal->nombre ?? __('Sin sucursal asignada') }}</span></div>
+    <div class="brand"><button type="button" class="btn-menu" id="btnMenu" onclick="alternarMenu()" aria-controls="sidebar" aria-expanded="true" title="Ocultar menú" aria-label="Ocultar menú"><i class="bi bi-list" aria-hidden="true"></i></button>Nexora <span class="sucursal">— <span data-i18n="topbarPanelCajero">Punto de venta</span> · {{ auth()->user()->sucursal->nombre ?? __('Sin sucursal asignada') }}</span></div>
     <div class="topbar-derecha">
-      <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
+      <button type="button" class="btn-salir" onclick="cerrarSesion()"><i class="bi bi-box-arrow-right" aria-hidden="true"></i><span data-i18n="cerrarSesion">Cerrar sesión</span></button>
       <div class="esquina-superior">
         <!-- Los dos idiomas a la vista; el activo va resaltado (recarga la página con lang.switch) -->
         <div class="idioma-switch" role="group" aria-label="Idioma / Language">
@@ -398,6 +425,7 @@
             </div>
             <div class="chips" id="chipsCategorias"></div>
             <div class="productos-grid" id="productosGrid"></div>
+            <div class="paginacion" id="pagProductos"></div>
           </div>
           <div class="carrito">
             <h2 data-i18n="carritoHeading">Carrito</h2>
@@ -560,6 +588,8 @@
   let cobrando = false;      // evita registrar la venta dos veces con doble clic
   let estadoCargado = false; // hasta que responda /cajero/estado no se muestra apertura ni venta
   let reportes = [];         // reportes que este cajero envió al administrador
+let paginaProductos = 1;   // página de las tarjetas de productos en "Vender" (12 por página)
+let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambia, vuelve a la página 1
 
   /*
    * fetch con CSRF + JSON. Devuelve el cuerpo ya parseado (o null en 204).
@@ -599,7 +629,7 @@
       btnEntrar: 'Entrar',
       demoNote: 'Demo visual — cualquier dato entra',
       sucursalCentro: '— Sucursal Centro',
-      cerrarSesion: 'Cerrar sesión',
+      cerrarSesion: 'Cerrar sesión', ocultarMenu: 'Ocultar menú', mostrarMenu: 'Mostrar menú',
       navVender: 'Vender',
       navCompras: 'Registrar compras',
       navProductos: 'Productos',
@@ -660,7 +690,7 @@
       alertEfectivoContado: 'Ingresa el efectivo contado.', confirmCerrarCaja: '¿Cerrar tu caja? Después ya no podrás vender en este turno.',
       btnCerrarConfirm: 'Cerrar caja', corteRealizado: 'Corte realizado. Caja cerrada.',
       ticketSubtotal: 'Subtotal', ticketIva: 'IVA', ticketCajero: 'Cajero',
-      btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaTabla: 'Página :p de :t · :n registros',
+      btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaTabla: 'Página :p de :t · :n registros', paginaProductos: 'Página :p de :t · :n productos',
       btnCancelar: 'Cancelar', btnEliminar: 'Eliminar',
       navReportes: 'Reportes', repHeading: 'Reportes al administrador', repNuevoHeading: 'Nuevo reporte', repListaHeading: 'Mis reportes',
       repDesc: 'Avisa al administrador de una falla, un faltante de producto, un problema con la caja o una sugerencia.',
@@ -682,7 +712,7 @@
       btnEntrar: 'Log in',
       demoNote: 'Visual demo — any data works',
       sucursalCentro: '— Centro Branch',
-      cerrarSesion: 'Log out',
+      cerrarSesion: 'Log out', ocultarMenu: 'Hide menu', mostrarMenu: 'Show menu',
       navVender: 'Sell',
       navCompras: 'Register purchases',
       navProductos: 'Products',
@@ -743,7 +773,7 @@
       alertEfectivoContado: 'Enter the cash counted.', confirmCerrarCaja: 'Close your register? You will not be able to sell in this shift afterwards.',
       btnCerrarConfirm: 'Close register', corteRealizado: 'Cash count done. Register closed.',
       ticketSubtotal: 'Subtotal', ticketIva: 'Tax', ticketCajero: 'Cashier',
-      btnAnterior: 'Previous', btnSiguiente: 'Next', paginaTabla: 'Page :p of :t · :n records',
+      btnAnterior: 'Previous', btnSiguiente: 'Next', paginaTabla: 'Page :p of :t · :n records', paginaProductos: 'Page :p of :t · :n products',
       btnCancelar: 'Cancel', btnEliminar: 'Delete',
       navReportes: 'Reports', repHeading: 'Reports to the administrator', repNuevoHeading: 'New report', repListaHeading: 'My reports',
       repDesc: 'Let the administrator know about a failure, a missing product, a register problem or a suggestion.',
@@ -769,6 +799,7 @@
      las filas que no son de la página actual y se dibujan los botones Anterior / Siguiente debajo.
      Declaradas aquí arriba porque aplicarIdioma() ya pinta las secciones al cargar la página. */
   const FILAS_POR_PAGINA = 10;
+  const PRODUCTOS_POR_PAGINA = 12;   // tarjetas por página en "Vender"
   const paginasTablas = {};   // { idTbody: { pagina, clave } }
 
   function paginarTabla(idTbody, clave = '') {
@@ -779,6 +810,8 @@
 
     const filas = [...tbody.rows];
     const paginas = Math.max(1, Math.ceil(filas.length / FILAS_POR_PAGINA));
+    // La fila de "Sin datos" (una sola celda que abarca toda la tabla) no cuenta como registro
+    const registros = filas.filter(f => !(f.cells.length === 1 && f.cells[0].colSpan > 1)).length;
     estado.pagina = Math.min(Math.max(1, estado.pagina), paginas);
     const desde = (estado.pagina - 1) * FILAS_POR_PAGINA;
     filas.forEach((fila, i) => { fila.style.display = (i >= desde && i < desde + FILAS_POR_PAGINA) ? '' : 'none'; });
@@ -790,9 +823,9 @@
       controles.id = 'pag-' + idTbody;
       tbody.closest('table').after(controles);
     }
-    controles.innerHTML = paginas <= 1 ? '' : `
+    controles.innerHTML = `
       <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina - 1})" ${estado.pagina <= 1 ? 'disabled' : ''}>‹ ${t('btnAnterior')}</button>
-      <span>${t('paginaTabla').replace(':p', estado.pagina).replace(':t', paginas).replace(':n', filas.length)}</span>
+      <span>${t('paginaTabla').replace(':p', estado.pagina).replace(':t', paginas).replace(':n', registros)}</span>
       <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina + 1})" ${estado.pagina >= paginas ? 'disabled' : ''}>${t('btnSiguiente')} ›</button>`;
   }
 
@@ -842,6 +875,7 @@
     "passCorta": "La nueva contraseña debe tener al menos 8 caracteres",
     "passNoCoincide": "Las contraseñas no coinciden",
     "passIgual": "La nueva contraseña debe ser distinta a la actual",
+    "passRequisitos": "La nueva contraseña debe tener una mayúscula, un número y un carácter especial.",
     "passCambiada": "Contraseña actualizada",
     "fuerzaDebil": "Seguridad: débil",
     "fuerzaMedia": "Seguridad: media",
@@ -864,15 +898,6 @@
     "dosPasosActiva": "Activada",
     "dosPasosInactiva": "Desactivada",
     "dosPasosHint": "Te pedirá un código extra, además de tu contraseña.",
-    "dosPasosPideActivar": "Te enviamos un código a tu correo. Escríbelo para activar la verificación en dos pasos.",
-    "dosPasosPideDesactivar": "Te enviamos un código a tu correo. Escríbelo para desactivar la verificación en dos pasos.",
-    "dosPasosLblCodigo": "Código de 6 dígitos",
-    "dosPasosBtnActivar": "Activar",
-    "dosPasosBtnDesactivar": "Desactivar",
-    "dosPasosReenviar": "Reenviar código",
-    "dosPasosCancelar": "Cancelar",
-    "dosPasosCodigoEnviado": "Te enviamos un código a tu correo.",
-    "dosPasosCodigoInvalido": "Escribe el código de 6 dígitos.",
     "dosPasosActivadaOk": "Verificación en dos pasos activada. La próxima vez que entres te pediremos un código.",
     "dosPasosDesactivadaOk": "Verificación en dos pasos desactivada.",
     "prefTitulo": "Preferencias del cajero",
@@ -900,6 +925,7 @@
     "passCorta": "The new password must be at least 8 characters long",
     "passNoCoincide": "The passwords do not match",
     "passIgual": "The new password must be different from the current one",
+    "passRequisitos": "The new password needs an uppercase letter, a number and a special character.",
     "passCambiada": "Password updated",
     "fuerzaDebil": "Strength: weak",
     "fuerzaMedia": "Strength: medium",
@@ -922,15 +948,6 @@
     "dosPasosActiva": "Enabled",
     "dosPasosInactiva": "Disabled",
     "dosPasosHint": "It will ask for an extra code, besides your password.",
-    "dosPasosPideActivar": "We sent a code to your email. Enter it to turn on two-step verification.",
-    "dosPasosPideDesactivar": "We sent a code to your email. Enter it to turn off two-step verification.",
-    "dosPasosLblCodigo": "6-digit code",
-    "dosPasosBtnActivar": "Turn on",
-    "dosPasosBtnDesactivar": "Turn off",
-    "dosPasosReenviar": "Resend code",
-    "dosPasosCancelar": "Cancel",
-    "dosPasosCodigoEnviado": "We sent a code to your email.",
-    "dosPasosCodigoInvalido": "Enter the 6-digit code.",
     "dosPasosActivadaOk": "Two-step verification turned on. Next time you sign in we will ask for a code.",
     "dosPasosDesactivadaOk": "Two-step verification turned off.",
     "prefTitulo": "Cashier preferences",
@@ -1012,19 +1029,11 @@
     boton.innerHTML = cfgIcono(oculto ? CFG_OJO_NO : CFG_OJO);
   }
 
+  /* Requisitos de la nueva contraseña (public/js/requisitos-contrasena.js): lista animada + barra de seguridad
+     + "las contraseñas coinciden". Se montan cada vez que se pinta la tarjeta. */
+  let cfgReqs = null;
   function cfgFuerza() {
-    const p = document.getElementById('cfgPassNueva').value;
-    let puntos = 0;
-    if (p.length >= 8) puntos++;
-    if (p.length >= 12) puntos++;
-    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) puntos++;
-    if (/\d/.test(p)) puntos++;
-    if (/[^A-Za-z0-9]/.test(p)) puntos++;
-    const nivel = !p ? 0 : puntos <= 1 ? 1 : puntos <= 3 ? 2 : 3;
-    const barra = document.getElementById('cfgFuerzaBarra');
-    barra.style.width = ['0%', '33%', '66%', '100%'][nivel];
-    barra.style.background = ['transparent', '#dc2626', '#f59e0b', '#16a34a'][nivel];
-    document.getElementById('cfgFuerzaTxt').textContent = nivel ? ct(['', 'fuerzaDebil', 'fuerzaMedia', 'fuerzaFuerte'][nivel]) : '';
+    if (cfgReqs) cfgReqs.actualizar();
   }
 
   async function cfgCambiarPass() {
@@ -1033,6 +1042,7 @@
     const confirmar = document.getElementById('cfgPassConfirmar').value;
     if (!actual) { mostrarToast(ct('passFalta'), 'error'); return; }
     if (nueva.length < 8) { mostrarToast(ct('passCorta'), 'error'); return; }
+    if (!/[A-Z]/.test(nueva) || !/\d/.test(nueva) || !/[^A-Za-z0-9]/.test(nueva)) { mostrarToast(ct('passRequisitos'), 'error'); return; }
     if (nueva !== confirmar) { mostrarToast(ct('passNoCoincide'), 'error'); return; }
     if (nueva === actual) { mostrarToast(ct('passIgual'), 'error'); return; }
     try {
@@ -1063,59 +1073,33 @@
   });
 
 
-  /* --- verificación en dos pasos (código por correo; backend: ConfiguracionController + DosPasosService) --- */
+  /* --- verificación en dos pasos (backend: PUT /configuracion/dos-pasos; el código se pide al INICIAR SESIÓN) --- */
   let cfg2faActivo = false;     // estado REAL de la cuenta (viene de /configuracion/perfil)
-  let cfg2faPendiente = null;   // true/false mientras se espera el código para activar/desactivar; null = nada pendiente
   const CFG_ESCUDO = '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>';
 
-  /* Pinta el interruptor con el estado real y, si hay un cambio pendiente, el campo del código */
+  /* Pinta el interruptor, el escudo y el texto con el estado real */
   function cfgPintar2fa() {
     const activo = cfg2faActivo;
     document.getElementById('cfgEscudo').classList.toggle('on', activo);
     const txt = document.getElementById('cfg2faEstado');
     txt.classList.toggle('on', activo);
     txt.textContent = ct(activo ? 'dosPasosActiva' : 'dosPasosInactiva');
-    document.getElementById('cfg2faSwitch').checked = activo;   // no se mueve hasta confirmar con el código
-
-    document.getElementById('cfg2faConfirmar').innerHTML = cfg2faPendiente === null ? '' : `
-      <p class="cfg-sub" style="margin-top:0.9rem;">${ct(cfg2faPendiente ? 'dosPasosPideActivar' : 'dosPasosPideDesactivar')}</p>
-      <div class="cfg-form"><div class="cfg-campo"><label for="cfg2faCodigo">${ct('dosPasosLblCodigo')}</label>
-        <input type="text" id="cfg2faCodigo" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" onkeydown="if (event.key === 'Enter') cfgConfirmar2fa()"></div></div>
-      <div class="cfg-acciones">
-        <button class="btn btn-primario" onclick="cfgConfirmar2fa()">${ct(cfg2faPendiente ? 'dosPasosBtnActivar' : 'dosPasosBtnDesactivar')}</button>
-        <button class="btn" onclick="cfgToggle2fa(${cfg2faPendiente})">${ct('dosPasosReenviar')}</button>
-        <button class="btn" onclick="cfgCancelar2fa()">${ct('dosPasosCancelar')}</button>
-      </div>`;
+    document.getElementById('cfg2faSwitch').checked = activo;
   }
 
-  /* Al mover el interruptor (o "Reenviar código"): el servidor manda el código al correo */
+  /* Al mover el interruptor se guarda de inmediato (decisión de Kay: sin código para activar ni desactivar).
+     Desde que está activa, cada inicio de sesión pide el código que llega al correo. */
   async function cfgToggle2fa(activar) {
+    const interruptor = document.getElementById('cfg2faSwitch');
+    interruptor.disabled = true;   // evita doble clic mientras responde el servidor
     try {
-      await cfgApi('/configuracion/dos-pasos/codigo', 'POST', { activar });
-      cfg2faPendiente = activar;
-      mostrarToast(ct('dosPasosCodigoEnviado'), 'exito');
-    } catch (e) { mostrarToast(e.message, 'error'); }
-    cfgPintar2fa();
-    document.getElementById('cfg2faCodigo')?.focus();
-  }
-
-  /* Confirma el cambio con el código que llegó al correo */
-  async function cfgConfirmar2fa() {
-    const codigo = document.getElementById('cfg2faCodigo').value.trim();
-    if (!/^\d{6}$/.test(codigo)) { mostrarToast(ct('dosPasosCodigoInvalido'), 'error'); return; }
-    try {
-      const r = await cfgApi('/configuracion/dos-pasos', 'PUT', { activar: cfg2faPendiente, codigo });
+      const r = await cfgApi('/configuracion/dos-pasos', 'PUT', { activar });
       cfg2faActivo = !!r.dos_pasos;
-      cfg2faPendiente = null;
       if (cfgPerfil) cfgPerfil.dos_pasos = cfg2faActivo;
       mostrarToast(ct(cfg2faActivo ? 'dosPasosActivadaOk' : 'dosPasosDesactivadaOk'), 'exito');
-      cfgPintar2fa();
     } catch (e) { mostrarToast(e.message, 'error'); }
-  }
-
-  function cfgCancelar2fa() {
-    cfg2faPendiente = null;
-    cfgPintar2fa();
+    interruptor.disabled = false;
+    cfgPintar2fa();   // si falló, el interruptor regresa a su estado real
   }
 
   /* --- pantalla --- */
@@ -1133,7 +1117,6 @@
   }
 
   async function renderConfiguracion() {
-    cfg2faPendiente = null;   // al volver a la sección no queda un cambio a medias (la tarjeta se pinta de nuevo)
     const cont = document.getElementById('sec-configuracion');
     if (!cfgPerfil) { cont.innerHTML = ''; await cfgCargarPerfil(); }
     const rolTexto = cfgPerfil.rol || CFG_ETIQUETA[idioma] || CFG_ETIQUETA.es;
@@ -1163,7 +1146,8 @@
             ${campoPass('cfgPassActual', 'lblPassActual')}
             ${campoPass('cfgPassNueva', 'lblPassNueva', 'oninput="cfgFuerza()"')}
             ${campoPass('cfgPassConfirmar', 'lblPassConfirmar')}
-            <div class="cfg-campo"><div class="cfg-fuerza"><i id="cfgFuerzaBarra"></i></div><span class="cfg-fuerza-txt" id="cfgFuerzaTxt"></span></div>
+            <div class="cfg-campo" id="cfgRequisitos" style="grid-column: 1 / -1;"></div>
+            <div class="cfg-campo" id="cfgCoincide" style="grid-column: 1 / -1;"></div>
           </div>
           <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgCambiarPass()">${ct('cambiarPass')}</button></div>
         </div>
@@ -1177,7 +1161,6 @@
             </div>
             <label class="cfg-switch verde"><input type="checkbox" id="cfg2faSwitch" ${cfg2faActivo ? 'checked' : ''} onchange="cfgToggle2fa(this.checked)" aria-label="${ct('dosPasosTitulo')}"><span></span></label>
           </div>
-          <div id="cfg2faConfirmar"></div>
         </div>
 
         <div class="cfg-card">
@@ -1201,6 +1184,7 @@
         </div>` : ''}
       </div>`;
     cfgMarcarTema();
+    cfgReqs = window.NexoraClave ? NexoraClave.montar({ clave: 'cfgPassNueva', confirmacion: 'cfgPassConfirmar', requisitos: document.getElementById('cfgRequisitos'), coincide: document.getElementById('cfgCoincide') }) : null;
   }
 
   const secciones = [
@@ -1213,6 +1197,25 @@
   ];
   secciones.push({ id: 'configuracion', key: 'navConfiguracion' });
   let seccionActual = 'vender';
+  // Sección del "#" de la URL; se muestra cuando termina de cargar todo el script (DOMContentLoaded)
+  const seccionDeInicio = seccionDeLaUrl('vender');
+  document.addEventListener('DOMContentLoaded', () => { if (seccionDeInicio !== seccionActual) mostrarSeccion(seccionDeInicio); });
+
+  /* La sección actual va en la URL (#ventas, #corte…). Al cambiar de idioma la página se recarga y, gracias
+     a eso, regresa a la MISMA sección en lugar de al inicio (también al recargar con F5). */
+  function seccionDeLaUrl(porDefecto) {
+    const id = decodeURIComponent(location.hash.slice(1));
+    return secciones.some(s => s.id === id) ? id : porDefecto;
+  }
+  function recordarSeccionEnUrl(id) {
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  }
+  // Los enlaces de idioma (barra de arriba y Configuración) se llevan el "#sección": el servidor responde con
+  // redirect()->back() y el navegador conserva ese "#..." al seguir la redirección.
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href*="/lang/"]');
+    if (a) a.href = a.href.split('#')[0] + location.hash;
+  });
 
   /* ---------- TEMA CLARO / OSCURO ---------- */
   function aplicarTema(tema) {
@@ -1249,6 +1252,34 @@
 
   aplicarIdioma();
 
+  /* ---------- MENÚ LATERAL: ocultar / mostrar ----------
+     Se recuerda en este navegador (como el tema): es una preferencia visual, no un dato del negocio. */
+  function aplicarMenu(oculto) {
+    document.querySelector('.layout').classList.toggle('menu-oculto', oculto);
+    const boton = document.getElementById('btnMenu');
+    const texto = t(oculto ? 'mostrarMenu' : 'ocultarMenu');
+    boton.setAttribute('aria-expanded', String(!oculto));
+    boton.title = texto;
+    boton.setAttribute('aria-label', texto);
+  }
+
+  function alternarMenu() {
+    const oculto = !document.querySelector('.layout').classList.contains('menu-oculto');
+    aplicarMenu(oculto);
+    try { localStorage.setItem('nexora-menu', oculto ? 'oculto' : 'visible'); } catch (e) {}
+  }
+
+  (function inicializarMenu() {
+    let guardado = null;
+    try { guardado = localStorage.getItem('nexora-menu'); } catch (e) {}
+    // Al abrir la página se aplica sin animación (si no, el menú se vería "cerrándose" al cargar)
+    const layout = document.querySelector('.layout');
+    layout.classList.add('sin-animacion');
+    aplicarMenu(guardado === 'oculto');
+    void layout.offsetWidth;   // obliga al navegador a aplicar el cambio antes de devolver la animación
+    layout.classList.remove('sin-animacion');
+  })();
+
   function cerrarSesion() {
     carrito = [];
     document.getElementById('logoutForm').submit();
@@ -1265,6 +1296,7 @@
 
   function mostrarSeccion(id, soloRefrescar) {
     seccionActual = id;
+    recordarSeccionEnUrl(id);
     if (id === 'configuracion') renderConfiguracion();
     secciones.forEach(s => {
       document.getElementById('sec-' + s.id).classList.toggle('activa', s.id === id);
@@ -1415,8 +1447,21 @@
     const busqueda = document.getElementById('buscarProducto').value.trim().toLowerCase();
     renderChipsCategorias();
     // El servidor ya manda solo productos activos con inventario en esta sucursal
-    grid.innerHTML = productos.filter(p => p.nombre.toLowerCase().includes(busqueda)
-      && (!categoriaSel || (categoriaSel === '__sin__' ? !p.categoria : p.categoria === categoriaSel))).map(p => {
+    const lista = productos.filter(p => p.nombre.toLowerCase().includes(busqueda)
+      && (!categoriaSel || (categoriaSel === '__sin__' ? !p.categoria : p.categoria === categoriaSel)));
+
+    // Paginación: la búsqueda y las categorías filtran TODOS los productos; luego se muestran 12 por página
+    const clave = busqueda + '|' + categoriaSel;
+    if (clave !== claveProductos) { paginaProductos = 1; claveProductos = clave; }
+    const paginas = Math.max(1, Math.ceil(lista.length / PRODUCTOS_POR_PAGINA));
+    paginaProductos = Math.min(Math.max(1, paginaProductos), paginas);
+    const desde = (paginaProductos - 1) * PRODUCTOS_POR_PAGINA;
+    document.getElementById('pagProductos').innerHTML = `
+      <button class="btn btn-primario btn-sm" onclick="irPaginaProductos(${paginaProductos - 1})" ${paginaProductos <= 1 ? 'disabled' : ''}>‹ ${t('btnAnterior')}</button>
+      <span>${t('paginaProductos').replace(':p', paginaProductos).replace(':t', paginas).replace(':n', lista.length)}</span>
+      <button class="btn btn-primario btn-sm" onclick="irPaginaProductos(${paginaProductos + 1})" ${paginaProductos >= paginas ? 'disabled' : ''}>${t('btnSiguiente')} ›</button>`;
+
+    grid.innerHTML = lista.slice(desde, desde + PRODUCTOS_POR_PAGINA).map(p => {
       const enCarrito = carrito.find(i => i.id === p.id);
       const disponible = p.stock - (enCarrito ? enCarrito.cantidad : 0);
       const imgHtml = p.foto
@@ -1425,7 +1470,7 @@
       return `
         <div class="producto-card">
           ${imgHtml}
-          ${p.categoria ? `<div class="cat">${escCat(p.categoria)}</div>` : ''}<div class="nombre">${esc(p.nombre)}</div>
+          <div class="cat">${p.categoria ? escCat(p.categoria) : '&nbsp;'}</div><div class="nombre" title="${esc(p.nombre)}">${esc(p.nombre)}</div>
           <div class="precio">${dinero(p.precio)}</div>
           <div class="stock">${t('stockLabel')}${disponible}</div>
           <button onclick="agregarAlCarrito(${p.id})" ${disponible <= 0 ? 'disabled' : ''}>
@@ -1433,6 +1478,11 @@
           </button>
         </div>`;
     }).join('') || `<div class="vacio">${t('sinResultados')}</div>`;
+  }
+
+  function irPaginaProductos(n) {
+    paginaProductos = n;
+    renderProductos();
   }
 
   function agregarAlCarrito(id) {

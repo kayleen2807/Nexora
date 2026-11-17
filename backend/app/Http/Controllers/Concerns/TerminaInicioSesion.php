@@ -41,7 +41,7 @@ trait TerminaInicioSesion
         // Así, iniciar sesión muchas veces no llena su correo: máximo 1 código cada 10 minutos por esta vía;
         // el límite de 1 por minuto / 5 por hora es para el botón "Enviar un código nuevo".
         if (! $dosPasos->tieneCodigoVigente($usuario)) {
-            $dosPasos->enviarCodigo($usuario, 'login');
+            $dosPasos->enviarCodigo($usuario);
         }
 
         return redirect()->route('dos-pasos.show');

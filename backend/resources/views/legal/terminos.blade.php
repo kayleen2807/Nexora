@@ -3,7 +3,7 @@
 @php
     // EDITA ESTOS DATOS con la información real del proyecto/empresa
     $empresa = 'Nexora [PentaByte S.A. de C.V.]';
-    $correo = 'contacto@nexora.example';
+    $correo = 'nexorahelp1@gmail.com';
     $jurisdiccion = 'Colima, México';
     $actualizado = '21 de octubre de 2026';
     $updatedEn = 'October 21, 2026';

@@ -657,3 +657,33 @@ body { background: var(--form-bg); }
     transform: translateY(0);
     box-shadow: 0 0 0 3px rgba(239, 142, 25, 0.18);
 }
+/* ==========================================================
+   Mensajes de error (login-alert): mismo estilo que el verde
+   de .login-status, pero en rojo. Antes no tenía estilos y
+   "Las credenciales no coinciden" salía sin color.
+   ========================================================== */
+.login-alert {
+    margin: 16px 0;
+    padding: 12px 14px;
+    border: 1px solid rgba(192, 57, 43, 0.3);
+    border-radius: 8px;
+    color: #a52d23;
+    background: rgba(192, 57, 43, 0.08);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.login-alert p {
+    margin: 0;
+}
+
+.login-alert p + p {
+    margin-top: 6px;
+}
+
+:root[data-theme="dark"] .login-alert {
+    border-color: rgba(255, 123, 107, 0.35);
+    color: #ff7b6b;
+    background: rgba(255, 123, 107, 0.1);
+}

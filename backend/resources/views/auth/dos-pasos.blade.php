@@ -22,7 +22,7 @@
         <section class="recovery-shell" aria-label="{{ __('Two-step verification') }}">
             <aside class="brand-panel">
                 <div class="language-switcher">
-                    @foreach (['es' => '🇪🇸', 'en' => '🇬🇧'] as $lang => $emoji)
+                    @foreach (['es' => '🇪🇸', 'en' => '🇺🇸'] as $lang => $emoji)
                         <a href="{{ route('lang.switch', $lang) }}" class="{{ app()->getLocale() === $lang ? 'active' : '' }}">{{ $emoji }} {{ strtoupper($lang) }}</a>
                     @endforeach
                 </div>

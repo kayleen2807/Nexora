@@ -9,8 +9,7 @@ use Illuminate\Notifications\Notification;
 /** Correo con el código de la verificación en dos pasos (mismo diseño que el de verificar correo). */
 class DosPasosCodigoNotification extends Notification
 {
-    /** @param  string  $motivo  'login' | 'activar' | 'desactivar' */
-    public function __construct(public readonly string $code, public readonly string $motivo = 'login') {}
+    public function __construct(public readonly string $code) {}
 
     public function via($notifiable): array
     {
@@ -19,11 +18,7 @@ class DosPasosCodigoNotification extends Notification
 
     public function toMail($notifiable): MailMessage
     {
-        $intro = match ($this->motivo) {
-            'activar' => __('Use this code to turn on two-step verification:'),
-            'desactivar' => __('Use this code to turn off two-step verification:'),
-            default => __('Use this code to finish signing in to Nexora:'),
-        };
+        $intro = __('Use this code to finish signing in to Nexora:');
 
         return (new MailMessage)
             ->subject(__('Your Nexora security code'))

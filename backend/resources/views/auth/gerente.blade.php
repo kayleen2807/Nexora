@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="{{ asset('js/requisitos-contrasena.js') }}"></script>
 <title>Nexora - Panel de Gerente</title>
 @include('partials.favicon')
 <script src="{{ asset('js/theme.js') }}"></script>
@@ -118,6 +119,9 @@
   .resumen-card { background: var(--card-bg); border-radius: 12px; padding: 1rem; box-shadow: 0 1px 4px var(--shadow); }
   .resumen-card .label { font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
   .resumen-card .valor { font-size: 1.4rem; font-weight: 700; }
+  /* Mi sucursal y Cortes de caja: cifras en naranja, igual que las tarjetas de Información general del admin */
+  #sec-mi-sucursal .resumen-card .valor,
+  #sec-corte .resumen-card .valor { color: var(--accent); }
 
   .diferencia-row { display: flex; justify-content: space-between; padding: 0.6rem 0; font-size: 0.95rem; }
   .diferencia-row.sobrante { color: var(--success-text); font-weight: 700; }
@@ -193,6 +197,22 @@
   .tema-toggle .icon-sun { display: none; }
   [data-theme="dark"] .tema-toggle .icon-sun { display: block; }
   [data-theme="dark"] .tema-toggle .icon-moon { display: none; }
+  /* Botón "Cerrar sesión" (antes era un enlace de texto): mismo estilo de píldora que el selector de idioma */
+  .btn-salir { display: inline-flex; align-items: center; gap: 6px; padding: 0.32rem 0.85rem; border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; background: transparent; color: var(--topbar-text); font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+  .btn-salir:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .btn-salir .bi { font-size: 1rem; line-height: 1; }
+  /* ---------- OCULTAR / MOSTRAR EL MENÚ LATERAL (botón ☰ junto a "Nexora") ----------
+     La columna del menú se anima de su ancho a 0. Al ocultarse, el menú espera a que termine la
+     animación para volverse invisible (visibility también lo saca del orden del tabulador). */
+  .topbar .brand .btn-menu { width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: var(--topbar-text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: background 0.15s, border-color 0.15s; }
+  .topbar .brand .btn-menu:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.45); }
+  .topbar .brand .btn-menu .bi { line-height: 1; }
+  .layout { transition: grid-template-columns 0.25s ease; }
+  .sidebar { min-width: 0; overflow-x: hidden; transition: visibility 0s linear 0s; }
+  .layout.menu-oculto { grid-template-columns: 0 1fr; }
+  .layout.menu-oculto .sidebar { visibility: hidden; border-right-width: 0; transition-delay: 0.25s; }
+  .layout.sin-animacion, .layout.sin-animacion .sidebar { transition: none; }   /* al cargar la página */
+  @media (prefers-reduced-motion: reduce) { .layout, .sidebar { transition: none; } }
   /* ---------- CONFIGURACIÓN DE LA CUENTA ---------- */
   .cfg-grid { display: grid; gap: 1rem; max-width: 780px; margin-top: 1rem; }
   .cfg-card { background: var(--card-bg, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: 12px; padding: 1.25rem 1.4rem; box-shadow: 0 1px 3px var(--shadow, rgba(0,0,0,0.06)); }
@@ -273,9 +293,9 @@
 </div>
 <div class="panel-view" id="panelView">
   <div class="topbar">
-    <div class="brand">Nexora <span class="sucursal">— <span data-i18n="topbarPanelGerente">Panel de Gerente</span> · {{ auth()->user()->sucursal->nombre ?? __('Sin sucursal asignada') }}</span></div>
+    <div class="brand"><button type="button" class="btn-menu" id="btnMenu" onclick="alternarMenu()" aria-controls="sidebar" aria-expanded="true" title="Ocultar menú" aria-label="Ocultar menú"><i class="bi bi-list" aria-hidden="true"></i></button>Nexora <span class="sucursal">— <span data-i18n="topbarPanelGerente">Panel de Gerente</span> · {{ auth()->user()->sucursal->nombre ?? __('Sin sucursal asignada') }}</span></div>
     <div class="topbar-derecha">
-      <a onclick="cerrarSesion()" data-i18n="cerrarSesion">Cerrar sesión</a>
+      <button type="button" class="btn-salir" onclick="cerrarSesion()"><i class="bi bi-box-arrow-right" aria-hidden="true"></i><span data-i18n="cerrarSesion">Cerrar sesión</span></button>
       <div class="esquina-superior">
         <!-- Los dos idiomas a la vista; el activo va resaltado (recarga la página con lang.switch) -->
         <div class="idioma-switch" role="group" aria-label="Idioma / Language">
@@ -591,6 +611,8 @@
       else grupos.push([fila]);
     });
     const paginas = Math.max(1, Math.ceil(grupos.length / FILAS_POR_PAGINA));
+    // La fila de "Sin datos" (una sola celda que abarca toda la tabla) no cuenta como registro
+    const registros = grupos.filter(g => !(g[0].cells.length === 1 && g[0].cells[0].colSpan > 1)).length;
     estado.pagina = Math.min(Math.max(1, estado.pagina), paginas);   // p. ej. si se borró la última fila de la última página
     const desde = (estado.pagina - 1) * FILAS_POR_PAGINA;
     grupos.forEach((grupo, i) => grupo.forEach(fila => { fila.style.display = (i >= desde && i < desde + FILAS_POR_PAGINA) ? '' : 'none'; }));
@@ -602,9 +624,9 @@
       controles.id = 'pag-' + idTbody;
       tbody.closest('table').after(controles);
     }
-    controles.innerHTML = paginas <= 1 ? '' : `
+    controles.innerHTML = `
       <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina - 1})" ${estado.pagina <= 1 ? 'disabled' : ''}>‹ ${t('btnAnterior')}</button>
-      <span>${t('paginaTabla').replace(':p', estado.pagina).replace(':t', paginas).replace(':n', grupos.length)}</span>
+      <span>${t('paginaTabla').replace(':p', estado.pagina).replace(':t', paginas).replace(':n', registros)}</span>
       <button class="btn btn-primario btn-sm" onclick="irPaginaTabla('${idTbody}', ${estado.pagina + 1})" ${estado.pagina >= paginas ? 'disabled' : ''}>${t('btnSiguiente')} ›</button>`;
   }
 
@@ -618,7 +640,7 @@
     es: {
       tagline: 'Panel de gerente', placeholderUsuario: 'Usuario', placeholderClave: 'Contraseña',
       btnEntrar: 'Entrar', demoNote: 'Demo visual — cualquier dato entra',
-      topbarSucursal: '— Panel de Gerente · Sucursal Centro', cerrarSesion: 'Cerrar sesión',
+      topbarSucursal: '— Panel de Gerente · Sucursal Centro', cerrarSesion: 'Cerrar sesión', ocultarMenu: 'Ocultar menú', mostrarMenu: 'Mostrar menú',
       navInventario: 'Inventario', navCompras: 'Registrar compras', navCorte: 'Cortes de caja',
       navCajas: 'Registro de cajas', navPrecios: 'Precios e IVA', navProductos: 'Alta / baja productos',
       navHistorial: 'Historial de ventas',
@@ -693,7 +715,7 @@
     en: {
       tagline: 'Manager panel', placeholderUsuario: 'Username', placeholderClave: 'Password',
       btnEntrar: 'Log in', demoNote: 'Visual demo — any data works',
-      topbarSucursal: '— Manager Panel · Centro Branch', cerrarSesion: 'Log out',
+      topbarSucursal: '— Manager Panel · Centro Branch', cerrarSesion: 'Log out', ocultarMenu: 'Hide menu', mostrarMenu: 'Show menu',
       navInventario: 'Inventory', navCompras: 'Register purchases', navCorte: 'Cash counts',
       navCajas: 'Cash registers', navPrecios: 'Prices & tax', navProductos: 'Add / remove products',
       navHistorial: 'Sales history',
@@ -808,6 +830,7 @@
     "passCorta": "La nueva contraseña debe tener al menos 8 caracteres",
     "passNoCoincide": "Las contraseñas no coinciden",
     "passIgual": "La nueva contraseña debe ser distinta a la actual",
+    "passRequisitos": "La nueva contraseña debe tener una mayúscula, un número y un carácter especial.",
     "passCambiada": "Contraseña actualizada",
     "fuerzaDebil": "Seguridad: débil",
     "fuerzaMedia": "Seguridad: media",
@@ -828,15 +851,6 @@
     "dosPasosActiva": "Activada",
     "dosPasosInactiva": "Desactivada",
     "dosPasosHint": "Te pedirá un código extra, además de tu contraseña.",
-    "dosPasosPideActivar": "Te enviamos un código a tu correo. Escríbelo para activar la verificación en dos pasos.",
-    "dosPasosPideDesactivar": "Te enviamos un código a tu correo. Escríbelo para desactivar la verificación en dos pasos.",
-    "dosPasosLblCodigo": "Código de 6 dígitos",
-    "dosPasosBtnActivar": "Activar",
-    "dosPasosBtnDesactivar": "Desactivar",
-    "dosPasosReenviar": "Reenviar código",
-    "dosPasosCancelar": "Cancelar",
-    "dosPasosCodigoEnviado": "Te enviamos un código a tu correo.",
-    "dosPasosCodigoInvalido": "Escribe el código de 6 dígitos.",
     "dosPasosActivadaOk": "Verificación en dos pasos activada. La próxima vez que entres te pediremos un código.",
     "dosPasosDesactivadaOk": "Verificación en dos pasos desactivada.",
     "correoHint": "El correo es tu usuario; para cambiarlo pídelo al administrador."
@@ -863,6 +877,7 @@
     "passCorta": "The new password must be at least 8 characters long",
     "passNoCoincide": "The passwords do not match",
     "passIgual": "The new password must be different from the current one",
+    "passRequisitos": "The new password needs an uppercase letter, a number and a special character.",
     "passCambiada": "Password updated",
     "fuerzaDebil": "Strength: weak",
     "fuerzaMedia": "Strength: medium",
@@ -883,15 +898,6 @@
     "dosPasosActiva": "Enabled",
     "dosPasosInactiva": "Disabled",
     "dosPasosHint": "It will ask for an extra code, besides your password.",
-    "dosPasosPideActivar": "We sent a code to your email. Enter it to turn on two-step verification.",
-    "dosPasosPideDesactivar": "We sent a code to your email. Enter it to turn off two-step verification.",
-    "dosPasosLblCodigo": "6-digit code",
-    "dosPasosBtnActivar": "Turn on",
-    "dosPasosBtnDesactivar": "Turn off",
-    "dosPasosReenviar": "Resend code",
-    "dosPasosCancelar": "Cancel",
-    "dosPasosCodigoEnviado": "We sent a code to your email.",
-    "dosPasosCodigoInvalido": "Enter the 6-digit code.",
     "dosPasosActivadaOk": "Two-step verification turned on. Next time you sign in we will ask for a code.",
     "dosPasosDesactivadaOk": "Two-step verification turned off.",
     "correoHint": "Your email is your username; ask the administrator to change it."
@@ -952,19 +958,11 @@
     boton.innerHTML = cfgIcono(oculto ? CFG_OJO_NO : CFG_OJO);
   }
 
+  /* Requisitos de la nueva contraseña (public/js/requisitos-contrasena.js): lista animada + barra de seguridad
+     + "las contraseñas coinciden". Se montan cada vez que se pinta la tarjeta. */
+  let cfgReqs = null;
   function cfgFuerza() {
-    const p = document.getElementById('cfgPassNueva').value;
-    let puntos = 0;
-    if (p.length >= 8) puntos++;
-    if (p.length >= 12) puntos++;
-    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) puntos++;
-    if (/\d/.test(p)) puntos++;
-    if (/[^A-Za-z0-9]/.test(p)) puntos++;
-    const nivel = !p ? 0 : puntos <= 1 ? 1 : puntos <= 3 ? 2 : 3;
-    const barra = document.getElementById('cfgFuerzaBarra');
-    barra.style.width = ['0%', '33%', '66%', '100%'][nivel];
-    barra.style.background = ['transparent', '#dc2626', '#f59e0b', '#16a34a'][nivel];
-    document.getElementById('cfgFuerzaTxt').textContent = nivel ? ct(['', 'fuerzaDebil', 'fuerzaMedia', 'fuerzaFuerte'][nivel]) : '';
+    if (cfgReqs) cfgReqs.actualizar();
   }
 
   async function cfgCambiarPass() {
@@ -973,6 +971,7 @@
     const confirmar = document.getElementById('cfgPassConfirmar').value;
     if (!actual) { mostrarToast(ct('passFalta'), 'error'); return; }
     if (nueva.length < 8) { mostrarToast(ct('passCorta'), 'error'); return; }
+    if (!/[A-Z]/.test(nueva) || !/\d/.test(nueva) || !/[^A-Za-z0-9]/.test(nueva)) { mostrarToast(ct('passRequisitos'), 'error'); return; }
     if (nueva !== confirmar) { mostrarToast(ct('passNoCoincide'), 'error'); return; }
     if (nueva === actual) { mostrarToast(ct('passIgual'), 'error'); return; }
     try {
@@ -996,64 +995,37 @@
   }
   new MutationObserver(cfgMarcarTema).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-  /* --- verificación en dos pasos (código por correo; backend: ConfiguracionController + DosPasosService) --- */
+  /* --- verificación en dos pasos (backend: PUT /configuracion/dos-pasos; el código se pide al INICIAR SESIÓN) --- */
   let cfg2faActivo = false;     // estado REAL de la cuenta (viene de /configuracion/perfil)
-  let cfg2faPendiente = null;   // true/false mientras se espera el código para activar/desactivar; null = nada pendiente
   const CFG_ESCUDO = '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>';
 
-  /* Pinta el interruptor con el estado real y, si hay un cambio pendiente, el campo del código */
+  /* Pinta el interruptor, el escudo y el texto con el estado real */
   function cfgPintar2fa() {
     const activo = cfg2faActivo;
     document.getElementById('cfgEscudo').classList.toggle('on', activo);
     const txt = document.getElementById('cfg2faEstado');
     txt.classList.toggle('on', activo);
     txt.textContent = ct(activo ? 'dosPasosActiva' : 'dosPasosInactiva');
-    document.getElementById('cfg2faSwitch').checked = activo;   // no se mueve hasta confirmar con el código
-
-    document.getElementById('cfg2faConfirmar').innerHTML = cfg2faPendiente === null ? '' : `
-      <p class="cfg-sub" style="margin-top:0.9rem;">${ct(cfg2faPendiente ? 'dosPasosPideActivar' : 'dosPasosPideDesactivar')}</p>
-      <div class="cfg-form"><div class="cfg-campo"><label for="cfg2faCodigo">${ct('dosPasosLblCodigo')}</label>
-        <input type="text" id="cfg2faCodigo" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" onkeydown="if (event.key === 'Enter') cfgConfirmar2fa()"></div></div>
-      <div class="cfg-acciones">
-        <button class="btn btn-primario" onclick="cfgConfirmar2fa()">${ct(cfg2faPendiente ? 'dosPasosBtnActivar' : 'dosPasosBtnDesactivar')}</button>
-        <button class="btn" onclick="cfgToggle2fa(${cfg2faPendiente})">${ct('dosPasosReenviar')}</button>
-        <button class="btn" onclick="cfgCancelar2fa()">${ct('dosPasosCancelar')}</button>
-      </div>`;
+    document.getElementById('cfg2faSwitch').checked = activo;
   }
 
-  /* Al mover el interruptor (o "Reenviar código"): el servidor manda el código al correo */
+  /* Al mover el interruptor se guarda de inmediato (decisión de Kay: sin código para activar ni desactivar).
+     Desde que está activa, cada inicio de sesión pide el código que llega al correo. */
   async function cfgToggle2fa(activar) {
+    const interruptor = document.getElementById('cfg2faSwitch');
+    interruptor.disabled = true;   // evita doble clic mientras responde el servidor
     try {
-      await cfgApi('/configuracion/dos-pasos/codigo', 'POST', { activar });
-      cfg2faPendiente = activar;
-      mostrarToast(ct('dosPasosCodigoEnviado'), 'exito');
-    } catch (e) { mostrarToast(e.message, 'error'); }
-    cfgPintar2fa();
-    document.getElementById('cfg2faCodigo')?.focus();
-  }
-
-  /* Confirma el cambio con el código que llegó al correo */
-  async function cfgConfirmar2fa() {
-    const codigo = document.getElementById('cfg2faCodigo').value.trim();
-    if (!/^\d{6}$/.test(codigo)) { mostrarToast(ct('dosPasosCodigoInvalido'), 'error'); return; }
-    try {
-      const r = await cfgApi('/configuracion/dos-pasos', 'PUT', { activar: cfg2faPendiente, codigo });
+      const r = await cfgApi('/configuracion/dos-pasos', 'PUT', { activar });
       cfg2faActivo = !!r.dos_pasos;
-      cfg2faPendiente = null;
       if (cfgPerfil) cfgPerfil.dos_pasos = cfg2faActivo;
       mostrarToast(ct(cfg2faActivo ? 'dosPasosActivadaOk' : 'dosPasosDesactivadaOk'), 'exito');
-      cfgPintar2fa();
     } catch (e) { mostrarToast(e.message, 'error'); }
-  }
-
-  function cfgCancelar2fa() {
-    cfg2faPendiente = null;
-    cfgPintar2fa();
+    interruptor.disabled = false;
+    cfgPintar2fa();   // si falló, el interruptor regresa a su estado real
   }
 
   /* --- pantalla --- */
   async function renderConfiguracion() {
-    cfg2faPendiente = null;   // al volver a la sección no queda un cambio a medias (la tarjeta se pinta de nuevo)
     const cont = document.getElementById('sec-configuracion');
     if (!cfgPerfil) { cont.innerHTML = ''; await cfgCargarPerfil(); }
     const rolTexto = cfgPerfil.rol || CFG_ETIQUETA[idioma] || CFG_ETIQUETA.es;
@@ -1083,7 +1055,8 @@
             ${campoPass('cfgPassActual', 'lblPassActual')}
             ${campoPass('cfgPassNueva', 'lblPassNueva', 'oninput="cfgFuerza()"')}
             ${campoPass('cfgPassConfirmar', 'lblPassConfirmar')}
-            <div class="cfg-campo"><div class="cfg-fuerza"><i id="cfgFuerzaBarra"></i></div><span class="cfg-fuerza-txt" id="cfgFuerzaTxt"></span></div>
+            <div class="cfg-campo" id="cfgRequisitos" style="grid-column: 1 / -1;"></div>
+            <div class="cfg-campo" id="cfgCoincide" style="grid-column: 1 / -1;"></div>
           </div>
           <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgCambiarPass()">${ct('cambiarPass')}</button></div>
         </div>
@@ -1097,7 +1070,6 @@
             </div>
             <label class="cfg-switch verde"><input type="checkbox" id="cfg2faSwitch" ${cfg2faActivo ? 'checked' : ''} onchange="cfgToggle2fa(this.checked)" aria-label="${ct('dosPasosTitulo')}"><span></span></label>
           </div>
-          <div id="cfg2faConfirmar"></div>
         </div>
 
         <div class="cfg-card">
@@ -1117,6 +1089,7 @@
 
       </div>`;
     cfgMarcarTema();
+    cfgReqs = window.NexoraClave ? NexoraClave.montar({ clave: 'cfgPassNueva', confirmacion: 'cfgPassConfirmar', requisitos: document.getElementById('cfgRequisitos'), coincide: document.getElementById('cfgCoincide') }) : null;
   }
 
   const secciones = [
@@ -1132,6 +1105,25 @@
     { id: 'configuracion', key: 'navConfiguracion' },
   ];
   let seccionActual = 'mi-sucursal';
+  // Sección del "#" de la URL; se muestra cuando termina de cargar todo el script (DOMContentLoaded)
+  const seccionDeInicio = seccionDeLaUrl('mi-sucursal');
+  document.addEventListener('DOMContentLoaded', () => { if (seccionDeInicio !== seccionActual) mostrarSeccion(seccionDeInicio); });
+
+  /* La sección actual va en la URL (#ventas, #corte…). Al cambiar de idioma la página se recarga y, gracias
+     a eso, regresa a la MISMA sección en lugar de al inicio (también al recargar con F5). */
+  function seccionDeLaUrl(porDefecto) {
+    const id = decodeURIComponent(location.hash.slice(1));
+    return secciones.some(s => s.id === id) ? id : porDefecto;
+  }
+  function recordarSeccionEnUrl(id) {
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  }
+  // Los enlaces de idioma (barra de arriba y Configuración) se llevan el "#sección": el servidor responde con
+  // redirect()->back() y el navegador conserva ese "#..." al seguir la redirección.
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href*="/lang/"]');
+    if (a) a.href = a.href.split('#')[0] + location.hash;
+  });
 
   /* ---------- TEMA CLARO / OSCURO ---------- */
   function aplicarTema(tema) {
@@ -1165,6 +1157,34 @@
 
   aplicarIdioma();
 
+  /* ---------- MENÚ LATERAL: ocultar / mostrar ----------
+     Se recuerda en este navegador (como el tema): es una preferencia visual, no un dato del negocio. */
+  function aplicarMenu(oculto) {
+    document.querySelector('.layout').classList.toggle('menu-oculto', oculto);
+    const boton = document.getElementById('btnMenu');
+    const texto = t(oculto ? 'mostrarMenu' : 'ocultarMenu');
+    boton.setAttribute('aria-expanded', String(!oculto));
+    boton.title = texto;
+    boton.setAttribute('aria-label', texto);
+  }
+
+  function alternarMenu() {
+    const oculto = !document.querySelector('.layout').classList.contains('menu-oculto');
+    aplicarMenu(oculto);
+    try { localStorage.setItem('nexora-menu', oculto ? 'oculto' : 'visible'); } catch (e) {}
+  }
+
+  (function inicializarMenu() {
+    let guardado = null;
+    try { guardado = localStorage.getItem('nexora-menu'); } catch (e) {}
+    // Al abrir la página se aplica sin animación (si no, el menú se vería "cerrándose" al cargar)
+    const layout = document.querySelector('.layout');
+    layout.classList.add('sin-animacion');
+    aplicarMenu(guardado === 'oculto');
+    void layout.offsetWidth;   // obliga al navegador a aplicar el cambio antes de devolver la animación
+    layout.classList.remove('sin-animacion');
+  })();
+
   function cerrarSesion() {
     document.getElementById('logoutForm').submit();
   }
@@ -1176,6 +1196,7 @@
 
   function mostrarSeccion(id) {
     seccionActual = id;
+    recordarSeccionEnUrl(id);
     secciones.forEach(s => {
       document.getElementById('sec-' + s.id).classList.toggle('activa', s.id === id);
       document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === id);

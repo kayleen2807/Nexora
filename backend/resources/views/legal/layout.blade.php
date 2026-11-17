@@ -148,7 +148,7 @@
             </a>
             <div class="legal-tools">
                 <div class="legal-lang">
-                    @foreach (['es' => '🇪🇸', 'en' => '🇬🇧'] as $lang => $emoji)
+                    @foreach (['es' => '🇪🇸', 'en' => '🇺🇸'] as $lang => $emoji)
                         <a href="{{ route('lang.switch', $lang) }}" class="{{ app()->getLocale() === $lang ? 'active' : '' }}">{{ $emoji }} {{ strtoupper($lang) }}</a>
                     @endforeach
                 </div>

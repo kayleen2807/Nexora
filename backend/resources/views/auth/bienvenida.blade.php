@@ -44,7 +44,7 @@
             @php
                 $idiomas = [
                     'es' => '🇪🇸',
-                    'en' => '🇬🇧',
+                    'en' => '🇺🇸',
                 ];
             @endphp
             <div class="language-switcher">
