@@ -222,17 +222,21 @@
   .btn-salir:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
   .btn-salir .bi { font-size: 1rem; line-height: 1; }
   /* ---------- OCULTAR / MOSTRAR EL MENÚ LATERAL (botón ☰ junto a "Nexora") ----------
-     La columna del menú se anima de su ancho a 0. Al ocultarse, el menú espera a que termine la
-     animación para volverse invisible (visibility también lo saca del orden del tabulador). */
+     Oculto = solo íconos: la columna se anima a 64px y el texto se desvanece. El ícono no se mueve
+     (los botones no cambian de padding; el texto que no cabe se recorta con overflow). */
   .topbar .brand .btn-menu { width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: var(--topbar-text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: background 0.15s, border-color 0.15s; }
   .topbar .brand .btn-menu:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.45); }
   .topbar .brand .btn-menu .bi { line-height: 1; }
   .layout { transition: grid-template-columns 0.25s ease; }
-  .sidebar { min-width: 0; overflow-x: hidden; transition: visibility 0s linear 0s; }
-  .layout.menu-oculto { grid-template-columns: 0 1fr; }
-  .layout.menu-oculto .sidebar { visibility: hidden; border-right-width: 0; transition-delay: 0.25s; }
-  .layout.sin-animacion, .layout.sin-animacion .sidebar { transition: none; }   /* al cargar la página */
-  @media (prefers-reduced-motion: reduce) { .layout, .sidebar { transition: none; } }
+  .sidebar { min-width: 0; overflow-x: hidden; }
+  .sidebar button { white-space: nowrap; overflow: hidden; }
+  .sidebar .txt-menu { transition: opacity 0.2s; }
+  .layout.menu-oculto { grid-template-columns: 64px 1fr; }
+  .layout.menu-oculto .sidebar .txt-menu { opacity: 0; }
+  .layout.menu-oculto .sidebar button { position: relative; }
+  .layout.menu-oculto .sidebar .contador-menu { position: absolute; top: 3px; right: 4px; margin: 0; padding: 0 5px; }   /* globo de reportes (admin) */
+  .layout.sin-animacion, .layout.sin-animacion .txt-menu { transition: none; }   /* al cargar la página */
+  @media (prefers-reduced-motion: reduce) { .layout, .sidebar .txt-menu { transition: none; } }
   #btnCrearUsuario:disabled { opacity: 0.65; cursor: wait; }
 
   /* Mis negocios (tarjeta "Mi negocio") */
@@ -450,6 +454,7 @@
               <th><span data-i18n="thPrecio">Precio</span> (MXN)</th>
               <th data-i18n="thEstado">Estado</th>
               <th></th>
+              <th></th>
             </tr>
             <tbody id="tablaProductosAdmin"></tbody>
           </table>
@@ -638,7 +643,7 @@
       thNombre: 'Nombre', thDireccion: 'Dirección', thInvitacion: 'Invitación', estadoInvitacionAccepted: 'Aceptada', estadoInvitacionSent: 'Pendiente', estadoInvitacionViewed: 'Pendiente', estadoInvitacionExpired: 'Vencida', estadoInvitacionVerified: 'Verificada', estadoInvitacionPending: 'Pendiente', estadoInvitacionRevoked: 'Reemplazada', btnReenviarInvitacion: 'Reenviar invitación', invitacionReenviada: 'Invitación reenviada (vale 48 horas).', btnGuardar: 'Guardar', btnEliminar: 'Eliminar', btnCancelar: 'Cancelar',
       alertNombreSucursal: 'Ingresa el nombre de la sucursal.', alertContactoInvalido: 'El contacto debe tener exactamente 10 números.', errorGuardarSucursal: 'No se pudo guardar la sucursal.', errorActualizarSucursal: 'No se pudo actualizar la sucursal.', sucursalAgregada: 'Sucursal agregada', sucursalActualizada: 'Sucursal actualizada', confirmEliminarSucursal: '¿Eliminar esta sucursal? Los usuarios asignados quedarán sin sucursal.',
       rolesHeading: 'Asignar roles', rolesDesc: 'Cambia el rol y la sucursal asignada a cada usuario.',
-      thUsuario: 'Usuario', thRol: 'Rol', thSucursal: 'Sucursal', sinAsignar: '— Sin asignar —',
+      thUsuario: 'Usuario', thRol: 'Rol', thSucursal: 'Sucursal', sinAsignar: '— Sin asignar —', btnEliminarProducto: 'Eliminar producto', productoEliminado: 'Producto eliminado del catálogo.', confirmEliminarProductoAdmin: '¿Eliminar "{nombre}" del catálogo de TODAS tus sucursales? Solo se puede si no tiene ventas, compras ni devoluciones. No se puede deshacer.', eligeSucursal: '— Elige una sucursal —', alertEligeSucursal: 'Elige la sucursal donde trabajará esta persona.', alertSinSucursales: 'Primero crea una sucursal en "Sucursales" para poder asignarla.',
       rolCajero: 'Cajero', rolGerente: 'Gerente', rolAdmin: 'Administrador',
       usuariosHeading: 'Usuarios', usuariosDesc: 'Consulta o elimina las cuentas de acceso al sistema.',
       labelNombreCompleto: 'Nombre completo', placeholderNombre: 'Nombre', labelUsuario: 'Usuario',
@@ -722,7 +727,7 @@
       thNombre: 'Name', thDireccion: 'Address', thInvitacion: 'Invitation', estadoInvitacionAccepted: 'Accepted', estadoInvitacionSent: 'Pending', estadoInvitacionViewed: 'Pending', estadoInvitacionExpired: 'Expired', estadoInvitacionVerified: 'Verified', estadoInvitacionPending: 'Pending', estadoInvitacionRevoked: 'Replaced', btnReenviarInvitacion: 'Resend invitation', invitacionReenviada: 'Invitation resent (valid for 48 hours).', btnGuardar: 'Save', btnEliminar: 'Delete', btnCancelar: 'Cancel',
       alertNombreSucursal: 'Enter the branch name.', alertContactoInvalido: 'Contact must contain exactly 10 digits.', errorGuardarSucursal: 'The branch could not be saved.', errorActualizarSucursal: 'The branch could not be updated.', sucursalAgregada: 'Branch added', sucursalActualizada: 'Branch updated', confirmEliminarSucursal: 'Delete this branch? Assigned users will be left without a branch.',
       rolesHeading: 'Assign roles', rolesDesc: 'Change the role and assigned branch for each user.', thGerente: 'Manager',
-      thUsuario: 'User', thRol: 'Role', thSucursal: 'Branch', sinAsignar: '— Unassigned —',
+      thUsuario: 'User', thRol: 'Role', thSucursal: 'Branch', sinAsignar: '— Unassigned —', btnEliminarProducto: 'Delete product', productoEliminado: 'Product deleted from the catalog.', confirmEliminarProductoAdmin: 'Delete "{nombre}" from the catalog of ALL your branches? Only possible if it has no sales, purchases or returns. This cannot be undone.', eligeSucursal: '— Choose a branch —', alertEligeSucursal: 'Choose the branch where this person will work.', alertSinSucursales: 'First create a branch in "Branches" so you can assign it.',
       rolCajero: 'Cashier', rolGerente: 'Manager', rolAdmin: 'Administrator',
       usuariosHeading: 'Users', usuariosDesc: 'View or delete system access accounts.',
       labelNombreCompleto: 'Full name', placeholderNombre: 'Name', labelUsuario: 'Username',
@@ -1297,8 +1302,28 @@
             ${ICONO_FOTO}<input type="file" accept="image/*" style="display:none" onchange="subirFotoAdmin(${p.id}, this)">
           </label>
         </td>
-      </tr>`).join('') || `<tr><td colspan="5" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
+        <td><button class="btn btn-peligro btn-sm" onclick="eliminarProductoAdmin(${p.id})" title="${t('btnEliminarProducto')}" aria-label="${t('btnEliminarProducto')}">${ICONO_BASURA}</button></td>
+      </tr>`).join('') || `<tr><td colspan="6" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
     paginarTabla('tablaProductosAdmin');
+  }
+
+  /* Borra el producto de TODO el catálogo del negocio; si tiene historia el servidor lo impide (422) */
+  async function eliminarProductoAdmin(id) {
+    const p = productosAdmin.find(x => x.id === id);
+    if (!p || !(await confirmar(t('confirmEliminarProductoAdmin').replace('{nombre}', p.nombre)))) return;
+    try {
+      const resp = await fetch('/administrador/productos/' + id, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok) throw new Error(data?.message || t('errorGenerico') || 'Error');
+      await Promise.all([cargarProductosAdmin(), cargarInventario(), cargarResumen()]);
+      renderProductosAdmin();
+      mostrarToast(t('productoEliminado'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   async function subirFotoAdmin(id, inputEl) {
@@ -1322,21 +1347,31 @@
 
   renderSidebar();
   (async () => {
-    await cargarUsuarios();
-    await cargarSucursales();
-    await cargarInventario();
-    await cargarProductosAdmin();
-    await cargarVentas();
-    await cargarCortes();
-    await cargarResumen();
-    await cargarNegocio();
-    await cargarMisNegocios();
-    await cargarReportes();
-    mostrarSeccion(seccionDeInicio);   // la sección donde estaba (p. ej. después de cambiar el idioma)
+    // La sección del "#" de la URL se muestra en cuanto termina de leerse TODA la página (los <script>
+    // de más abajo incluidos), sin esperar los datos: así no hay zona muerta de const ni salto al final.
+    if (document.readyState === 'loading') await new Promise(listo => document.addEventListener('DOMContentLoaded', listo, { once: true }));
+    if (seccionDeInicio !== seccionActual) mostrarSeccion(seccionDeInicio);
+
+    // Todas las peticiones salen A LA VEZ (antes iban una tras otra: con ~1.5 s por petición en Railway
+    // eran ~15 s de apartados vacíos). Solo los cortes esperan a las sucursales (usan la primera).
+    await Promise.all([
+      cargarUsuarios(),
+      cargarSucursales().then(() => cargarCortes()),
+      cargarInventario(),
+      cargarProductosAdmin(),
+      cargarVentas(),
+      cargarResumen(),
+      cargarNegocio(),
+      cargarMisNegocios(),
+      cargarReportes(),
+    ].map(p => p.catch(e => console.error(e))));   // si una falla, las demás siguen
+
+    // Se vuelve a pintar la sección en la que está AHORA (si se movió mientras cargaba, se queda ahí)
+    mostrarSeccion(seccionActual);
   })();
 
   function renderSidebar() {
-    document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${(ICONOS_MENU[s.key] || '') + t(s.key)}</button>`).join('');
+    document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" title="${t(s.key)}" onclick="mostrarSeccion('${s.id}')">${ICONOS_MENU[s.key] || ''}<span class="txt-menu">${t(s.key)}</span></button>`).join('');
     secciones.forEach(s => document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === seccionActual));
     pintarContadorReportes();
   }
@@ -1598,6 +1633,7 @@
     const rol = document.getElementById('rol-' + id).value;
     const sucVal = document.getElementById('sucRol-' + id).value;
     const idSucursal = sucVal ? parseInt(sucVal) : null;
+    if (!idSucursal) { mostrarToast(t('alertEligeSucursal'), 'error'); return; }
 
     const mensaje = mensajeCambioRol(u, rol, idSucursal);
     if (!mensaje) { mostrarToast(t('sinCambios'), 'error'); return; }
@@ -1661,7 +1697,7 @@
   function renderCrearUsuario() {
     const select = document.getElementById('usrSucursal');
     const elegida = select.value;
-    select.innerHTML = `<option value="">${t('sinAsignar')}</option>${opcionesSucursal()}`;
+    select.innerHTML = `<option value="">${t('eligeSucursal')}</option>${opcionesSucursal()}`;
     select.value = elegida;
 
     document.getElementById('icoCrearUsuario').innerHTML = ICONOS_MENU.navCrearUsuarios;
@@ -1685,6 +1721,9 @@
     if (!nombre || !apellido || !fecha_nacimiento || !correo) { mostrarToast(t('alertCompletaUsuario'), 'error'); return; }
     if (!document.getElementById('usrCorreo').checkValidity()) { mostrarToast(t('alertCorreoInvalido'), 'error'); return; }
     if (!esMayorDeEdad(fecha_nacimiento)) { mostrarToast(t('alertMayorEdad'), 'error'); return; }
+    // Sin sucursal el panel del gerente/cajero no tiene datos: es obligatoria (el servidor también la exige)
+    if (!sucursales.length) { mostrarToast(t('alertSinSucursales'), 'error'); return; }
+    if (!sucVal) { mostrarToast(t('alertEligeSucursal'), 'error'); return; }
 
     // Enviar el correo tarda unos segundos: el botón avisa y se bloquea (evita crear dos veces con doble clic)
     const boton = document.getElementById('btnCrearUsuario');

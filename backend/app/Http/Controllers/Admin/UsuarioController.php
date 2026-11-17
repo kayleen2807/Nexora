@@ -59,11 +59,16 @@ class UsuarioController extends Controller
         });
     }
 
-    /** Regla: la sucursal elegida debe ser del mismo negocio. */
+    /**
+     * Regla: la sucursal es OBLIGATORIA (los paneles de gerente y cajero trabajan con los datos de su
+     * sucursal; sin ella no tienen nada que mostrar) y debe ser del mismo negocio.
+     */
     private function reglaSucursal(Request $request): array
     {
-        return ['nullable', 'integer', Rule::exists('sucursal', 'id_sucursal')->where('id_negocio', $this->idNegocio($request))];
+        return ['required', 'integer', Rule::exists('sucursal', 'id_sucursal')->where('id_negocio', $this->idNegocio($request))];
     }
+
+    private const MENSAJE_SUCURSAL = 'Elige la sucursal donde trabajará esta persona (si aún no tienes, créala en "Sucursales").';
 
     /**
      * El admin no puede cambiarse ni borrarse a sí mismo, y el dueño del negocio
@@ -95,6 +100,7 @@ class UsuarioController extends Controller
             'id_sucursal' => $this->reglaSucursal($request),
         ], [
             'rol.in' => 'Solo puedes crear usuarios con rol Gerente o Cajero.',
+            'id_sucursal.required' => self::MENSAJE_SUCURSAL,
             'id_sucursal.exists' => 'La sucursal no pertenece a tu negocio.',
             'fecha_nacimiento.required' => __('Date of birth is required.'),
             'fecha_nacimiento.date' => __('Date of birth is invalid.'),
@@ -161,6 +167,7 @@ class UsuarioController extends Controller
             'id_sucursal' => $this->reglaSucursal($request),
         ], [
             'rol.in' => 'Solo se puede asignar el rol Gerente o Cajero.',
+            'id_sucursal.required' => self::MENSAJE_SUCURSAL,
             'id_sucursal.exists' => 'La sucursal no pertenece a tu negocio.',
         ]);
 

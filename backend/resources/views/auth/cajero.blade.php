@@ -205,17 +205,21 @@
   .btn-salir:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
   .btn-salir .bi { font-size: 1rem; line-height: 1; }
   /* ---------- OCULTAR / MOSTRAR EL MENÚ LATERAL (botón ☰ junto a "Nexora") ----------
-     La columna del menú se anima de su ancho a 0. Al ocultarse, el menú espera a que termine la
-     animación para volverse invisible (visibility también lo saca del orden del tabulador). */
+     Oculto = solo íconos: la columna se anima a 64px y el texto se desvanece. El ícono no se mueve
+     (los botones no cambian de padding; el texto que no cabe se recorta con overflow). */
   .topbar .brand .btn-menu { width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: var(--topbar-text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: background 0.15s, border-color 0.15s; }
   .topbar .brand .btn-menu:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.45); }
   .topbar .brand .btn-menu .bi { line-height: 1; }
   .layout { transition: grid-template-columns 0.25s ease; }
-  .sidebar { min-width: 0; overflow-x: hidden; transition: visibility 0s linear 0s; }
-  .layout.menu-oculto { grid-template-columns: 0 1fr; }
-  .layout.menu-oculto .sidebar { visibility: hidden; border-right-width: 0; transition-delay: 0.25s; }
-  .layout.sin-animacion, .layout.sin-animacion .sidebar { transition: none; }   /* al cargar la página */
-  @media (prefers-reduced-motion: reduce) { .layout, .sidebar { transition: none; } }
+  .sidebar { min-width: 0; overflow-x: hidden; }
+  .sidebar button { white-space: nowrap; overflow: hidden; }
+  .sidebar .txt-menu { transition: opacity 0.2s; }
+  .layout.menu-oculto { grid-template-columns: 64px 1fr; }
+  .layout.menu-oculto .sidebar .txt-menu { opacity: 0; }
+  .layout.menu-oculto .sidebar button { position: relative; }
+  .layout.menu-oculto .sidebar .contador-menu { position: absolute; top: 3px; right: 4px; margin: 0; padding: 0 5px; }   /* globo de reportes (admin) */
+  .layout.sin-animacion, .layout.sin-animacion .txt-menu { transition: none; }   /* al cargar la página */
+  @media (prefers-reduced-motion: reduce) { .layout, .sidebar .txt-menu { transition: none; } }
 
   .pago-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
   .pago-section h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--muted); }
@@ -1290,7 +1294,7 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
   /* ---------- NAVEGACIÓN ---------- */
   function renderSidebar() {
     const sb = document.getElementById('sidebar');
-    sb.innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${(ICONOS[s.key] || '') + t(s.key)}</button>`).join('');
+    sb.innerHTML = secciones.map(s => `<button id="btn-${s.id}" title="${t(s.key)}" onclick="mostrarSeccion('${s.id}')">${ICONOS[s.key] || ''}<span class="txt-menu">${t(s.key)}</span></button>`).join('');
     secciones.forEach(s => document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === seccionActual));
   }
 

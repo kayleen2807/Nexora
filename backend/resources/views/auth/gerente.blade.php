@@ -202,17 +202,21 @@
   .btn-salir:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
   .btn-salir .bi { font-size: 1rem; line-height: 1; }
   /* ---------- OCULTAR / MOSTRAR EL MENÚ LATERAL (botón ☰ junto a "Nexora") ----------
-     La columna del menú se anima de su ancho a 0. Al ocultarse, el menú espera a que termine la
-     animación para volverse invisible (visibility también lo saca del orden del tabulador). */
+     Oculto = solo íconos: la columna se anima a 64px y el texto se desvanece. El ícono no se mueve
+     (los botones no cambian de padding; el texto que no cabe se recorta con overflow). */
   .topbar .brand .btn-menu { width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: var(--topbar-text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: background 0.15s, border-color 0.15s; }
   .topbar .brand .btn-menu:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.45); }
   .topbar .brand .btn-menu .bi { line-height: 1; }
   .layout { transition: grid-template-columns 0.25s ease; }
-  .sidebar { min-width: 0; overflow-x: hidden; transition: visibility 0s linear 0s; }
-  .layout.menu-oculto { grid-template-columns: 0 1fr; }
-  .layout.menu-oculto .sidebar { visibility: hidden; border-right-width: 0; transition-delay: 0.25s; }
-  .layout.sin-animacion, .layout.sin-animacion .sidebar { transition: none; }   /* al cargar la página */
-  @media (prefers-reduced-motion: reduce) { .layout, .sidebar { transition: none; } }
+  .sidebar { min-width: 0; overflow-x: hidden; }
+  .sidebar button { white-space: nowrap; overflow: hidden; }
+  .sidebar .txt-menu { transition: opacity 0.2s; }
+  .layout.menu-oculto { grid-template-columns: 64px 1fr; }
+  .layout.menu-oculto .sidebar .txt-menu { opacity: 0; }
+  .layout.menu-oculto .sidebar button { position: relative; }
+  .layout.menu-oculto .sidebar .contador-menu { position: absolute; top: 3px; right: 4px; margin: 0; padding: 0 5px; }   /* globo de reportes (admin) */
+  .layout.sin-animacion, .layout.sin-animacion .txt-menu { transition: none; }   /* al cargar la página */
+  @media (prefers-reduced-motion: reduce) { .layout, .sidebar .txt-menu { transition: none; } }
   /* ---------- CONFIGURACIÓN DE LA CUENTA ---------- */
   .cfg-grid { display: grid; gap: 1rem; max-width: 780px; margin-top: 1rem; }
   .cfg-card { background: var(--card-bg, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: 12px; padding: 1.25rem 1.4rem; box-shadow: 0 1px 3px var(--shadow, rgba(0,0,0,0.06)); }
@@ -430,6 +434,7 @@
               <th data-i18n="thIva">IVA %</th>
               <th><span data-i18n="thPrecioFinal">Precio final</span> (MXN)</th>
               <th data-i18n="thEstado">Estado</th>
+              <th></th>
               <th></th>
               <th></th>
             </tr>
@@ -664,7 +669,7 @@
       productosHeading: 'Alta / baja de productos', productosDesc: 'Agrega productos, ajusta su precio e IVA o desactívalos. Los cambios solo aplican a tu sucursal.',
       labelNombre: 'Nombre', thCategoria: 'Categoría', labelCategoria: 'Categoría', filtroCategoria: 'Categoría', todasCategorias: 'Todas', sinCategoria: 'Sin categoría', labelStockInicial: 'Stock inicial', placeholderProducto: 'Producto',
       btnDarAlta: 'Dar de alta', thPrecio: 'Precio', badgeActivo: 'Activo', badgeInactivo: 'Inactivo',
-      btnDarBaja: 'Dar de baja', btnReactivar: 'Reactivar', alertCompletaProducto: 'Completa al menos nombre y precio.',
+      btnDarBaja: 'Dar de baja', btnReactivar: 'Reactivar', btnEliminarProducto: 'Eliminar producto', productoEliminado: 'Producto eliminado.', confirmEliminarProducto: '¿Eliminar "{nombre}"? Solo se puede si no tiene ventas, compras ni devoluciones y ninguna otra sucursal lo usa. No se puede deshacer.', alertCompletaProducto: 'Completa al menos nombre y precio.',
       historialHeading: 'Historial de ventas', historialDesc: 'Todas las ventas registradas en esta sucursal. Desde aquí puedes devolver piezas o cancelar una venta.',
       thCajero: 'Cajero', thMetodo: 'Método', badgeEfectivo: 'Efectivo', badgeTarjeta: 'Tarjeta',
       alertCompletaCompra: 'Completa producto, cantidad y costo.',
@@ -739,7 +744,7 @@
       productosHeading: 'Add / remove products', productosDesc: 'Add products, adjust their price and tax or deactivate them. Changes only apply to your branch.',
       labelNombre: 'Name', thCategoria: 'Category', labelCategoria: 'Category', filtroCategoria: 'Category', todasCategorias: 'All', sinCategoria: 'No category', labelStockInicial: 'Initial stock', placeholderProducto: 'Product',
       btnDarAlta: 'Add product', thPrecio: 'Price', badgeActivo: 'Active', badgeInactivo: 'Inactive',
-      btnDarBaja: 'Deactivate', btnReactivar: 'Reactivate', alertCompletaProducto: 'Fill in at least name and price.',
+      btnDarBaja: 'Deactivate', btnReactivar: 'Reactivate', btnEliminarProducto: 'Delete product', productoEliminado: 'Product deleted.', confirmEliminarProducto: 'Delete "{nombre}"? Only possible if it has no sales, purchases or returns and no other branch uses it. This cannot be undone.', alertCompletaProducto: 'Fill in at least name and price.',
       historialHeading: 'Sales history', historialDesc: 'All sales recorded at this branch. From here you can return items or cancel a sale.',
       thCajero: 'Cashier', thMetodo: 'Method', badgeEfectivo: 'Cash', badgeTarjeta: 'Card',
       alertCompletaCompra: 'Fill in product, quantity, and cost.',
@@ -1190,7 +1195,7 @@
   }
 
   function renderSidebar() {
-    document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" onclick="mostrarSeccion('${s.id}')">${(ICONOS_MENU[s.key] || '') + t(s.key)}</button>`).join('');
+    document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" title="${t(s.key)}" onclick="mostrarSeccion('${s.id}')">${ICONOS_MENU[s.key] || ''}<span class="txt-menu">${t(s.key)}</span></button>`).join('');
     secciones.forEach(s => document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === seccionActual));
   }
 
@@ -1469,6 +1474,7 @@
             <input type="file" accept="image/*" style="display:none" onchange="subirFoto(${p.id}, this)">
           </label>
         </td>
+        <td><button class="btn btn-peligro btn-sm" onclick="eliminarProducto(${p.id})" title="${t('btnEliminarProducto')}" aria-label="${t('btnEliminarProducto')}">${ICONO_BASURA}</button></td>
       </tr>`).join('');
     paginarTabla('tablaProductos', filtroCat);   // otra categoría → página 1
   }
@@ -1512,6 +1518,20 @@
       await api('/gerente/productos/' + id + '/toggle', 'PUT');
       await cargarProductos();
       renderProductos();
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
+  }
+
+  /* Solo se elimina si es de esta sucursal y no tiene historia; si no, el servidor explica por qué (422) */
+  async function eliminarProducto(id) {
+    const p = productos.find(x => x.id === id);
+    if (!p || !(await confirmar(t('confirmEliminarProducto').replace('{nombre}', p.nombre)))) return;
+    try {
+      await api('/gerente/productos/' + id, 'DELETE');
+      await cargarProductos();
+      renderProductos();
+      mostrarToast(t('productoEliminado'), 'exito');
     } catch (e) {
       mostrarToast(e.message, 'error');
     }

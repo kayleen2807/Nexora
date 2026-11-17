@@ -166,6 +166,7 @@ Route::middleware(['auth', 'rol:administrador'])
 
         Route::get('/productos', [AdminProductoController::class, 'index']);
         Route::post('/productos/{producto}/foto', [AdminProductoController::class, 'uploadFoto']);
+        Route::delete('/productos/{producto}', [AdminProductoController::class, 'destroy']);
 
         Route::get('/ventas', [VentaController::class, 'index']);
 
@@ -195,6 +196,7 @@ Route::middleware(['auth', 'rol:gerente'])
         Route::put('/productos/{producto}', [ProductoController::class, 'update']);
         Route::put('/productos/{producto}/toggle', [ProductoController::class, 'toggleActivo']);
         Route::post('/productos/{producto}/foto', [ProductoController::class, 'uploadFoto']);
+        Route::delete('/productos/{producto}', [ProductoController::class, 'destroy']);
 
         Route::put('/inventario/{producto}', [GerenteInventarioController::class, 'ajustar']);
 

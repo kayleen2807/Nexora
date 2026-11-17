@@ -44,4 +44,18 @@ class ProductoController extends Controller
 
         return response()->json(['foto' => Storage::disk('public')->url($ruta)]);
     }
+
+    /**
+     * Elimina el producto del catálogo del negocio (todas sus sucursales) si no tiene ventas,
+     * compras ni devoluciones; si las tiene → 422 con la sugerencia de darlo de baja.
+     */
+    public function destroy(Request $request, Producto $producto)
+    {
+        $this->asegurarDelNegocio($request, $producto);
+
+        $motivo = $producto->eliminarSiSePuede();
+        abort_if($motivo !== null, 422, $motivo);
+
+        return response()->json(['message' => 'Producto eliminado del catálogo.']);
+    }
 }

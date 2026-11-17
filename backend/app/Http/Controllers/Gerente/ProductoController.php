@@ -171,6 +171,21 @@ class ProductoController extends Controller
         return response()->json($inventario);
     }
 
+    /**
+     * Elimina un producto que es SOLO de esta sucursal y no tiene historia (p. ej. creado por error).
+     * Si tiene ventas/compras/devoluciones o lo usa otra sucursal → 422 con la sugerencia de darlo de baja.
+     */
+    public function destroy(Request $request, Producto $producto)
+    {
+        $this->asegurarDelNegocio($request, $producto);
+        $idSucursal = $this->idSucursal($request);
+
+        $motivo = $producto->eliminarSiSePuede($idSucursal);
+        abort_if($motivo !== null, 422, $motivo);
+
+        return response()->json(['message' => 'Producto eliminado.']);
+    }
+
     /** Mensajes en español para los límites (los genéricos de Laravel salen en inglés). */
     private function mensajes(): array
     {
