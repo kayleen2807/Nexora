@@ -188,6 +188,15 @@
   .rep-pendiente { background: var(--danger-bg); color: var(--danger-text); }
   .rep-en_revision { background: var(--border-light); color: var(--muted); }
   .rep-resuelto { background: var(--success-bg); color: var(--success-text); }
+  /* Productos por autorizar */
+  .aut-pendiente, .aut-aprobado, .aut-rechazado { white-space: nowrap; }
+  .aut-pendiente { background: var(--danger-bg); color: var(--danger-text); }
+  .aut-aprobado { background: var(--success-bg); color: var(--success-text); }
+  .aut-rechazado { background: var(--border-light); color: var(--muted); }
+  .aut-acciones { display: flex; flex-direction: column; gap: 6px; min-width: 190px; }
+  .aut-acciones .btn { white-space: nowrap; }
+  .aut-acciones .ico { width: 1em; height: 1em; vertical-align: -0.15em; }
+  .aut-acciones input { padding: 0.35rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.78rem; background: var(--card-bg); color: var(--text); }
   .filtros-rep { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
   .filtros-rep select, td select.rep-estado { padding: 0.45rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; background: var(--card-bg); color: var(--text); }
   td select.rep-estado { display: block; margin-top: 4px; }
@@ -480,6 +489,26 @@
         </div>
       </div>
 
+      <!-- Productos nuevos de los gerentes: autorizar = pasa a todas las sucursales; rechazar = se queda en la suya -->
+      <div class="seccion" id="sec-autorizaciones">
+        <h2 data-i18n="autHeading">Productos por autorizar</h2>
+        <p class="desc" data-i18n="autDesc">Productos nuevos que dieron de alta tus gerentes. Mientras decides, cada uno se vende solo en su sucursal. Si lo autorizas, aparece en todas tus sucursales (activo y con stock 0); si lo rechazas, se queda solo en la sucursal que lo creó.</p>
+        <div class="card">
+          <table>
+            <tr>
+              <th data-i18n="thFoto">Foto</th>
+              <th data-i18n="thProducto">Producto</th>
+              <th data-i18n="autThSucursal">Lo pidió</th>
+              <th><span data-i18n="autThPrecio">Precio con IVA</span> (MXN)</th>
+              <th data-i18n="autThFecha">Fecha</th>
+              <th data-i18n="thEstado">Estado</th>
+              <th></th>
+            </tr>
+            <tbody id="tablaAutorizaciones"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="seccion" id="sec-ventas">
         <h2 data-i18n="ventasHeading">Ventas por sucursal</h2>
         <p class="desc" data-i18n="ventasDesc">Consulta las ventas registradas en cualquier sucursal.</p>
@@ -655,6 +684,8 @@
   let paginaCortes = { pagina: 1, paginas: 1, total: 0 };
   let reportes = [];
   let reportesPendientes = 0;
+  let autorizaciones = [];
+  let autorizacionesPendientes = 0;
 
   /* Cortes de la sucursal elegida, de 50 en 50: el filtro y la página los resuelve el servidor */
   async function cargarCortes(pagina = paginaCortes.pagina) {
@@ -724,6 +755,15 @@
       inventarioHeading: 'Inventario por sucursal', inventarioDesc: 'Consulta las existencias de cualquier sucursal.',
       thProducto: 'Producto', thStock: 'Stock', sinDatos: 'Sin datos',
       navProductosAdmin: 'Catálogo / fotos',
+      navAutorizaciones: 'Autorizaciones', autHeading: 'Productos por autorizar',
+      autDesc: 'Productos nuevos que dieron de alta tus gerentes. Mientras decides, cada uno se vende solo en su sucursal. Si lo autorizas, aparece en todas tus sucursales (activo y con stock 0); si lo rechazas, se queda solo en la sucursal que lo creó.',
+      autThSucursal: 'Lo pidió', autThPrecio: 'Precio con IVA', autThFecha: 'Fecha', autPendientesTitulo: 'Productos esperando tu autorización',
+      autEstado_pendiente: 'Pendiente', autEstado_aprobado: 'Autorizado', autEstado_rechazado: 'Rechazado',
+      autBtnAutorizar: 'Autorizar', autBtnRechazar: 'Rechazar', autMotivoPlaceholder: 'Motivo del rechazo (opcional)',
+      autConfirmar: '¿Autorizar "{nombre}"? Se agregará a todas tus sucursales, activo y con stock 0 (cada gerente registra sus compras).',
+      autConfirmarRechazo: '¿Rechazar "{nombre}"? Se quedará solo en {sucursal}; ahí lo podrán seguir vendiendo.',
+      autStockOrigen: 'Stock en su sucursal: {n}', autMotivo: 'Motivo: {motivo}', autSinSolicitudes: 'No hay productos por autorizar.',
+      autCatalogoPendiente: 'Esperando autorización', autSucursalBorrada: 'Sucursal eliminada',
       adminProductosHeading: 'Catálogo de productos', adminProductosDesc: 'Cambia el nombre o la foto de cada producto; el cambio se ve en todas tus sucursales.',
       btnGuardarNombre: 'Guardar nombre', nombreProductoGuardado: 'Nombre del producto actualizado en todas tus sucursales.', alertNombreProducto: 'Escribe el nombre del producto.',
       thFoto: 'Foto', thPrecio: 'Precio', fotoActualizada: 'Foto actualizada', labelFotoProducto: 'Foto del producto',
@@ -818,6 +858,15 @@
       inventarioHeading: 'Inventory by branch', inventarioDesc: 'Check the stock at any branch.',
       thProducto: 'Product', thStock: 'Stock', sinDatos: 'No data',
       navProductosAdmin: 'Catalog / photos',
+      navAutorizaciones: 'Approvals', autHeading: 'Products to approve',
+      autDesc: 'New products your managers added. While you decide, each one is sold only in its branch. If you approve it, it shows up in all your branches (active, with 0 stock); if you reject it, it stays only in the branch that created it.',
+      autThSucursal: 'Requested by', autThPrecio: 'Price with VAT', autThFecha: 'Date', autPendientesTitulo: 'Products waiting for your approval',
+      autEstado_pendiente: 'Pending', autEstado_aprobado: 'Approved', autEstado_rechazado: 'Rejected',
+      autBtnAutorizar: 'Approve', autBtnRechazar: 'Reject', autMotivoPlaceholder: 'Rejection reason (optional)',
+      autConfirmar: 'Approve "{nombre}"? It will be added to all your branches, active and with 0 stock (each manager records their purchases).',
+      autConfirmarRechazo: 'Reject "{nombre}"? It will stay only in {sucursal}, where it can still be sold.',
+      autStockOrigen: 'Stock in its branch: {n}', autMotivo: 'Reason: {motivo}', autSinSolicitudes: 'There are no products to approve.',
+      autCatalogoPendiente: 'Awaiting approval', autSucursalBorrada: 'Deleted branch',
       adminProductosHeading: 'Product catalog', adminProductosDesc: 'Change the name or photo of each product; the change shows in all your branches.',
       btnGuardarNombre: 'Save name', nombreProductoGuardado: 'Product name updated in all your branches.', alertNombreProducto: 'Write the product name.',
       thFoto: 'Photo', thPrecio: 'Price', fotoActualizada: 'Photo updated', labelFotoProducto: 'Product photo',
@@ -936,6 +985,7 @@
     navUsuarios: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
     navInventario: svg('<path d="M12 22v-9"/><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z"/><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13"/><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.82 1.2a1.655 1.655 0 0 0-1.64 0L3 3.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z"/>'),
     navProductosAdmin: svg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
+    navAutorizaciones: svg('<path d="M16 3h5v5"/><path d="M21 3 14 10"/><path d="M11 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6"/><path d="m8 13 2.5 2.5L16 10"/>'),
     navReportesVentas: svg('<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>'),
     navVentas: svg('<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>'),
     navCortes: svg(CLIPBOARD_LIST),
@@ -1346,6 +1396,7 @@
     //{ id: 'proveedores', key: 'navProveedores' }, //pendiente en la bd y conexion
     { id: 'inventario', key: 'navInventario' },
     { id: 'productos-admin', key: 'navProductosAdmin' },
+    { id: 'autorizaciones', key: 'navAutorizaciones' },
     { id: 'ventas', key: 'navVentas'},
     { id: 'reportes-ventas', key: 'navReportesVentas' },
     { id: 'cortes', key: 'navCortes' },
@@ -1470,7 +1521,7 @@
         <td><div class="nombre-editable">
           <input type="text" id="admNombre-${p.id}" maxlength="150" value="${esc(p.nombre)}" aria-label="${t('thProducto')}">
           <button class="btn btn-primario btn-sm" onclick="guardarNombreProductoAdmin(${p.id})" title="${t('btnGuardarNombre')}" aria-label="${t('btnGuardarNombre')}">${ICONO_GUARDAR}</button>
-        </div></td>
+        </div>${p.autorizacion === 'pendiente' ? `<span class="badge aut-pendiente" style="display:inline-block;margin-top:4px;cursor:pointer;" onclick="mostrarSeccion('autorizaciones')">${t('autCatalogoPendiente')}</span>` : ''}</td>
         <td>${monto(p.precio)}</td>
         <td><span class="badge ${p.activo ? 'badge-gerente' : 'badge-cajero'}">${p.activo ? t('estadoActiva') : t('estadoInactiva')}</span></td>
         <td>
@@ -1560,6 +1611,7 @@
       cargarNegocio(),
       cargarMisNegocios(),
       cargarReportes(),
+      cargarAutorizaciones(),
     ].map(p => p.catch(e => console.error(e))));   // si una falla, las demás siguen
 
     // Se vuelve a pintar la sección en la que está AHORA (si se movió mientras cargaba, se queda ahí)
@@ -1570,6 +1622,7 @@
     document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" title="${t(s.key)}" onclick="mostrarSeccion('${s.id}')">${ICONOS_MENU[s.key] || ''}<span class="txt-menu">${t(s.key)}</span></button>`).join('');
     secciones.forEach(s => document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === seccionActual));
     pintarContadorReportes();
+    pintarContadorAutorizaciones();
   }
 
   function mostrarSeccion(id) {
@@ -1588,6 +1641,7 @@
     //if (id === 'proveedores') renderProveedores();
     if (id === 'inventario') renderInventarioGlobal();
     if (id === 'productos-admin') { renderProductosAdmin(); cargarProductosAdmin().then(renderProductosAdmin); }
+    if (id === 'autorizaciones') { renderAutorizaciones(); cargarAutorizaciones().then(renderAutorizaciones); }
     if (id === 'ventas') renderVentas();
     if (id === 'cortes') { renderCortes(); cargarCortes().then(renderCortes); }
     if (id === 'reportes-ventas') {
@@ -2208,6 +2262,79 @@
     if (!btn) return;
     btn.querySelector('.contador-menu')?.remove();
     if (reportesPendientes > 0) btn.insertAdjacentHTML('beforeend', `<span class="contador-menu" title="${t('repPendientesTitulo')}">${reportesPendientes}</span>`);
+  }
+
+  /*  PRODUCTOS POR AUTORIZAR (los dan de alta los gerentes; el dueño decide si pasan a todas las sucursales)  */
+  async function cargarAutorizaciones() {
+    const res = await fetch('/administrador/autorizaciones', { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return;
+    const data = await res.json();
+    autorizaciones = data.solicitudes;
+    autorizacionesPendientes = data.pendientes;
+    pintarContadorAutorizaciones();
+  }
+
+  /* Globo rojo con los pendientes junto a "Productos por autorizar" (mismo estilo que el de Reportes) */
+  function pintarContadorAutorizaciones() {
+    const btn = document.getElementById('btn-autorizaciones');
+    if (!btn) return;
+    btn.querySelector('.contador-menu')?.remove();
+    if (autorizacionesPendientes > 0) btn.insertAdjacentHTML('beforeend', `<span class="contador-menu" title="${t('autPendientesTitulo')}">${autorizacionesPendientes}</span>`);
+  }
+
+  function renderAutorizaciones() {
+    document.getElementById('tablaAutorizaciones').innerHTML = autorizaciones.map(a => `
+      <tr>
+        <td>${a.foto
+          ? `<img src="${esc(a.foto)}" alt="${esc(a.nombre)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
+          : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}</td>
+        <td><strong>${esc(a.nombre)}</strong>
+          <div class="rep-desc">${a.categoria ? esc(a.categoria) + ' · ' : ''}${t('autStockOrigen').replace('{n}', a.stock)}</div></td>
+        <td>${a.sucursal ? esc(a.sucursal) : `<em>${t('autSucursalBorrada')}</em>`}${a.gerente ? `<div class="rep-desc">${esc(a.gerente)}</div>` : ''}</td>
+        <td>${monto(a.precio_final)}<div class="rep-desc">${monto(a.precio)} + ${a.iva}% IVA</div></td>
+        <td>${fechaReporte(a.fecha_solicitud)}</td>
+        <td><span class="badge aut-${a.autorizacion}">${t('autEstado_' + a.autorizacion)}</span>
+          ${a.autorizacion !== 'pendiente' && a.fecha_autorizacion ? `<div class="rep-desc">${fechaReporte(a.fecha_autorizacion)}</div>` : ''}
+          ${a.motivo_rechazo ? `<div class="rep-desc">${esc(t('autMotivo').replace('{motivo}', a.motivo_rechazo))}</div>` : ''}</td>
+        <td>${a.autorizacion === 'aprobado' ? '' : `<div class="aut-acciones">
+          <button class="btn btn-primario btn-sm" onclick="autorizarProducto(${a.id})">${ICONO_GUARDAR} ${t('autBtnAutorizar')}</button>
+          ${a.autorizacion === 'pendiente' ? `
+            <input type="text" id="autMotivo-${a.id}" maxlength="255" placeholder="${t('autMotivoPlaceholder')}" aria-label="${t('autMotivoPlaceholder')}">
+            <button class="btn btn-peligro btn-sm" onclick="rechazarProducto(${a.id})">${t('autBtnRechazar')}</button>` : ''}
+        </div>`}</td>
+      </tr>`).join('') || `<tr><td colspan="7" style="color:var(--muted-light);">${t('autSinSolicitudes')}</td></tr>`;
+    paginarTabla('tablaAutorizaciones');
+  }
+
+  async function decidirProducto(id, accion, cuerpo) {
+    try {
+      const resp = await fetch(`/administrador/autorizaciones/${id}/${accion}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok) throw new Error(data?.message || t('errorGenerico') || 'Error');
+      mostrarToast(data.message, 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
+    // Aunque falle (p. ej. otra pestaña ya lo decidió) se vuelve a pedir: así se ve el estado real
+    await Promise.all([cargarAutorizaciones(), cargarProductosAdmin(), cargarInventario()].map(p => p.catch(() => {})));
+    renderAutorizaciones();
+  }
+
+  async function autorizarProducto(id) {
+    const a = autorizaciones.find(x => x.id === id);
+    if (!a || !(await confirmar(t('autConfirmar').replace('{nombre}', a.nombre), t('autBtnAutorizar')))) return;
+    await decidirProducto(id, 'autorizar', {});
+  }
+
+  async function rechazarProducto(id) {
+    const a = autorizaciones.find(x => x.id === id);
+    const motivo = document.getElementById('autMotivo-' + id)?.value.trim() || '';
+    if (!a || !(await confirmar(t('autConfirmarRechazo').replace('{nombre}', a.nombre).replace('{sucursal}', a.sucursal || t('autSucursalBorrada')), t('autBtnRechazar')))) return;
+    await decidirProducto(id, 'rechazar', { motivo });
   }
 
   /* Rellena un <select> de filtro conservando lo que estaba elegido */

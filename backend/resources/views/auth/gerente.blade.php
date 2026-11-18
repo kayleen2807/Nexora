@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script src="{{ asset('js/requisitos-contrasena.js') }}"></script>
 <script src="{{ asset('js/reportes-ventas.js') }}"></script>
+<script src="{{ asset('js/disponibilidad.js') }}"></script>
 <title>Nexora - Panel de Gerente</title>
 @include('partials.favicon')
 <script src="{{ asset('js/theme.js') }}"></script>
@@ -167,6 +168,12 @@
   td input.cat-input { width: 140px; }
   td input.nombre-input { width: 170px; }   /* nombre del producto (solo si es de esta sucursal) */
   .nombre-bloqueado { cursor: help; border-bottom: 1px dotted var(--muted-light); }
+  /* Autorización del producto (pendiente / en todas / solo aquí), debajo del nombre */
+  .aut-badge { display: inline-block; margin-top: 4px; padding: 1px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; white-space: nowrap; }
+  .aut-pendiente { background: var(--accent-bg-light); color: var(--accent-hover); }
+  .aut-aprobado { background: var(--border-light); color: var(--muted); }
+  .aut-rechazado { background: var(--danger-bg); color: var(--danger-text); cursor: help; }
+  .acciones-producto { display: flex; gap: 6px; }   /* "¿Dónde hay?" + eliminar en la misma celda */
 
   /* ---------- REPORTES (reglas nuevas; solo usan las variables del tema) ---------- */
   .fila-form .campo-ancho { flex: 1 1 280px; }
@@ -623,6 +630,7 @@
   const ICONO_POWER = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>';
   const ICONO_BAN = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>';
   const ICONO_BASURA = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+  const ICONO_UBICACION = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>';
 
   /* ---------- PAGINACIÓN DE TABLAS (en el navegador) ----------
      Cada render pinta la tabla completa y luego llama paginarTabla(idTbody): aquí solo se OCULTAN
@@ -716,6 +724,12 @@
       btnActivar: 'Activar', btnDesactivar: 'Desactivar',
       cajaAgregada: 'Caja agregada', cajaEliminada: 'Caja eliminada',
       productoActualizado: 'Producto actualizado', productoAgregado: 'Producto agregado',
+      productoAgregadoPendiente: 'Producto agregado. Ya lo puedes vender en tu sucursal; el administrador decidirá si pasa a todas las sucursales.',
+      autPendiente: 'Esperando autorización', autPendienteAyuda: 'Se vende solo en tu sucursal hasta que el administrador lo autorice para todas.',
+      autAprobado: 'En todas las sucursales', autRechazado: 'Solo en tu sucursal',
+      autRechazadoAyuda: 'El administrador decidió no pasarlo a las demás sucursales; tú lo sigues vendiendo.',
+      autRechazadoMotivo: 'El administrador no lo pasó a las demás sucursales: "{motivo}". Tú lo sigues vendiendo.',
+      btnDondeHay: '¿Dónde hay? (otras sucursales)',
       stockActualizado: 'Stock actualizado', compraRegistrada: 'Compra registrada; inventario actualizado',
       sinVentas: 'Sin ventas registradas', sinProductos: 'Sin productos',
       thApertura: 'Apertura', thCierre: 'Cierre', thFondo: 'Fondo', thVentas: 'Ventas', thEsperado: 'Esperado',
@@ -794,6 +808,12 @@
       btnActivar: 'Activate', btnDesactivar: 'Deactivate',
       cajaAgregada: 'Register added', cajaEliminada: 'Register deleted',
       productoActualizado: 'Product updated', productoAgregado: 'Product added',
+      productoAgregadoPendiente: 'Product added. You can sell it in your branch now; the administrator will decide whether it goes to every branch.',
+      autPendiente: 'Awaiting approval', autPendienteAyuda: 'Sold only in your branch until the administrator approves it for all branches.',
+      autAprobado: 'In every branch', autRechazado: 'Only in your branch',
+      autRechazadoAyuda: 'The administrator decided not to add it to the other branches; you can keep selling it.',
+      autRechazadoMotivo: 'The administrator did not add it to the other branches: "{motivo}". You can keep selling it.',
+      btnDondeHay: 'Where is it? (other branches)',
       stockActualizado: 'Stock updated', compraRegistrada: 'Purchase registered; inventory updated',
       sinVentas: 'No sales recorded', sinProductos: 'No products',
       thApertura: 'Opened', thCierre: 'Closed', thFondo: 'Fund', thVentas: 'Sales', thEsperado: 'Expected',
@@ -1607,7 +1627,7 @@
         <td>${p.compartido
           // El nombre es del catálogo del negocio: si otra sucursal lo tiene, lo cambia el administrador
           ? `<span class="nombre-bloqueado" title="${t('nombreSoloAdmin')}">${esc(p.nombre)}</span>`
-          : `<input type="text" class="nombre-input" id="nombre-${p.id}" maxlength="150" value="${esc(p.nombre)}" aria-label="${t('thNombre')}">`}</td>
+          : `<input type="text" class="nombre-input" id="nombre-${p.id}" maxlength="150" value="${esc(p.nombre)}" aria-label="${t('thNombre')}">`}${insigniaAutorizacion(p)}</td>
         <td><input type="text" class="cat-input" id="cat-${p.id}" list="listaCategorias" maxlength="40" value="${escCat(p.categoria || '')}" placeholder="${t('sinCategoria')}"></td>
         <td><input type="number" id="precio-${p.id}" value="${p.precio}" step="0.01"></td>
         <td><input type="number" id="iva-${p.id}" value="${p.iva}" step="0.01"></td>
@@ -1623,9 +1643,30 @@
             <input type="file" accept="image/*" style="display:none" onchange="subirFoto(${p.id}, this)">
           </label>`}
         </td>
-        <td><button class="btn btn-peligro btn-sm" onclick="eliminarProducto(${p.id})" title="${t('btnEliminarProducto')}" aria-label="${t('btnEliminarProducto')}">${ICONO_BASURA}</button></td>
+        <td><div class="acciones-producto">
+          <button class="btn btn-sm" style="background:var(--accent-bg-light);color:var(--accent-hover);" onclick="verDisponibilidad(${p.id})" title="${t('btnDondeHay')}" aria-label="${t('btnDondeHay')}">${ICONO_UBICACION}</button>
+          <button class="btn btn-peligro btn-sm" onclick="eliminarProducto(${p.id})" title="${t('btnEliminarProducto')}" aria-label="${t('btnEliminarProducto')}">${ICONO_BASURA}</button>
+        </div></td>
       </tr>`).join('');
     paginarTabla('tablaProductos', filtroCat);   // otra categoría → página 1
+  }
+
+  /* Productos dados de alta por un gerente: los autoriza el administrador (pasan a todas las sucursales).
+     Los de antes de ese cambio (autorizacion = null) no llevan insignia. */
+  function insigniaAutorizacion(p) {
+    if (p.autorizacion === 'pendiente') return `<div><span class="aut-badge aut-pendiente" title="${t('autPendienteAyuda')}">${t('autPendiente')}</span></div>`;
+    if (p.autorizacion === 'aprobado') return `<div><span class="aut-badge aut-aprobado">${t('autAprobado')}</span></div>`;
+    if (p.autorizacion === 'rechazado') {
+      const ayuda = p.motivo_rechazo ? t('autRechazadoMotivo').replace('{motivo}', p.motivo_rechazo) : t('autRechazadoAyuda');
+      return `<div><span class="aut-badge aut-rechazado" title="${esc(ayuda)}">${t('autRechazado')}</span></div>`;
+    }
+    return '';
+  }
+
+  /* "¿Dónde hay?": otras sucursales que lo tienen (ventana de public/js/disponibilidad.js) */
+  function verDisponibilidad(id) {
+    const p = productos.find(x => x.id === id);
+    if (p) NexoraDisponibilidad.abrir({ url: `/gerente/productos/${id}/disponibilidad`, producto: p.nombre });
   }
 
   async function subirFoto(id, inputEl) {
@@ -1714,7 +1755,7 @@
       fotoInput.value = '';
       await cargarProductos();
       renderProductos();
-      mostrarToast(t('productoAgregado'), 'exito');
+      mostrarToast(t('productoAgregadoPendiente'), 'exito');
     } catch (e) {
       mostrarToast(e.message, 'error');
     }

@@ -46,6 +46,14 @@ class VentaController extends Controller
             ]);
     }
 
+    /** "¿Dónde hay?" (como en farmacias): otras sucursales del negocio que lo tienen y cuántas piezas. */
+    public function disponibilidad(Request $request, Producto $producto)
+    {
+        $this->asegurarProductoVisible($request, $producto);
+
+        return response()->json($producto->disponibilidad($this->idSucursal($request)));
+    }
+
     /**
      * Registra una venta completa. Los precios se recalculan AQUÍ con los datos de la
      * BD: nunca se confía en los precios que mande el navegador.

@@ -31,6 +31,8 @@ class ProductoController extends Controller
 
         return Producto::query()
             ->where('producto.id_negocio', $this->idNegocio($request))
+            // Sin los pendientes/rechazados de OTRAS sucursales (decisión de Kay 2026-11-18)
+            ->visibleEnSucursal($idSucursal)
             ->leftJoin('inventario', function ($join) use ($idSucursal) {
                 $join->on('inventario.id_producto', '=', 'producto.id_producto')
                     ->where('inventario.id_sucursal', '=', $idSucursal);
@@ -66,6 +68,9 @@ class ProductoController extends Controller
                     'stock_minimo' => (int) ($p->getAttribute('stock_minimo') ?? 5),
                     'categoria' => $p->getAttribute('categoria_sucursal'),
                     'compartido' => (bool) $p->getAttribute('compartido'),
+                    // null = anterior al cambio; pendiente | aprobado | rechazado (+ lo que contestó el admin)
+                    'autorizacion' => $p->autorizacion,
+                    'motivo_rechazo' => $p->motivo_rechazo,
                 ];
             });
     }
@@ -83,15 +88,21 @@ class ProductoController extends Controller
         ], $this->mensajes());
 
         $idNegocio = $this->idNegocio($request);
+        $idUsuario = $this->usuario($request)->id_usuario;
 
-        // Producto (catálogo del negocio, valores por defecto) + su inventario en esta sucursal: los dos o ninguno
-        $producto = DB::transaction(function () use ($data, $idSucursal, $idNegocio) {
+        // Producto (catálogo del negocio, valores por defecto) + su inventario en esta sucursal: los dos o ninguno.
+        // Queda PENDIENTE: se vende solo aquí hasta que el administrador lo autorice para todas las sucursales.
+        $producto = DB::transaction(function () use ($data, $idSucursal, $idNegocio, $idUsuario) {
             $producto = Producto::create([
                 'nombre' => $data['nombre'],
                 'precio' => $data['precio'],
                 'iva' => $data['iva'] ?? 16,
                 'estado' => true,
                 'id_negocio' => $idNegocio,
+                'autorizacion' => Producto::PENDIENTE,
+                'id_sucursal_origen' => $idSucursal,
+                'id_usuario_solicita' => $idUsuario,
+                'fecha_solicitud' => now(),
             ]);
 
             Inventario::create([
@@ -118,7 +129,7 @@ class ProductoController extends Controller
      */
     public function uploadFoto(Request $request, Producto $producto)
     {
-        $this->asegurarDelNegocio($request, $producto);
+        $this->asegurarProductoVisible($request, $producto);
         abort_if(
             Inventario::where('id_producto', $producto->id_producto)->where('id_sucursal', '!=', $this->idSucursal($request))->exists(),
             422,
@@ -147,7 +158,7 @@ class ProductoController extends Controller
      */
     public function update(Request $request, Producto $producto)
     {
-        $this->asegurarDelNegocio($request, $producto);
+        $this->asegurarProductoVisible($request, $producto);
         $idSucursal = $this->idSucursal($request);
 
         $data = $request->validate([
@@ -186,7 +197,7 @@ class ProductoController extends Controller
     /** Activa/desactiva el producto SOLO en la sucursal del gerente. */
     public function toggleActivo(Request $request, Producto $producto)
     {
-        $this->asegurarDelNegocio($request, $producto);
+        $this->asegurarProductoVisible($request, $producto);
         $idSucursal = $this->idSucursal($request);
 
         $inventario = DB::transaction(function () use ($producto, $idSucursal) {
@@ -206,13 +217,21 @@ class ProductoController extends Controller
      */
     public function destroy(Request $request, Producto $producto)
     {
-        $this->asegurarDelNegocio($request, $producto);
+        $this->asegurarProductoVisible($request, $producto);
         $idSucursal = $this->idSucursal($request);
 
         $motivo = $producto->eliminarSiSePuede($idSucursal);
         abort_if($motivo !== null, 422, $motivo);
 
         return response()->json(['message' => 'Producto eliminado.']);
+    }
+
+    /** "¿Dónde hay?": otras sucursales del negocio que tienen el producto activo y cuántas piezas. */
+    public function disponibilidad(Request $request, Producto $producto)
+    {
+        $this->asegurarProductoVisible($request, $producto);
+
+        return response()->json($producto->disponibilidad($this->idSucursal($request)));
     }
 
     /** Mensajes en español para los límites (los genéricos de Laravel salen en inglés). */
