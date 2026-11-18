@@ -6,6 +6,7 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script src="{{ asset('js/requisitos-contrasena.js') }}"></script>
+<script src="{{ asset('js/disponibilidad.js') }}"></script>
 <title>Nexora - Punto de Venta</title>
 @include('partials.favicon')
 <script src="{{ asset('js/theme.js') }}"></script>
@@ -166,6 +167,10 @@
   .producto-card .cat { min-height: 1em; }
   .producto-card .nombre { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; min-height: 2.5em; overflow-wrap: anywhere; }
   .producto-card button { margin-top: auto; }
+  /* "¿Dónde hay?" (otras sucursales): enlace discreto encima de Agregar; los dos quedan abajo de la tarjeta */
+  .producto-card .btn-donde { width: auto; background: none; color: var(--accent); padding: 0 0 0.45rem; font-size: 0.75rem; font-weight: 600; }
+  .producto-card .btn-donde:hover { background: none; color: var(--accent-hover); text-decoration: underline; }
+  .producto-card .btn-donde + button { margin-top: 0; }
 
   .carrito { background: var(--card-bg); border-radius: 12px; padding: 1.25rem; height: fit-content; }
   .carrito-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-light); font-size: 0.85rem; }
@@ -656,6 +661,7 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
       cambioLabel: 'Cambio',
       faltaLabel: 'Falta',
       sinStock: 'Sin stock',
+      dondeHay: '¿Dónde hay?', dondeHayAyuda: 'Ver qué otras sucursales lo tienen y cuántas piezas',
       agregarBtn: 'Agregar',
       stockLabel: 'Stock: ',
       comprasHeading: 'Registrar compras',
@@ -740,6 +746,7 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
       cambioLabel: 'Change',
       faltaLabel: 'Missing',
       sinStock: 'Out of stock',
+      dondeHay: 'Where is it?', dondeHayAyuda: 'See which other branches have it and how many units',
       agregarBtn: 'Add',
       stockLabel: 'Stock: ',
       comprasHeading: 'Register purchases',
@@ -1531,11 +1538,18 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
           <div class="cat">${p.categoria ? escCat(p.categoria) : '&nbsp;'}</div><div class="nombre" title="${esc(p.nombre)}">${esc(p.nombre)}</div>
           <div class="precio">${dinero(p.precio)}</div>
           <div class="stock">${t('stockLabel')}${disponible}</div>
+          <button type="button" class="btn-donde" onclick="verDisponibilidad(${p.id})" title="${t('dondeHayAyuda')}"><i class="bi bi-geo-alt" aria-hidden="true"></i> ${t('dondeHay')}</button>
           <button onclick="agregarAlCarrito(${p.id})" ${disponible <= 0 ? 'disabled' : ''}>
             ${disponible <= 0 ? t('sinStock') : ICONOS.agregarBtn + t('agregarBtn')}
           </button>
         </div>`;
     }).join('') || `<div class="vacio">${t('sinResultados')}</div>`;
+  }
+
+  /* "¿Dónde hay?": en qué otras sucursales lo tienen (ventana de public/js/disponibilidad.js) */
+  function verDisponibilidad(id) {
+    const p = productos.find(x => x.id === id);
+    if (p) NexoraDisponibilidad.abrir({ url: `/cajero/productos/${id}/disponibilidad`, producto: p.nombre });
   }
 
   function irPaginaProductos(n) {

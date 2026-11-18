@@ -20,7 +20,7 @@ class InventarioController extends Controller
      */
     public function ajustar(Request $request, Producto $producto)
     {
-        $this->asegurarDelNegocio($request, $producto);
+        $this->asegurarProductoVisible($request, $producto);
         $idSucursal = $this->idSucursal($request);
 
         $data = $request->validate([

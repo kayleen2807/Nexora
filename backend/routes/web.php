@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cookie;
 use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\Admin\InventarioController;
 use App\Http\Controllers\Admin\ProductoController as AdminProductoController;
+use App\Http\Controllers\Admin\AutorizacionProductoController;
 use App\Http\Controllers\Admin\VentaController;
 use App\Http\Controllers\Admin\ResumeController;
 use App\Http\Controllers\Gerente\MiSucursalController;
@@ -178,6 +179,11 @@ Route::middleware(['auth', 'rol:administrador'])
         Route::put('/productos/{producto}', [AdminProductoController::class, 'update']);
         Route::delete('/productos/{producto}', [AdminProductoController::class, 'destroy']);
 
+        // Productos nuevos de los gerentes: autorizar (todas las sucursales) o rechazar
+        Route::get('/autorizaciones', [AutorizacionProductoController::class, 'index']);
+        Route::put('/autorizaciones/{producto}/autorizar', [AutorizacionProductoController::class, 'autorizar']);
+        Route::put('/autorizaciones/{producto}/rechazar', [AutorizacionProductoController::class, 'rechazar']);
+
         Route::get('/ventas', [VentaController::class, 'index']);
 
         Route::get('/resumen', [ResumeController::class, 'index']);
@@ -209,6 +215,7 @@ Route::middleware(['auth', 'rol:gerente'])
         Route::put('/productos/{producto}/toggle', [ProductoController::class, 'toggleActivo']);
         Route::post('/productos/{producto}/foto', [ProductoController::class, 'uploadFoto']);
         Route::delete('/productos/{producto}', [ProductoController::class, 'destroy']);
+        Route::get('/productos/{producto}/disponibilidad', [ProductoController::class, 'disponibilidad']);
 
         Route::put('/inventario/{producto}', [GerenteInventarioController::class, 'ajustar']);
 
@@ -244,6 +251,7 @@ Route::middleware(['auth', 'rol:cajero'])
         Route::post('/turno/cerrar', [TurnoController::class, 'cerrar']);
 
         Route::get('/productos', [CajeroVentaController::class, 'productos']);
+        Route::get('/productos/{producto}/disponibilidad', [CajeroVentaController::class, 'disponibilidad']);
         Route::post('/ventas', [CajeroVentaController::class, 'store']);
 
         Route::get('/reportes', [CajeroReporteController::class, 'index']);

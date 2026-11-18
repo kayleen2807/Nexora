@@ -23,6 +23,7 @@ class ProductoController extends Controller
             'precio' => (float) $p->precio,
             'iva' => (float) $p->iva,
             'activo' => (bool) $p->estado,
+            'autorizacion' => $p->autorizacion,   // null = anterior al 2026-11-18
         ]);
     }
 

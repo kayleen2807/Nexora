@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\UsaNegocioDelUsuario;
 use App\Http\Controllers\Controller;
+use App\Models\Producto;
 use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
@@ -49,7 +50,15 @@ class SucursalController extends Controller
 
         $data['id_negocio'] = $this->idNegocio($request);
 
-        return response()->json(Sucursal::create($data), 201);
+        // La sucursal nace con los productos que el admin autorizó para todo el negocio (activos, stock 0)
+        $sucursal = DB::transaction(function () use ($data) {
+            $sucursal = Sucursal::create($data);
+            Producto::agregarAutorizadosA($sucursal);
+
+            return $sucursal;
+        });
+
+        return response()->json($sucursal, 201);
     }
 
     public function update(Request $request, Sucursal $sucursal){

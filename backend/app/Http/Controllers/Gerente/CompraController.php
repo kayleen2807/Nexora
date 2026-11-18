@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\UsaSucursalDelUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Compra;
 use App\Models\Inventario;
+use App\Models\Producto;
 use App\Support\Limites;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +53,9 @@ class CompraController extends Controller
             'cantidad.max' => 'La cantidad es demasiado grande.',
             'costo_unitario.max' => 'El costo no puede ser mayor a '.Limites::dineroTexto().'.',
         ]);
+
+        // Un producto pendiente/rechazado de OTRA sucursal no existe para esta (no se le compra ni se le crea stock)
+        $this->asegurarProductoVisible($request, Producto::findOrFail($data['id_producto']));
 
         // compra.total es numeric(10,2): cantidad × costo debe caber
         abort_if(round($data['cantidad'] * $data['costo_unitario'], 2) > Limites::DINERO, 422,
