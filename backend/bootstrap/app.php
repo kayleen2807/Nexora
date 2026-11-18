@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [\App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\SinCacheConSesion::class,   // "Atrás" después de cerrar sesión ya no muestra el panel
         ]);
 
         $middleware->alias([

@@ -6,6 +6,7 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script src="{{ asset('js/requisitos-contrasena.js') }}"></script>
+<script src="{{ asset('js/reportes-ventas.js') }}"></script>
 <title>Nexora - Panel de Gerente</title>
 @include('partials.favicon')
 <script src="{{ asset('js/theme.js') }}"></script>
@@ -127,6 +128,11 @@
   .diferencia-row.sobrante { color: var(--success-text); font-weight: 700; }
   .diferencia-row.faltante { color: var(--danger-text); font-weight: 700; }
   .diferencia-row.cuadrado { color: var(--muted); font-weight: 700; }
+  /* Dinero a favor en VERDE (sobrante, cambio suficiente). El 30-oct la paleta "success" pasó a naranja
+     (rediseño de Caro, se respeta); estos indicadores usan su propio verde, el mismo que tenían antes. */
+  :root { --dinero-ok: #16a34a; --dinero-ok-bg: #dcfce7; }
+  [data-theme="dark"] { --dinero-ok: #4ade80; --dinero-ok-bg: #143621; }
+  .diferencia-row.sobrante { color: var(--dinero-ok); }
     /* ---------- TOASTS ---------- */
   #toastContainer {
     position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1000;
@@ -170,6 +176,16 @@
   .rep-pendiente { background: var(--danger-bg); color: var(--danger-text); }
   .rep-en_revision { background: var(--border-light); color: var(--muted); }
   .rep-resuelto { background: var(--success-bg); color: var(--success-text); }
+  /* Reportes de cajeros que atiende el gerente (mismo estilo que la bandeja del admin) */
+  td select.rep-estado { display: block; margin-top: 4px; padding: 0.45rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; background: var(--card-bg); color: var(--text); }
+  td textarea.rep-respuesta { width: 100%; min-width: 180px; min-height: 2.6rem; padding: 0.4rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.8rem; background: var(--card-bg); color: var(--text); resize: vertical; }
+  .rep-acciones { display: flex; flex-direction: column; gap: 6px; }
+  .rep-acciones .btn { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+  .rep-acciones .ico, .rep-con-admin .ico { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .btn-escalar { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn-escalar:hover { background: var(--accent-bg-light); }
+  .rep-con-admin { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--muted); margin-top: 4px; white-space: nowrap; }
+  .contador-menu { margin-left: 6px; padding: 0 7px; border-radius: 20px; background: var(--danger-text); color: #fff; font-size: 0.7rem; font-weight: 700; }
   /* ---------- PAGINACIÓN DE CORTES (regla nueva; variables del tema) ---------- */
   .paginacion { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; margin-top: 0.9rem; font-size: 0.82rem; color: var(--muted); }
   /* Cortes: las columnas de montos (fondo, ventas, esperado, contado, diferencia) no se parten en dos renglones */
@@ -269,6 +285,8 @@
   .cfg-switch input:checked + span::after { transform: translateX(18px); }
   .cfg-info { display: flex; justify-content: space-between; gap: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border, #e5e7eb); font-size: 0.85rem; }
   .cfg-info small { color: var(--muted, #6b7280); display: block; }
+.cfg-card.cfg-peligro { border: 1px solid var(--danger-text, #dc2626); }
+  .cfg-card.cfg-peligro h3 { color: var(--danger-text, #dc2626); }
   .sidebar #btn-configuracion { margin-top: 0.6rem; border-top: 1px solid var(--border, #e5e7eb); }
   .cfg-escudo { width: 40px; height: 40px; border-radius: 50%; background: var(--border, #e5e7eb); color: var(--muted, #6b7280); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, color 0.2s; }
   .cfg-escudo .ico { width: 1.3em; height: 1.3em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -443,6 +461,13 @@
         </div>
       </div>
 
+      <!-- Reportes de ventas: la pantalla la arma public/js/reportes-ventas.js (compartido con el otro panel) -->
+      <div class="seccion" id="sec-reportes-ventas">
+        <h2 data-i18n="rvHeading">Reportes de ventas</h2>
+        <p class="desc" data-i18n="rvDesc">Ventas netas, gráficas y productos más vendidos de tu sucursal.</p>
+        <div id="rvContenedor"></div>
+      </div>
+
       <div class="seccion" id="sec-historial">
         <h2 data-i18n="historialHeading">Historial de ventas</h2>
         <p class="desc" data-i18n="historialDesc">Todas las ventas registradas en esta sucursal. Desde aquí puedes devolver piezas o cancelar una venta.</p>
@@ -473,7 +498,7 @@
         <div class="card">
           <h3 data-i18n="repListaHeading">Mis reportes</h3>
           <table>
-            <tr><th data-i18n="repThFecha">Fecha</th><th data-i18n="repThAutor">Enviado por</th><th data-i18n="repThTipo">Tipo</th><th data-i18n="repThAsunto">Asunto</th><th data-i18n="repThEstado">Estado</th><th data-i18n="repThRespuesta">Respuesta</th></tr>
+            <tr><th data-i18n="repThFecha">Fecha</th><th data-i18n="repThAutor">Enviado por</th><th data-i18n="repThTipo">Tipo</th><th data-i18n="repThAsunto">Asunto</th><th data-i18n="repThEstado">Estado</th><th data-i18n="repThRespuesta">Respuesta</th><th></th></tr>
             <tbody id="tablaReportes"></tbody>
           </table>
         </div>
@@ -492,6 +517,7 @@
 
   /* ---------- DATOS (declarados antes de cualquier función que los use) ---------- */
   let productos = [];
+  let reporteVentas = null;   // NexoraReportesVentas (se arma la primera vez que se abre la sección)
   let compras = [];
   let historial = [];
   let cajas = [];
@@ -502,6 +528,7 @@
   let ventaAbierta = null;   // folio de la venta cuyo panel de devolución está abierto
   let detalleVenta = null;   // detalle (líneas + devoluciones) de esa venta
   let reportes = [];         // reportes de la sucursal (suyos y de sus cajeros)
+  let reportesPendientes = 0;   // de cajeros que esperan al gerente (globo rojo del menú)
 
   /*
    * fetch con CSRF + JSON. Devuelve el cuerpo ya parseado (o null en 204).
@@ -648,7 +675,7 @@
       topbarSucursal: '— Panel de Gerente · Sucursal Centro', cerrarSesion: 'Cerrar sesión', ocultarMenu: 'Ocultar menú', mostrarMenu: 'Mostrar menú',
       navInventario: 'Inventario', navCompras: 'Registrar compras', navCorte: 'Cortes de caja',
       navCajas: 'Registro de cajas', navPrecios: 'Precios e IVA', navProductos: 'Alta / baja productos',
-      navHistorial: 'Historial de ventas',
+      navHistorial: 'Historial de ventas', navReportesVentas: 'Reportes de ventas', rvHeading: 'Reportes de ventas', rvDesc: 'Ventas netas, gráficas y productos más vendidos de tu sucursal.',
       invHeading: 'Inventario', invDesc: 'Consulta y ajusta las existencias de tu sucursal.',
       thProducto: 'Producto', thStockActual: 'Stock actual', thAjustar: 'Ajustar', btnAplicar: 'Aplicar',
       comprasHeading: 'Registrar compras', comprasDesc: 'Registra las entradas de mercancía recibidas por el cajero o proveedor.',
@@ -669,7 +696,7 @@
       productosHeading: 'Alta / baja de productos', productosDesc: 'Agrega productos, ajusta su precio e IVA o desactívalos. Los cambios solo aplican a tu sucursal.',
       labelNombre: 'Nombre', thCategoria: 'Categoría', labelCategoria: 'Categoría', filtroCategoria: 'Categoría', todasCategorias: 'Todas', sinCategoria: 'Sin categoría', labelStockInicial: 'Stock inicial', placeholderProducto: 'Producto',
       btnDarAlta: 'Dar de alta', thPrecio: 'Precio', badgeActivo: 'Activo', badgeInactivo: 'Inactivo',
-      btnDarBaja: 'Dar de baja', btnReactivar: 'Reactivar', btnEliminarProducto: 'Eliminar producto', productoEliminado: 'Producto eliminado.', confirmEliminarProducto: '¿Eliminar "{nombre}"? Solo se puede si no tiene ventas, compras ni devoluciones y ninguna otra sucursal lo usa. No se puede deshacer.', alertCompletaProducto: 'Completa al menos nombre y precio.',
+      btnDarBaja: 'Dar de baja', btnReactivar: 'Reactivar', btnEliminarProducto: 'Eliminar producto', fotoSoloAdmin: 'Otras sucursales también tienen este producto: su foto la cambia el administrador en Catálogo / fotos.', productoEliminado: 'Producto eliminado.', confirmEliminarProducto: '¿Eliminar "{nombre}"? Solo se puede si no tiene ventas, compras ni devoluciones y ninguna otra sucursal lo usa. No se puede deshacer.', alertCompletaProducto: 'Completa al menos nombre y precio.',
       historialHeading: 'Historial de ventas', historialDesc: 'Todas las ventas registradas en esta sucursal. Desde aquí puedes devolver piezas o cancelar una venta.',
       thCajero: 'Cajero', thMetodo: 'Método', badgeEfectivo: 'Efectivo', badgeTarjeta: 'Tarjeta',
       alertCompletaCompra: 'Completa producto, cantidad y costo.',
@@ -703,12 +730,15 @@
       devueltoLabel: 'devuelto', canceladaPor: 'Motivo de cancelación',
       labelFotoProducto: 'Foto del producto', thFoto: 'Foto', fotoActualizada: 'Foto actualizada',
       navConfiguracion: 'Configuración',
-      navReportes: 'Reportes', repHeading: 'Reportes al administrador', repNuevoHeading: 'Nuevo reporte', repListaHeading: 'Reportes de la sucursal',
-      repDesc: 'Avisa al administrador de una falla, un faltante de producto, un problema con la caja o una sugerencia. Aquí también ves los reportes de tus cajeros.',
+      navReportes: 'Reportes', repHeading: 'Reportes', repNuevoHeading: 'Nuevo reporte para el administrador', repListaHeading: 'Reportes de la sucursal',
+      repDesc: 'Avisa al administrador de una falla, un faltante de producto, un problema con la caja o una sugerencia. Los reportes de tus cajeros llegan aquí: contéstalos o, si no puedes resolverlos, pásalos al administrador.',
+      repPendientesTitulo: 'Reportes de cajeros pendientes', repPhRespuesta: 'Respuesta para el cajero (opcional)', repGuardado: 'Reporte actualizado',
+      repBtnEscalar: 'Pasar al admin', repConfirmarEscalar: '¿Pasar este reporte al administrador? Desde ese momento lo atiende él y tú solo podrás consultarlo.', repEscalado: 'Reporte pasado al administrador',
+      repConAdmin: 'Lo atiende el administrador', repPasadoEl: 'Pasado al administrador el', repRespondio_gerente: 'Respondiste tú', repRespondio_administrador: 'Respondió el administrador',
       repThFecha: 'Fecha', repThEstado: 'Estado',
       repLabelTipo: 'Tipo', repLabelAsunto: 'Asunto', repLabelDescripcion: 'Descripción',
       repPhAsunto: 'Ej. La impresora no imprime tickets', repPhDescripcion: 'Cuéntale al administrador qué pasó, cuándo y en qué caja o producto…',
-      repBtnEnviar: 'Enviar reporte', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta del administrador',
+      repBtnEnviar: 'Enviar reporte', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta',
       repSinReportes: 'Aún no hay reportes.', repSinRespuesta: 'Sin respuesta todavía', repTu: 'Tú', repUsuarioEliminado: 'Usuario eliminado',
       repTipo_falla: 'Falla del sistema', repTipo_faltante: 'Faltante de producto', repTipo_caja: 'Problema con caja / dinero', repTipo_sugerencia: 'Sugerencia', repTipo_otro: 'Otro',
       repEstado_pendiente: 'Pendiente', repEstado_en_revision: 'En revisión', repEstado_resuelto: 'Resuelto',
@@ -723,7 +753,7 @@
       topbarSucursal: '— Manager Panel · Centro Branch', cerrarSesion: 'Log out', ocultarMenu: 'Hide menu', mostrarMenu: 'Show menu',
       navInventario: 'Inventory', navCompras: 'Register purchases', navCorte: 'Cash counts',
       navCajas: 'Cash registers', navPrecios: 'Prices & tax', navProductos: 'Add / remove products',
-      navHistorial: 'Sales history',
+      navHistorial: 'Sales history', navReportesVentas: 'Sales reports', rvHeading: 'Sales reports', rvDesc: 'Net sales, charts and best-selling products for your branch.',
       invHeading: 'Inventory', invDesc: 'Check and adjust the stock at your branch.',
       thProducto: 'Product', thStockActual: 'Current stock', thAjustar: 'Adjust', btnAplicar: 'Apply',
       comprasHeading: 'Register purchases', comprasDesc: 'Log incoming stock received by the cashier or supplier.',
@@ -744,7 +774,7 @@
       productosHeading: 'Add / remove products', productosDesc: 'Add products, adjust their price and tax or deactivate them. Changes only apply to your branch.',
       labelNombre: 'Name', thCategoria: 'Category', labelCategoria: 'Category', filtroCategoria: 'Category', todasCategorias: 'All', sinCategoria: 'No category', labelStockInicial: 'Initial stock', placeholderProducto: 'Product',
       btnDarAlta: 'Add product', thPrecio: 'Price', badgeActivo: 'Active', badgeInactivo: 'Inactive',
-      btnDarBaja: 'Deactivate', btnReactivar: 'Reactivate', btnEliminarProducto: 'Delete product', productoEliminado: 'Product deleted.', confirmEliminarProducto: 'Delete "{nombre}"? Only possible if it has no sales, purchases or returns and no other branch uses it. This cannot be undone.', alertCompletaProducto: 'Fill in at least name and price.',
+      btnDarBaja: 'Deactivate', btnReactivar: 'Reactivate', btnEliminarProducto: 'Delete product', fotoSoloAdmin: 'Other branches also have this product: its photo is changed by the administrator in Catalog / photos.', productoEliminado: 'Product deleted.', confirmEliminarProducto: 'Delete "{nombre}"? Only possible if it has no sales, purchases or returns and no other branch uses it. This cannot be undone.', alertCompletaProducto: 'Fill in at least name and price.',
       historialHeading: 'Sales history', historialDesc: 'All sales recorded at this branch. From here you can return items or cancel a sale.',
       thCajero: 'Cashier', thMetodo: 'Method', badgeEfectivo: 'Cash', badgeTarjeta: 'Card',
       alertCompletaCompra: 'Fill in product, quantity, and cost.',
@@ -778,12 +808,15 @@
       devueltoLabel: 'returned', canceladaPor: 'Cancellation reason',
       labelFotoProducto: 'Product photo', thFoto: 'Photo', fotoActualizada: 'Photo updated',
       navConfiguracion: 'Settings',
-      navReportes: 'Reports', repHeading: 'Reports to the administrator', repNuevoHeading: 'New report', repListaHeading: 'Branch reports',
-      repDesc: 'Let the administrator know about a failure, a missing product, a register problem or a suggestion. Your cashiers\' reports also appear here.',
+      navReportes: 'Reports', repHeading: 'Reports', repNuevoHeading: 'New report for the administrator', repListaHeading: 'Branch reports',
+      repDesc: 'Let the administrator know about a failure, a missing product, a register problem or a suggestion. Your cashiers\' reports arrive here: reply to them or, if you cannot solve them, pass them to the administrator.',
+      repPendientesTitulo: 'Pending cashier reports', repPhRespuesta: 'Reply to the cashier (optional)', repGuardado: 'Report updated',
+      repBtnEscalar: 'Pass to admin', repConfirmarEscalar: 'Pass this report to the administrator? From then on they handle it and you can only view it.', repEscalado: 'Report passed to the administrator',
+      repConAdmin: 'Handled by the administrator', repPasadoEl: 'Passed to the administrator on', repRespondio_gerente: 'You replied', repRespondio_administrador: 'The administrator replied',
       repThFecha: 'Date', repThEstado: 'Status',
       repLabelTipo: 'Type', repLabelAsunto: 'Subject', repLabelDescripcion: 'Description',
       repPhAsunto: 'E.g. The printer does not print receipts', repPhDescripcion: 'Tell the administrator what happened, when, and which register or product…',
-      repBtnEnviar: 'Send report', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: "Administrator's reply",
+      repBtnEnviar: 'Send report', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: 'Reply',
       repSinReportes: 'No reports yet.', repSinRespuesta: 'No reply yet', repTu: 'You', repUsuarioEliminado: 'Deleted user',
       repTipo_falla: 'System failure', repTipo_faltante: 'Missing product', repTipo_caja: 'Register / cash problem', repTipo_sugerencia: 'Suggestion', repTipo_otro: 'Other',
       repEstado_pendiente: 'Pending', repEstado_en_revision: 'In review', repEstado_resuelto: 'Resolved',
@@ -804,6 +837,7 @@
     navCompras: svgMenu('<path d="m15 11-1 9"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/><path d="M4.5 15.5h15"/><path d="m5 11 4-7"/><path d="m9 11 1 9"/>'),
     navCajas: svgMenu('<rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>'),
     navProductos: svgMenu('<path d="M16 16h6"/><path d="M19 13v6"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/>'),
+    navReportesVentas: svgMenu('<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>'),
     navHistorial: svgMenu('<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>'),
     navCorte: svgMenu('<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>'),
     navConfiguracion: svgMenu('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'),
@@ -815,6 +849,14 @@
   const CFG_TEXTOS = {
   "es": {
     "navConfiguracion": "Configuración",
+    "borrarTitulo": "Eliminar mi cuenta",
+    "borrarBoton": "Eliminar mi cuenta",
+    "borrarPass": "Tu contraseña",
+    "borrarEscribeCorreo": "Escribe tu correo ({correo}) para confirmar",
+    "borrarFaltaPass": "Escribe tu contraseña para confirmar.",
+    "borrarFaltaCorreo": "Escribe tu correo exactamente como aparece.",
+    "borrarConfirmar": "¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+    "borrarSub": "Tu cuenta se borra. Si ya tienes ventas o cortes, se desactiva y se borran tus datos personales; el historial del negocio se conserva.",
     "cfgTitulo": "Configuración",
     "cfgDesc": "Administra tu cuenta, la seguridad y la apariencia.",
     "perfilTitulo": "Perfil",
@@ -862,6 +904,14 @@
   },
   "en": {
     "navConfiguracion": "Settings",
+    "borrarTitulo": "Delete my account",
+    "borrarBoton": "Delete my account",
+    "borrarPass": "Your password",
+    "borrarEscribeCorreo": "Type your email ({correo}) to confirm",
+    "borrarFaltaPass": "Type your password to confirm.",
+    "borrarFaltaCorreo": "Type your email exactly as shown.",
+    "borrarConfirmar": "Are you sure you want to delete your account? This cannot be undone.",
+    "borrarSub": "Your account is deleted. If you already have sales or cash cuts, it is deactivated and your personal data erased; the business history is kept.",
     "cfgTitulo": "Settings",
     "cfgDesc": "Manage your account, security and appearance.",
     "perfilTitulo": "Profile",
@@ -968,6 +1018,22 @@
   let cfgReqs = null;
   function cfgFuerza() {
     if (cfgReqs) cfgReqs.actualizar();
+  }
+
+  /* Eliminar mi cuenta: el servidor revisa la contraseña (y, si es el dueño, el correo escrito), borra
+     o anonimiza, cierra la sesión y responde a dónde ir (el login con el aviso "Tu cuenta se eliminó") */
+  async function cfgEliminarCuenta() {
+    const password = document.getElementById('cfgBorrarPass').value;
+    const campoCorreo = document.getElementById('cfgBorrarCorreo');
+    if (campoCorreo && campoCorreo.value.trim().toLowerCase() !== String(cfgPerfil.correo).toLowerCase()) { mostrarToast(ct('borrarFaltaCorreo'), 'error'); return; }
+    if (!password) { mostrarToast(ct('borrarFaltaPass'), 'error'); return; }
+    if (!(await confirmar(ct('borrarConfirmar'), ct('borrarBoton')))) return;
+    try {
+      const r = await cfgApi('/configuracion/cuenta', 'DELETE', { password, confirmacion: campoCorreo ? campoCorreo.value.trim() : null });
+      location.replace(r?.redirect || '/login');   // replace: "Atrás" ya no regresa al panel
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   async function cfgCambiarPass() {
@@ -1092,6 +1158,14 @@
           <div class="cfg-info"><div><b>${ct('lblMoneda')}</b><small>${ct('monedaHint')}</small></div><span>${ct('monedaTxt')}</span></div>
         </div>
 
+        <div class="cfg-card cfg-peligro">
+          <h3>${ct('borrarTitulo')}</h3><p class="cfg-sub">${ct('borrarSub')}</p>
+          <div class="cfg-form">
+            <div class="cfg-campo"><label for="cfgBorrarPass">${ct('borrarPass')}</label><input type="password" id="cfgBorrarPass" autocomplete="current-password"></div>
+          </div>
+          <div class="cfg-acciones"><button class="btn btn-peligro" onclick="cfgEliminarCuenta()">${ct('borrarBoton')}</button></div>
+        </div>
+
       </div>`;
     cfgMarcarTema();
     cfgReqs = window.NexoraClave ? NexoraClave.montar({ clave: 'cfgPassNueva', confirmacion: 'cfgPassConfirmar', requisitos: document.getElementById('cfgRequisitos'), coincide: document.getElementById('cfgCoincide') }) : null;
@@ -1104,6 +1178,7 @@
     { id: 'cajas', key: 'navCajas' },
     { id: 'productos', key: 'navProductos' },
     { id: 'historial', key: 'navHistorial' },
+    { id: 'reportes-ventas', key: 'navReportesVentas' },
     // El cajero hace su corte; aquí el gerente consulta el historial de cortes
     { id: 'corte', key: 'navCorte' },
     { id: 'reportes', key: 'navReportes' },
@@ -1113,6 +1188,7 @@
   // Sección del "#" de la URL; se muestra cuando termina de cargar todo el script (DOMContentLoaded)
   const seccionDeInicio = seccionDeLaUrl('mi-sucursal');
   document.addEventListener('DOMContentLoaded', () => { if (seccionDeInicio !== seccionActual) mostrarSeccion(seccionDeInicio); });
+  document.addEventListener('DOMContentLoaded', () => { if (seccionActual !== 'reportes') cargarReportes(); });   // globo de pendientes
 
   /* La sección actual va en la URL (#ventas, #corte…). Al cambiar de idioma la página se recarga y, gracias
      a eso, regresa a la MISMA sección en lugar de al inicio (también al recargar con F5). */
@@ -1190,6 +1266,10 @@
     layout.classList.remove('sin-animacion');
   })();
 
+  /* Si el navegador muestra el panel desde su memoria al darle "Atrás" (bfcache), se vuelve a pedir al
+     servidor: sin sesión, manda al login (complementa el middleware SinCacheConSesion) */
+  window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+
   function cerrarSesion() {
     document.getElementById('logoutForm').submit();
   }
@@ -1197,6 +1277,7 @@
   function renderSidebar() {
     document.getElementById('sidebar').innerHTML = secciones.map(s => `<button id="btn-${s.id}" title="${t(s.key)}" onclick="mostrarSeccion('${s.id}')">${ICONOS_MENU[s.key] || ''}<span class="txt-menu">${t(s.key)}</span></button>`).join('');
     secciones.forEach(s => document.getElementById('btn-' + s.id).classList.toggle('activo', s.id === seccionActual));
+    pintarContadorReportes();
   }
 
   function mostrarSeccion(id) {
@@ -1214,16 +1295,43 @@
     if (id === 'productos') { renderProductos(); cargarProductos().then(renderProductos); }
     if (id === 'historial') { renderHistorial(); cargarHistorial().then(renderHistorial); }
     if (id === 'corte') { renderCortes(); cargarCortes().then(renderCortes); }
+    if (id === 'reportes-ventas') {
+      if (!reporteVentas) reporteVentas = NexoraReportesVentas.montar({
+        contenedor: document.getElementById('rvContenedor'), url: '/gerente/reportes-ventas',
+        dinero, toast: mostrarToast,
+      });
+      reporteVentas.mostrar();
+    }
+
     if (id === 'reportes') { renderReportes(); cargarReportes().then(renderReportes); }
     if (id === 'configuracion') renderConfiguracion();
   }
 
   /* ---------- REPORTES AL ADMINISTRADOR ---------- */
   const TIPOS_REPORTE = ['falla', 'faltante', 'caja', 'sugerencia', 'otro'];
+  const ESTADOS_REPORTE = ['pendiente', 'en_revision', 'resuelto'];
+  const ICONO_ESCALAR = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>';
 
   async function cargarReportes() {
-    try { reportes = await api('/gerente/reportes'); }
-    catch (e) { mostrarToast(e.message, 'error'); }
+    try {
+      const data = await api('/gerente/reportes');
+      reportes = data.reportes;
+      reportesPendientes = data.pendientes;
+      pintarContadorReportes();
+    } catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  /* Globo rojo junto a "Reportes" en el menú: reportes de cajeros que esperan al gerente */
+  function pintarContadorReportes() {
+    const btn = document.getElementById('btn-reportes');
+    if (!btn) return;
+    btn.querySelector('.contador-menu')?.remove();
+    if (reportesPendientes > 0) btn.insertAdjacentHTML('beforeend', `<span class="contador-menu" title="${t('repPendientesTitulo')}">${reportesPendientes}</span>`);
+  }
+
+  /* Quién contestó (debajo de la respuesta) */
+  function quienResponde(r) {
+    return r.rol_responde ? t('repRespondio_' + r.rol_responde) + ' · ' : '';
   }
 
   function renderReportes() {
@@ -1239,11 +1347,44 @@
           <td>${r.mio ? t('repTu') : esc(r.autor ?? t('repUsuarioEliminado'))}${r.rol_autor && !r.mio ? `<div class="rep-desc">${t('repRol_' + r.rol_autor)}</div>` : ''}</td>
           <td>${t('repTipo_' + r.tipo)}</td>
           <td><strong>${esc(r.asunto)}</strong><div class="rep-desc">${esc(r.descripcion)}</div></td>
-          <td><span class="badge rep-${r.estado}">${t('repEstado_' + r.estado)}</span></td>
-          <td>${r.respuesta ? `${esc(r.respuesta)}<div class="rep-desc">${formatearFecha(r.fecha_respuesta)}</div>` : `<span class="rep-desc">${t('repSinRespuesta')}</span>`}</td>
+          <td>
+            <span class="badge rep-${r.estado}">${t('repEstado_' + r.estado)}</span>
+            ${r.puede_atender ? `<select class="rep-estado" id="repEstado-${r.id}">${ESTADOS_REPORTE.map(e => `<option value="${e}" ${e === r.estado ? 'selected' : ''}>${t('repEstado_' + e)}</option>`).join('')}</select>` : ''}
+            ${!r.mio && r.destino === 'admin' ? `<div class="rep-con-admin" title="${r.fecha_escalado ? t('repPasadoEl') + ' ' + formatearFecha(r.fecha_escalado) : ''}">${ICONO_ESCALAR} ${t('repConAdmin')}</div>` : ''}
+          </td>
+          <td>${r.puede_atender
+            ? `<textarea class="rep-respuesta" id="repRespuesta-${r.id}" maxlength="500" placeholder="${t('repPhRespuesta')}">${esc(r.respuesta ?? '')}</textarea>${r.fecha_respuesta ? `<div class="rep-desc">${quienResponde(r)}${formatearFecha(r.fecha_respuesta)}</div>` : ''}`
+            : (r.respuesta ? `${esc(r.respuesta)}<div class="rep-desc">${quienResponde(r)}${formatearFecha(r.fecha_respuesta)}</div>` : `<span class="rep-desc">${t('repSinRespuesta')}</span>`)}</td>
+          <td>${r.puede_atender ? `<div class="rep-acciones">
+            <button class="btn btn-primario btn-sm" onclick="guardarReporte(${r.id})">${ICONO_GUARDAR}${t('btnGuardar')}</button>
+            ${r.estado !== 'resuelto' ? `<button class="btn btn-escalar btn-sm" onclick="escalarReporte(${r.id})">${ICONO_ESCALAR}${t('repBtnEscalar')}</button>` : ''}
+          </div>` : ''}</td>
         </tr>`).join('')
-      : `<tr><td colspan="6" style="color:var(--muted);">${t('repSinReportes')}</td></tr>`;
+      : `<tr><td colspan="7" style="color:var(--muted);">${t('repSinReportes')}</td></tr>`;
     paginarTabla('tablaReportes');
+  }
+
+  /* Atender un reporte de cajero: estado + respuesta (el cajero la ve en su panel) */
+  async function guardarReporte(id) {
+    const estado = document.getElementById('repEstado-' + id).value;
+    const respuesta = document.getElementById('repRespuesta-' + id).value.trim();
+    try {
+      await api('/gerente/reportes/' + id, 'PUT', { estado, respuesta });
+      await cargarReportes();
+      renderReportes();
+      mostrarToast(t('repGuardado'), 'exito');
+    } catch (e) { mostrarToast(e.message, 'error'); }
+  }
+
+  /* "Pasar al admin": desde ahora lo atiende el administrador; aquí queda en solo lectura */
+  async function escalarReporte(id) {
+    if (!await confirmar(t('repConfirmarEscalar'), t('repBtnEscalar'))) return;
+    try {
+      await api('/gerente/reportes/' + id + '/escalar', 'POST', {});
+      await cargarReportes();
+      renderReportes();
+      mostrarToast(t('repEscalado'), 'exito');
+    } catch (e) { mostrarToast(e.message, 'error'); }
   }
 
   async function enviarReporte() {
@@ -1469,10 +1610,13 @@
         <td><button class="btn btn-sm ${p.activo ? 'btn-exito' : 'btn-peligro'}" onclick="toggleActivo(${p.id})" title="${p.activo ? t('btnDarBaja') : t('btnReactivar')}" aria-label="${p.activo ? t('btnDarBaja') : t('btnReactivar')}">${ICONO_POWER}</button></td>
         <td><button class="btn btn-primario btn-sm" onclick="guardarProducto(${p.id})" title="${t('btnGuardar')}" aria-label="${t('btnGuardar')}">${ICONO_GUARDAR}</button></td>
         <td>
-          <label class="btn btn-sm" style="background:var(--accent-bg-light);color:var(--accent-hover);cursor:pointer;" title="${t('labelFotoProducto')}">
+          ${p.compartido
+            // Lo tienen otras sucursales: la foto es de todo el negocio y la cambia el administrador
+            ? `<span class="btn btn-sm" style="opacity:0.45;cursor:not-allowed;" title="${t('fotoSoloAdmin')}" aria-label="${t('fotoSoloAdmin')}"><svg class="icono-foto" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 8h.01"></path><path d="m3 16 5-5c.928-.893 2.072-.893 3 0l4 4"></path><path d="m14 14 1-1c.928-.893 2.072-.893 3 0l3 3"></path><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M19 2v4"></path><path d="M17 4h4"></path></svg></span>`
+            : `<label class="btn btn-sm" style="background:var(--accent-bg-light);color:var(--accent-hover);cursor:pointer;" title="${t('labelFotoProducto')}">
             <svg class="icono-foto" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 8h.01"></path><path d="m3 16 5-5c.928-.893 2.072-.893 3 0l4 4"></path><path d="m14 14 1-1c.928-.893 2.072-.893 3 0l3 3"></path><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M19 2v4"></path><path d="M17 4h4"></path></svg>
             <input type="file" accept="image/*" style="display:none" onchange="subirFoto(${p.id}, this)">
-          </label>
+          </label>`}
         </td>
         <td><button class="btn btn-peligro btn-sm" onclick="eliminarProducto(${p.id})" title="${t('btnEliminarProducto')}" aria-label="${t('btnEliminarProducto')}">${ICONO_BASURA}</button></td>
       </tr>`).join('');

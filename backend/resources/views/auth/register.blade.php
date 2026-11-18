@@ -137,7 +137,7 @@
                             <small id="legal-hint" class="legal-hint">{{ __('Open and read both links to be able to accept them.') }}</small>
                         </div>
 
-                        <button type="submit" id="register-submit" disabled>{{ __('Register') }}</button>
+                        <button type="submit" id="register-submit" disabled><i class="bi bi-person-plus" aria-hidden="true"></i> {{ __('Register') }}</button>
                     </form>
 
                     <div class="google-divider"><span>{{ __('or') }}</span></div>

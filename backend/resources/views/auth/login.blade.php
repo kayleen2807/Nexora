@@ -97,7 +97,7 @@
                             <a href="{{ route('password.request') }}">{{ __('Forgot my password') }}</a>
                         </div>
 
-                        <button type="submit">{{ __('Login') }}</button>
+                        <button type="submit"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> {{ __('Login') }}</button>
                     </form>
 
                     <div class="google-divider"><span>{{ __('or') }}</span></div>

@@ -6,6 +6,7 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script src="{{ asset('js/requisitos-contrasena.js') }}"></script>
+<script src="{{ asset('js/reportes-ventas.js') }}"></script>
 <title>Nexora - Panel de Administrador</title>
 @include('partials.favicon')
 <script src="{{ asset('js/theme.js') }}"></script>
@@ -129,6 +130,13 @@
   .form-separador { border: none; border-top: 1px solid var(--border-light); margin: 1.25rem 0; }
   .form-acciones { display: flex; justify-content: flex-end; margin-top: 1.25rem; }
   .form-acciones .ico { margin-right: 6px; }
+  /* Editar usuario (fila abierta bajo el usuario) y zona para eliminar el negocio */
+  .fila-anexa > td { background: var(--sidebar-hover); }
+  .fila-anexa .ayuda { font-size: 0.72rem; color: var(--muted-light); line-height: 1.35; margin: 0.6rem 0 0; }
+  .fila-anexa .form-acciones { gap: 0.5rem; margin-top: 0.8rem; }
+  .zona-peligro { margin-top: 1.25rem; border-top: 1px solid var(--border-light); padding-top: 1rem; }
+  .zona-peligro summary { cursor: pointer; color: var(--danger-text); font-weight: 600; font-size: 0.88rem; }
+  .zona-peligro[open] summary { margin-bottom: 0.6rem; }
 
   .filtro-sucursal { margin-bottom: 1rem; }
   .filtro-sucursal select { padding: 0.55rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; min-width: 200px; background: var(--card-bg); color: var(--text); }
@@ -193,6 +201,11 @@
   .badge-sobrante, .badge-completada { background: var(--success-bg); color: var(--success-text); }
   .badge-faltante, .badge-cancelada { background: var(--danger-bg); color: var(--danger-text); }
   .badge-cuadrada { background: var(--border-light); color: var(--muted); }
+  /* Dinero a favor en VERDE (sobrante, cambio suficiente). El 30-oct la paleta "success" pasó a naranja
+     (rediseño de Caro, se respeta); estos indicadores usan su propio verde, el mismo que tenían antes. */
+  :root { --dinero-ok: #16a34a; --dinero-ok-bg: #dcfce7; }
+  [data-theme="dark"] { --dinero-ok: #4ade80; --dinero-ok-bg: #143621; }
+  .badge-sobrante { background: var(--dinero-ok-bg); color: var(--dinero-ok); }
   .badge-dev-parcial { background: var(--warning-bg); color: var(--warning-text); }
   #tablaCortes .badge, #tablaVentas .badge { white-space: nowrap; }
 
@@ -257,6 +270,7 @@
   .cfg-campo input:disabled { opacity: 0.65; cursor: not-allowed; }
   .cfg-campo small { font-size: 0.72rem; }
   .cfg-acciones { margin-top: 1rem; display: flex; gap: 0.6rem; align-items: center; }
+  .cfg-cambio-correo { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
   .cfg-pass { position: relative; display: flex; }
   .cfg-pass input { flex: 1; padding-right: 2.4rem; }
   .cfg-ojo { position: absolute; right: 0.35rem; top: 50%; transform: translateY(-50%); background: transparent; border: 0; cursor: pointer; color: var(--muted, #6b7280); padding: 0.3rem; display: flex; }
@@ -296,6 +310,8 @@
   .cfg-switch input:checked + span::after { transform: translateX(18px); }
   .cfg-info { display: flex; justify-content: space-between; gap: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border, #e5e7eb); font-size: 0.85rem; }
   .cfg-info small { color: var(--muted, #6b7280); display: block; }
+.cfg-card.cfg-peligro { border: 1px solid var(--danger-text, #dc2626); }
+  .cfg-card.cfg-peligro h3 { color: var(--danger-text, #dc2626); }
   .sidebar #btn-configuracion { margin-top: 0.6rem; border-top: 1px solid var(--border, #e5e7eb); }
   .cfg-escudo { width: 40px; height: 40px; border-radius: 50%; background: var(--border, #e5e7eb); color: var(--muted, #6b7280); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, color 0.2s; }
   .cfg-escudo .ico { width: 1.3em; height: 1.3em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -473,6 +489,13 @@
         </div>
       </div>
 
+      <!-- Reportes de ventas: la pantalla la arma public/js/reportes-ventas.js (compartido con el otro panel) -->
+      <div class="seccion" id="sec-reportes-ventas">
+        <h2 data-i18n="rvHeading">Reportes de ventas</h2>
+        <p class="desc" data-i18n="rvDesc">Ventas netas, gráficas y productos más vendidos de todas tus sucursales o de una.</p>
+        <div id="rvContenedor"></div>
+      </div>
+
       <div class="seccion" id="sec-cortes">
         <h2 data-i18n="cortesHeading">Cortes de caja por sucursal</h2>
         <p class="desc" data-i18n="cortesDesc">Consulta los turnos de caja de cualquier sucursal: lo vendido contra el efectivo contado.</p>
@@ -543,6 +566,17 @@
             <div class="campo"><label for="nuevoNegocio" data-i18n="labelNuevoNegocio">Nuevo negocio</label><input type="text" id="nuevoNegocio" maxlength="150" data-i18n-placeholder="placeholderNuevoNegocio" placeholder="Ej. Papelería Sol" style="min-width:260px;"></div>
             <button class="btn btn-primario" onclick="crearNegocio()"><span id="icoCrearNegocio" class="ico-texto"></span><span data-i18n="btnCrearNegocio">Crear negocio</span></button>
           </div>
+
+          <!-- Borra el negocio ACTIVO con todo lo suyo: contraseña + escribir su nombre exacto -->
+          <details class="zona-peligro">
+            <summary data-i18n="eliminarNegocioTitulo">Eliminar este negocio</summary>
+            <p class="negocios-desc" data-i18n="eliminarNegocioDesc">Se borran sus sucursales, empleados, productos, ventas, cortes y fotos. No se puede deshacer.</p>
+            <div class="fila-form" style="margin-bottom:0;">
+              <div class="campo"><label for="borrarNegocioNombre" id="lblBorrarNegocioNombre"></label><input type="text" id="borrarNegocioNombre" autocomplete="off" style="min-width:220px;"></div>
+              <div class="campo"><label for="borrarNegocioPass" data-i18n="labelTuContrasena">Tu contraseña</label><input type="password" id="borrarNegocioPass" autocomplete="current-password"></div>
+              <button class="btn btn-peligro" onclick="eliminarNegocio()"><span id="icoEliminarNegocio" class="ico-texto"></span><span data-i18n="btnEliminarNegocio">Eliminar negocio</span></button>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -585,6 +619,7 @@
   }
 
   let usuarios = [];
+  let usuarioEditando = null;   // id del usuario con el formulario "Editar" abierto
 
   async function cargarUsuarios(){
     const res = await fetch('/administrador/usuarios');
@@ -606,6 +641,7 @@
   }
 
   let ventas = [];
+  let reporteVentas = null;   // NexoraReportesVentas (se arma la primera vez que se abre la sección)
 
   async function cargarVentas() {
     const res = await fetch('/administrador/ventas');
@@ -648,7 +684,15 @@
       usuariosHeading: 'Usuarios', usuariosDesc: 'Consulta o elimina las cuentas de acceso al sistema.',
       labelNombreCompleto: 'Nombre completo', placeholderNombre: 'Nombre', labelUsuario: 'Usuario',
       labelContrasena: 'Contraseña', labelRol: 'Rol', btnCrearUsuario: 'Crear usuario',
-      alertCompletaUsuario: 'Completa todos los campos.', confirmEliminarUsuario: '¿Eliminar este usuario?',
+      alertCompletaUsuario: 'Completa todos los campos.', confirmEliminarUsuario: '¿Eliminar este usuario? Si ya tiene ventas o cortes, se desactiva y se borran sus datos personales (su historial se conserva).',
+      btnEditarUsuario: 'Editar datos', usuarioActualizado: 'Datos guardados.',
+      ayudaCambioCorreo: 'Si cambias el correo: si aún no aceptó la invitación, le llegará al correo nuevo; si ya usaba su cuenta, la próxima vez que entre le pediremos un código enviado al correo nuevo y avisaremos al anterior.',
+      confirmCambioCorreo: '¿Cambiar el correo a {correo}? Le enviaremos un mensaje a esa dirección.',
+      usuarioAnonimizado: 'El usuario tenía ventas o cortes: se desactivó y se borraron sus datos personales; su historial se conserva.',
+      eliminarNegocioTitulo: 'Eliminar este negocio', eliminarNegocioDesc: 'Se borran sus sucursales, empleados, productos, ventas, cortes y fotos. No se puede deshacer.',
+      escribeNombreNegocio: 'Escribe "{nombre}" para confirmar', labelTuContrasena: 'Tu contraseña', btnEliminarNegocio: 'Eliminar negocio',
+      unicoNegocio: 'Es tu único negocio. Para borrarlo, elimina tu cuenta desde Configuración.', nombreNoCoincide: 'El nombre no coincide con el del negocio.',
+      faltaContrasena: 'Escribe tu contraseña.', confirmEliminarNegocio: '¿Borrar "{nombre}" con todo lo que tiene? Esta acción no se puede deshacer.',
       navCrearUsuarios: 'Crear usuarios', crearUsuariosHeading: 'Crear usuarios',
       crearUsuariosDesc: 'Registra una cuenta nueva y asígnale su rol y sucursal.',
       labelFechaNacimiento: 'Fecha de nacimiento', grupoDatosPersonales: 'Datos personales', grupoAcceso: 'Acceso al sistema',
@@ -679,7 +723,7 @@
       navProductosAdmin: 'Catálogo / fotos',
       adminProductosHeading: 'Catálogo de productos', adminProductosDesc: 'Sube o reemplaza la foto de cada producto del catálogo global.',
       thFoto: 'Foto', thPrecio: 'Precio', fotoActualizada: 'Foto actualizada', labelFotoProducto: 'Foto del producto',
-      navVentas: 'Ventas',
+      navVentas: 'Ventas', navReportesVentas: 'Reportes de ventas', rvHeading: 'Reportes de ventas', rvDesc: 'Ventas netas, gráficas y productos más vendidos de todas tus sucursales o de una.',
       ventasHeading: 'Ventas por sucursal', ventasDesc: 'Consulta las ventas registradas en cualquier sucursal.',
       thFecha: 'Fecha', thCajero: 'Cajero', thMetodoPago: 'Método de pago', thTotal: 'Total',
       estadoCompletada: 'Completada', estadoCancelada: 'Cancelada', estadoDevParcial: 'Con devolución',
@@ -694,7 +738,8 @@
       statProductos: 'Productos', statVentasHoy: 'Ventas de hoy', statVentasMes: 'Ventas del mes', statStockBajo: 'Stock bajo',
       labelEstado: 'Estado', thEstado: 'Estado', estadoActiva: 'Activa', estadoInactiva: 'Inactiva',
       navReportes: 'Reportes', repHeading: 'Reportes de tu equipo',
-      repDesc: 'Reportes que te envían tus gerentes y cajeros. Cambia el estado y, si quieres, contéstales con una nota.',
+      repDesc: 'Reportes de tus gerentes y los que ellos te pasan de sus cajeros (también los de cajeros de una sucursal sin gerente). Cambia el estado y, si quieres, contéstales con una nota.',
+      repPasadoPor: 'Te lo pasó el gerente', repRespuestaGerente: 'Respuesta del gerente; si escribes otra, la reemplaza',
       repTodosEstados: 'Todos los estados', repTodosTipos: 'Todos los tipos', repTodasSucursales: 'Todas las sucursales',
       repContador: ':n pendientes', repPendientesTitulo: 'Reportes pendientes', repThFecha: 'Fecha', repThSucursal: 'Sucursal', repThEstado: 'Estado',
       repPhRespuesta: 'Respuesta para quien lo envió (opcional)', repRespondido: 'Respondido el', repGuardado: 'Reporte actualizado',
@@ -732,7 +777,15 @@
       usuariosHeading: 'Users', usuariosDesc: 'View or delete system access accounts.',
       labelNombreCompleto: 'Full name', placeholderNombre: 'Name', labelUsuario: 'Username',
       labelContrasena: 'Password', labelRol: 'Role', btnCrearUsuario: 'Create user',
-      alertCompletaUsuario: 'Fill in all the fields.', confirmEliminarUsuario: 'Delete this user?',
+      alertCompletaUsuario: 'Fill in all the fields.', confirmEliminarUsuario: 'Delete this user? If they already have sales or cash cuts, the account is deactivated and their personal data is erased (their history is kept).',
+      btnEditarUsuario: 'Edit details', usuarioActualizado: 'Details saved.',
+      ayudaCambioCorreo: 'If you change the email: if they have not accepted the invitation yet, it will be sent to the new email; if they already used their account, next time they sign in we will ask for a code sent to the new email and notify the old one.',
+      confirmCambioCorreo: 'Change the email to {correo}? We will send a message to that address.',
+      usuarioAnonimizado: 'The user had sales or cash cuts: the account was deactivated and their personal data erased; their history is kept.',
+      eliminarNegocioTitulo: 'Delete this business', eliminarNegocioDesc: 'Its branches, staff, products, sales, cash cuts and photos are deleted. This cannot be undone.',
+      escribeNombreNegocio: 'Type "{nombre}" to confirm', labelTuContrasena: 'Your password', btnEliminarNegocio: 'Delete business',
+      unicoNegocio: 'This is your only business. To delete it, delete your account from Settings.', nombreNoCoincide: 'The name does not match the business name.',
+      faltaContrasena: 'Type your password.', confirmEliminarNegocio: 'Delete "{nombre}" with everything in it? This cannot be undone.',
       navCrearUsuarios: 'Create users', crearUsuariosHeading: 'Create users',
       crearUsuariosDesc: 'Register a new account and assign its role and branch.',
       labelFechaNacimiento: 'Date of birth', grupoDatosPersonales: 'Personal details', grupoAcceso: 'System access',
@@ -763,7 +816,7 @@
       navProductosAdmin: 'Catalog / photos',
       adminProductosHeading: 'Product catalog', adminProductosDesc: 'Upload or replace the photo for each product in the global catalog.',
       thFoto: 'Photo', thPrecio: 'Price', fotoActualizada: 'Photo updated', labelFotoProducto: 'Product photo',
-      navVentas: 'Sales',
+      navVentas: 'Sales', navReportesVentas: 'Sales reports', rvHeading: 'Sales reports', rvDesc: 'Net sales, charts and best-selling products for all your branches or just one.',
       ventasHeading: 'Sales by branch', ventasDesc: 'Check the sales recorded at any branch.',
       thFecha: 'Date', thCajero: 'Cashier', thMetodoPago: 'Payment method', thTotal: 'Total',
       estadoCompletada: 'Completed', estadoCancelada: 'Cancelled', estadoDevParcial: 'With return',
@@ -778,7 +831,8 @@
       statProductos: 'Products', statVentasHoy: "Today's sales", statVentasMes: 'Monthly sales', statStockBajo: 'Low stock',
       labelEstado: 'Status', thEstado: 'Status', estadoActiva: 'Active', estadoInactiva: 'Inactive',
       navReportes: 'Reports', repHeading: 'Reports from your team',
-      repDesc: 'Reports sent by your managers and cashiers. Change the status and, if you want, reply with a note.',
+      repDesc: 'Reports from your managers and the cashier reports they pass to you (also those from cashiers of a branch with no manager). Change the status and, if you want, reply with a note.',
+      repPasadoPor: 'Passed to you by the manager', repRespuestaGerente: 'Manager\'s reply; if you write another one, it replaces it',
       repTodosEstados: 'All statuses', repTodosTipos: 'All types', repTodasSucursales: 'All branches',
       repContador: ':n pending', repPendientesTitulo: 'Pending reports', repThFecha: 'Date', repThSucursal: 'Branch', repThEstado: 'Status',
       repPhRespuesta: 'Reply to the sender (optional)', repRespondido: 'Replied on', repGuardado: 'Report updated',
@@ -817,6 +871,7 @@
   const ICONO_GUARDAR = svg('<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>');
   const ICONO_CORREO = svg('<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>');
   const ICONO_BASURA = svg('<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>');
+  const ICONO_EDITAR = svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>');
   // Mismo ícono de "agregar foto" que usa el panel del gerente (antes aquí había un emoji 📷)
   const ICONO_FOTO = svg('<path d="M15 8h.01"/><path d="m3 16 5-5c.928-.893 2.072-.893 3 0l4 4"/><path d="m14 14 1-1c.928-.893 2.072-.893 3 0l3 3"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M19 2v4"/><path d="M17 4h4"/>');
   const ICONO_CAMBIAR = svg('<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>');
@@ -876,6 +931,7 @@
     navUsuarios: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
     navInventario: svg('<path d="M12 22v-9"/><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z"/><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13"/><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.82 1.2a1.655 1.655 0 0 0-1.64 0L3 3.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z"/>'),
     navProductosAdmin: svg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
+    navReportesVentas: svg('<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>'),
     navVentas: svg('<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>'),
     navCortes: svg(CLIPBOARD_LIST),
     navReportes: svg('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v2"/><path d="M12 13h.01"/>')
@@ -886,6 +942,22 @@
   const CFG_TEXTOS = {
   "es": {
     "navConfiguracion": "Configuración",
+    "cambiarCorreo": "Cambiar correo",
+    "correoNuevo": "Correo nuevo",
+    "enviarCodigo": "Enviar código",
+    "codigo6": "Código de 6 dígitos",
+    "confirmarCorreo": "Confirmar correo",
+    "correoNuevoInvalido": "Escribe un correo válido.",
+    "codigoInvalido": "El código tiene 6 dígitos.",
+    "correoCambiado": "Listo: ahora inicias sesión con tu correo nuevo.",
+    "borrarTitulo": "Eliminar mi cuenta",
+    "borrarBoton": "Eliminar mi cuenta",
+    "borrarPass": "Tu contraseña",
+    "borrarEscribeCorreo": "Escribe tu correo ({correo}) para confirmar",
+    "borrarFaltaPass": "Escribe tu contraseña para confirmar.",
+    "borrarFaltaCorreo": "Escribe tu correo exactamente como aparece.",
+    "borrarConfirmar": "¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+    "borrarSub": "Se borran tu cuenta y TODOS tus negocios: sucursales, empleados, productos, ventas, cortes y fotos. No se puede deshacer.",
     "cfgTitulo": "Configuración",
     "cfgDesc": "Administra tu cuenta, la seguridad y la apariencia.",
     "perfilTitulo": "Perfil",
@@ -929,10 +1001,26 @@
     "dosPasosHint": "Te pedirá un código extra, además de tu contraseña.",
     "dosPasosActivadaOk": "Verificación en dos pasos activada. La próxima vez que entres te pediremos un código.",
     "dosPasosDesactivadaOk": "Verificación en dos pasos desactivada.",
-    "correoHint": "El correo es tu usuario de acceso y no se puede cambiar desde aquí."
+    "correoHint": "Es tu usuario de acceso. Para cambiarlo te enviaremos un código al correo nuevo."
   },
   "en": {
     "navConfiguracion": "Settings",
+    "cambiarCorreo": "Change email",
+    "correoNuevo": "New email",
+    "enviarCodigo": "Send code",
+    "codigo6": "6-digit code",
+    "confirmarCorreo": "Confirm email",
+    "correoNuevoInvalido": "Type a valid email.",
+    "codigoInvalido": "The code has 6 digits.",
+    "correoCambiado": "Done: you now sign in with your new email.",
+    "borrarTitulo": "Delete my account",
+    "borrarBoton": "Delete my account",
+    "borrarPass": "Your password",
+    "borrarEscribeCorreo": "Type your email ({correo}) to confirm",
+    "borrarFaltaPass": "Type your password to confirm.",
+    "borrarFaltaCorreo": "Type your email exactly as shown.",
+    "borrarConfirmar": "Are you sure you want to delete your account? This cannot be undone.",
+    "borrarSub": "Your account and ALL your businesses are deleted: branches, staff, products, sales, cash cuts and photos. This cannot be undone.",
     "cfgTitulo": "Settings",
     "cfgDesc": "Manage your account, security and appearance.",
     "perfilTitulo": "Profile",
@@ -976,7 +1064,7 @@
     "dosPasosHint": "It will ask for an extra code, besides your password.",
     "dosPasosActivadaOk": "Two-step verification turned on. Next time you sign in we will ask for a code.",
     "dosPasosDesactivadaOk": "Two-step verification turned off.",
-    "correoHint": "Your email is your login and cannot be changed from here."
+    "correoHint": "It is your login. To change it we will send a code to the new email."
   }
 };
   const ct = k => (CFG_TEXTOS[idioma] || CFG_TEXTOS.es)[k] ?? k;
@@ -1015,6 +1103,43 @@
     document.getElementById('cfgNombreCompleto').textContent = (cfgPerfil.nombre + ' ' + cfgPerfil.apellido).trim();
   }
 
+  /* Cambiar correo (solo el dueño; los empleados se lo piden al administrador) */
+  function cfgMostrarCambioCorreo() {
+    const caja = document.getElementById('cfgCambioCorreo');
+    caja.hidden = !caja.hidden;
+    if (!caja.hidden) document.getElementById('cfgCorreoNuevo').focus();
+  }
+
+  async function cfgPedirCodigoCorreo() {
+    const campo = document.getElementById('cfgCorreoNuevo');
+    const correo = campo.value.trim().toLowerCase();
+    const password = document.getElementById('cfgCorreoPass').value;
+    if (!correo || !campo.checkValidity()) { mostrarToast(ct('correoNuevoInvalido'), 'error'); return; }
+    if (!password) { mostrarToast(ct('borrarFaltaPass'), 'error'); return; }
+    try {
+      const r = await cfgApi('/configuracion/correo', 'POST', { correo, password });
+      document.getElementById('cfgPasoCodigo').hidden = false;
+      document.getElementById('cfgCodigoAviso').textContent = r.message;
+      document.getElementById('cfgCodigoCorreo').focus();
+      mostrarToast(r.message, 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
+  }
+
+  async function cfgConfirmarCorreo() {
+    const codigo = document.getElementById('cfgCodigoCorreo').value.trim();
+    if (!/^[0-9]{6}$/.test(codigo)) { mostrarToast(ct('codigoInvalido'), 'error'); return; }
+    try {
+      const r = await cfgApi('/configuracion/correo/confirmar', 'POST', { codigo });
+      cfgPerfil.correo = r.correo;
+      mostrarToast(ct('correoCambiado'), 'exito');
+      renderConfiguracion();
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
+  }
+
   async function cfgGuardarPerfil() {
     const nombre = document.getElementById('cfgNombre').value.trim();
     const apellido = document.getElementById('cfgApellido').value.trim();
@@ -1039,6 +1164,22 @@
   let cfgReqs = null;
   function cfgFuerza() {
     if (cfgReqs) cfgReqs.actualizar();
+  }
+
+  /* Eliminar mi cuenta: el servidor revisa la contraseña (y, si es el dueño, el correo escrito), borra
+     o anonimiza, cierra la sesión y responde a dónde ir (el login con el aviso "Tu cuenta se eliminó") */
+  async function cfgEliminarCuenta() {
+    const password = document.getElementById('cfgBorrarPass').value;
+    const campoCorreo = document.getElementById('cfgBorrarCorreo');
+    if (campoCorreo && campoCorreo.value.trim().toLowerCase() !== String(cfgPerfil.correo).toLowerCase()) { mostrarToast(ct('borrarFaltaCorreo'), 'error'); return; }
+    if (!password) { mostrarToast(ct('borrarFaltaPass'), 'error'); return; }
+    if (!(await confirmar(ct('borrarConfirmar'), ct('borrarBoton')))) return;
+    try {
+      const r = await cfgApi('/configuracion/cuenta', 'DELETE', { password, confirmacion: campoCorreo ? campoCorreo.value.trim() : null });
+      location.replace(r?.redirect || '/login');   // replace: "Atrás" ya no regresa al panel
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   async function cfgCambiarPass() {
@@ -1123,7 +1264,20 @@
             <div class="cfg-campo"><label for="cfgApellido">${ct('lblApellido')}</label><input type="text" id="cfgApellido" maxlength="80" value="${esc(cfgPerfil.apellido)}"></div>
             <div class="cfg-campo"><label for="cfgCorreo">${ct('lblCorreo')}</label><input type="email" id="cfgCorreo" value="${esc(cfgPerfil.correo)}" disabled><small>${ct('correoHint')}</small></div>
           </div>
-          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgGuardarPerfil()">${ct('guardarCambios')}</button></div>
+          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgGuardarPerfil()">${ct('guardarCambios')}</button><button type="button" class="btn" onclick="cfgMostrarCambioCorreo()">${ct('cambiarCorreo')}</button></div>
+          <!-- Cambiar correo: 1) correo nuevo + contraseña → código al correo nuevo; 2) el código confirma el cambio -->
+          <div id="cfgCambioCorreo" class="cfg-cambio-correo" hidden>
+            <div class="cfg-form">
+              <div class="cfg-campo"><label for="cfgCorreoNuevo">${ct('correoNuevo')}</label><input type="email" id="cfgCorreoNuevo" maxlength="150" autocomplete="email"></div>
+              <div class="cfg-campo"><label for="cfgCorreoPass">${ct('borrarPass')}</label><input type="password" id="cfgCorreoPass" autocomplete="current-password"></div>
+            </div>
+            <div class="cfg-acciones"><button type="button" class="btn btn-primario" onclick="cfgPedirCodigoCorreo()">${ct('enviarCodigo')}</button></div>
+            <div id="cfgPasoCodigo" hidden>
+              <p class="cfg-sub" id="cfgCodigoAviso"></p>
+              <div class="cfg-form"><div class="cfg-campo"><label for="cfgCodigoCorreo">${ct('codigo6')}</label><input id="cfgCodigoCorreo" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div></div>
+              <div class="cfg-acciones"><button type="button" class="btn btn-primario" onclick="cfgConfirmarCorreo()">${ct('confirmarCorreo')}</button></div>
+            </div>
+          </div>
         </div>
 
         <div class="cfg-card">
@@ -1164,6 +1318,15 @@
           <div class="cfg-info"><div><b>${ct('lblMoneda')}</b><small>${ct('monedaHint')}</small></div><span>${ct('monedaTxt')}</span></div>
         </div>
 
+        <div class="cfg-card cfg-peligro">
+          <h3>${ct('borrarTitulo')}</h3><p class="cfg-sub">${ct('borrarSub')}</p>
+          <div class="cfg-form">
+            <div class="cfg-campo"><label for="cfgBorrarCorreo">${ct('borrarEscribeCorreo').replace('{correo}', esc(cfgPerfil.correo))}</label><input type="email" id="cfgBorrarCorreo" autocomplete="off"></div>
+            <div class="cfg-campo"><label for="cfgBorrarPass">${ct('borrarPass')}</label><input type="password" id="cfgBorrarPass" autocomplete="current-password"></div>
+          </div>
+          <div class="cfg-acciones"><button class="btn btn-peligro" onclick="cfgEliminarCuenta()">${ct('borrarBoton')}</button></div>
+        </div>
+
       </div>`;
     cfgMarcarTema();
     cfgReqs = window.NexoraClave ? NexoraClave.montar({ clave: 'cfgPassNueva', confirmacion: 'cfgPassConfirmar', requisitos: document.getElementById('cfgRequisitos'), coincide: document.getElementById('cfgCoincide') }) : null;
@@ -1179,6 +1342,7 @@
     { id: 'inventario', key: 'navInventario' },
     { id: 'productos-admin', key: 'navProductosAdmin' },
     { id: 'ventas', key: 'navVentas'},
+    { id: 'reportes-ventas', key: 'navReportesVentas' },
     { id: 'cortes', key: 'navCortes' },
     { id: 'reportes', key: 'navReportes' },
   ];
@@ -1271,6 +1435,10 @@
     void layout.offsetWidth;   // obliga al navegador a aplicar el cambio antes de devolver la animación
     layout.classList.remove('sin-animacion');
   })();
+
+  /* Si el navegador muestra el panel desde su memoria al darle "Atrás" (bfcache), se vuelve a pedir al
+     servidor: sin sesión, manda al login (complementa el middleware SinCacheConSesion) */
+  window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
 
   function cerrarSesion() {
     document.getElementById('logoutForm').submit();
@@ -1394,6 +1562,15 @@
     if (id === 'productos-admin') { renderProductosAdmin(); cargarProductosAdmin().then(renderProductosAdmin); }
     if (id === 'ventas') renderVentas();
     if (id === 'cortes') { renderCortes(); cargarCortes().then(renderCortes); }
+    if (id === 'reportes-ventas') {
+      if (!reporteVentas) reporteVentas = NexoraReportesVentas.montar({
+        contenedor: document.getElementById('rvContenedor'), url: '/administrador/reportes-ventas',
+        sucursales: () => sucursales.map(s => ({ id: s.id_sucursal, nombre: s.nombre })),
+        dinero, toast: mostrarToast,
+      });
+      reporteVentas.mostrar();
+    }
+
     if (id === 'reportes') { renderReportes(); cargarReportes().then(renderReportes); }
   }
 
@@ -1428,6 +1605,31 @@
     const elegido = select.value;
     select.innerHTML = misNegocios.map(n => `<option value="${n.id}" ${n.activo ? 'selected' : ''}>${esc(n.nombre)}</option>`).join('');
     if (elegido && misNegocios.some(n => String(n.id) === elegido)) select.value = elegido;
+
+    document.getElementById('icoEliminarNegocio').innerHTML = ICONO_BASURA;
+    const activo = misNegocios.find(n => n.activo);
+    document.getElementById('lblBorrarNegocioNombre').textContent = t('escribeNombreNegocio').replace('{nombre}', activo?.nombre ?? '');
+  }
+
+  /* Borra el negocio activo con TODO lo suyo; el servidor vuelve a validar contraseña, nombre y que no sea el único */
+  async function eliminarNegocio() {
+    const activo = misNegocios.find(n => n.activo);
+    if (!activo) return;
+    if (misNegocios.length < 2) { mostrarToast(t('unicoNegocio'), 'error'); return; }
+    const confirmacion = document.getElementById('borrarNegocioNombre').value.trim();
+    const password = document.getElementById('borrarNegocioPass').value;
+    if (confirmacion !== activo.nombre) { mostrarToast(t('nombreNoCoincide'), 'error'); return; }
+    if (!password) { mostrarToast(t('faltaContrasena'), 'error'); return; }
+    if (!(await confirmar(t('confirmEliminarNegocio').replace('{nombre}', activo.nombre), t('btnEliminarNegocio')))) return;
+
+    const res = await fetch('/administrador/negocios/' + activo.id, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+      body: JSON.stringify({ password, confirmacion }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) { mostrarToast((data?.errors && Object.values(data.errors)[0][0]) || data?.message || t('errorGenerico'), 'error'); return; }
+    location.reload();   // el servidor ya cambió al dueño a otro de sus negocios
   }
 
   async function cambiarNegocio() {
@@ -1677,7 +1879,22 @@
         : '';
       const accion = u.esYo || u.rol === 'admin'
         ? ''
-        : `${reenviar}<button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button>`;
+        : `<button class="btn btn-primario btn-sm" onclick="editarUsuario(${u.id})" title="${t('btnEditarUsuario')}" aria-label="${t('btnEditarUsuario')}">${ICONO_EDITAR}</button> ${reenviar}<button class="btn btn-peligro btn-sm" onclick="eliminarUsuario(${u.id})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button>`;
+      // Formulario "Editar" abierto bajo la fila (fila-anexa: la paginación la cuenta con la de arriba)
+      const edicion = usuarioEditando !== u.id ? '' : `
+      <tr class="fila-anexa"><td colspan="5">
+        <div class="form-grid editar-usuario">
+          <div class="campo"><label for="edNombre-${u.id}">${t('labelNombre')}</label><input id="edNombre-${u.id}" maxlength="150" value="${esc(u.nombreSolo ?? '')}"></div>
+          <div class="campo"><label for="edApellido-${u.id}">${t('labelApellido')}</label><input id="edApellido-${u.id}" maxlength="150" value="${esc(u.apellido ?? '')}"></div>
+          <div class="campo"><label for="edNacimiento-${u.id}">${t('labelFechaNacimiento')}</label><input type="date" id="edNacimiento-${u.id}" max="${fechaMayorDeEdad()}" value="${esc(u.fechaNacimiento ?? '')}"></div>
+          <div class="campo"><label for="edCorreo-${u.id}">${t('labelCorreo')}</label><input type="email" id="edCorreo-${u.id}" maxlength="150" value="${esc(u.correo ?? '')}"></div>
+        </div>
+        <p class="ayuda">${t('ayudaCambioCorreo')}</p>
+        <div class="form-acciones">
+          <button class="btn" onclick="editarUsuario(${u.id})">${t('btnCancelar')}</button>
+          <button class="btn btn-primario" id="btnGuardarUsuario-${u.id}" onclick="guardarEdicionUsuario(${u.id})">${ICONO_GUARDAR} <span>${t('btnGuardar')}</span></button>
+        </div>
+      </td></tr>`;
       const estadoClase = estadoInvitacion === 'accepted' ? 'badge-invitacion-aceptada' : estadoInvitacion === 'expired' ? 'badge-invitacion-vencida' : estadoInvitacion === 'verified' ? 'badge-invitacion-verificada' : 'badge-invitacion-pendiente';
       const estadoTexto = t('estadoInvitacion' + estadoInvitacion.charAt(0).toUpperCase() + estadoInvitacion.slice(1));
       return `
@@ -1687,9 +1904,54 @@
         <td>${sucursal ? esc(sucursal.nombre) : '—'}</td>
         <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
         <td style="white-space:nowrap">${accion}</td>
-      </tr>`;
+      </tr>${edicion}`;
     }).join('');
     paginarTabla('tablaUsuarios');
+  }
+
+  /* Abre / cierra el formulario de edición bajo la fila */
+  function editarUsuario(id) {
+    usuarioEditando = usuarioEditando === id ? null : id;
+    renderUsuarios();
+  }
+
+  function fechaMayorDeEdad() {
+    const d = new Date(); d.setFullYear(d.getFullYear() - 18);
+    return d.toISOString().slice(0, 10);
+  }
+
+  async function guardarEdicionUsuario(id) {
+    const u = usuarios.find(x => x.id === id);
+    const v = campo => document.getElementById(campo + '-' + id).value.trim();
+    const cuerpo = { nombre: v('edNombre'), apellido: v('edApellido'), fecha_nacimiento: v('edNacimiento'), correo: v('edCorreo').toLowerCase() };
+
+    if (!cuerpo.nombre || !cuerpo.apellido || !cuerpo.fecha_nacimiento || !cuerpo.correo) { mostrarToast(t('alertCompletaUsuario'), 'error'); return; }
+    if (!document.getElementById('edCorreo-' + id).checkValidity()) { mostrarToast(t('alertCorreoInvalido'), 'error'); return; }
+    if (!esMayorDeEdad(cuerpo.fecha_nacimiento)) { mostrarToast(t('alertMayorEdad'), 'error'); return; }
+    // Cambiar el correo manda correos (invitación o código): se confirma antes
+    if (cuerpo.correo !== u.correo && !(await confirmar(t('confirmCambioCorreo').replace('{correo}', cuerpo.correo), t('btnGuardar')))) return;
+
+    const boton = document.getElementById('btnGuardarUsuario-' + id);
+    boton.disabled = true;
+    try {
+      const res = await fetch('/administrador/usuarios/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        mostrarToast((data?.errors && Object.values(data.errors)[0][0]) || data?.message || t('errorGenerico'), 'error');
+        return;
+      }
+      usuarioEditando = null;
+      mostrarToast(data?.message ?? t('usuarioActualizado'), 'exito');
+      await cargarUsuarios();
+    } catch (e) {
+      mostrarToast(t('errorGenerico'), 'error');
+    } finally {
+      boton.disabled = false;
+    }
   }
 
   /*  CREAR USUARIOS  */
@@ -1784,12 +2046,13 @@
       headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
     });
 
+    const data = await res.json().catch(() => null);
     if (!res.ok) {
-      const err = await res.json().catch(() => null);
-      mostrarToast(err?.message ?? t('errorEliminarUsuario'), 'error');
+      mostrarToast(data?.message ?? t('errorEliminarUsuario'), 'error');
       return;
     }
-    mostrarToast(t('usuarioEliminado'), 'exito');
+    // Con ventas/cortes no se puede borrar: el servidor lo anonimiza (su historial se conserva)
+    mostrarToast(t(data?.resultado === 'anonimizada' ? 'usuarioAnonimizado' : 'usuarioEliminado'), 'exito');
     await cargarUsuarios();
   }
 
@@ -1935,7 +2198,7 @@
         <tr>
           <td>${fechaReporte(r.fecha)}</td>
           <td>${esc(r.sucursal ?? '—')}</td>
-          <td>${esc(r.autor ?? t('repUsuarioEliminado'))}${r.rol_autor ? `<div class="rep-desc">${t('repRol_' + r.rol_autor)}</div>` : ''}</td>
+          <td>${esc(r.autor ?? t('repUsuarioEliminado'))}${r.rol_autor ? `<div class="rep-desc">${t('repRol_' + r.rol_autor)}</div>` : ''}${r.fecha_escalado ? `<div class="rep-desc">${t('repPasadoPor')} · ${fechaReporte(r.fecha_escalado)}</div>` : ''}</td>
           <td>${t('repTipo_' + r.tipo)}</td>
           <td><strong>${esc(r.asunto)}</strong><div class="rep-desc">${esc(r.descripcion)}</div></td>
           <td>
@@ -1944,7 +2207,7 @@
           </td>
           <td>
             <textarea class="rep-respuesta" id="repRespuesta-${r.id}" maxlength="500" placeholder="${t('repPhRespuesta')}">${esc(r.respuesta ?? '')}</textarea>
-            ${r.fecha_respuesta ? `<div class="rep-desc">${t('repRespondido')} ${fechaReporte(r.fecha_respuesta)}</div>` : ''}
+            ${r.fecha_respuesta ? `<div class="rep-desc">${r.rol_responde === 'gerente' ? t('repRespuestaGerente') + ' · ' : ''}${t('repRespondido')} ${fechaReporte(r.fecha_respuesta)}</div>` : ''}
           </td>
           <td><button class="btn btn-primario btn-sm" onclick="guardarReporte(${r.id})"><span class="ico-texto">${ICONO_GUARDAR}</span>${t('btnGuardar')}</button></td>
         </tr>`).join('')

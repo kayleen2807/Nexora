@@ -36,6 +36,8 @@ use App\Http\Controllers\Admin\ReporteController as AdminReporteController;
 use App\Http\Controllers\Gerente\ReporteController as GerenteReporteController;
 use App\Http\Controllers\Cajero\ReporteController as CajeroReporteController;
 use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\Admin\ReporteVentasController as AdminReporteVentasController;
+use App\Http\Controllers\Gerente\ReporteVentasController as GerenteReporteVentasController;
 
 
 //Ruta para la funcion del idioma(local)
@@ -144,6 +146,12 @@ Route::middleware('auth')
         // Verificación en dos pasos: el interruptor la activa o desactiva directamente
         Route::put('/dos-pasos', [ConfiguracionController::class, 'cambiarDosPasos'])
             ->middleware('throttle:10,1');
+        // Cambio del correo del dueño: 1) código al correo nuevo, 2) confirmar con el código
+        Route::post('/correo', [ConfiguracionController::class, 'solicitarCambioCorreo'])->middleware('throttle:5,1');
+        Route::post('/correo/confirmar', [ConfiguracionController::class, 'confirmarCambioCorreo'])->middleware('throttle:10,1');
+        // Eliminar mi cuenta (pide contraseña; 5 intentos por minuto para que no se pueda adivinar)
+        Route::delete('/cuenta', [ConfiguracionController::class, 'eliminarCuenta'])
+            ->middleware('throttle:5,1');
     });
  
 
@@ -159,6 +167,7 @@ Route::middleware(['auth', 'rol:administrador'])
         Route::get('/usuarios', [UsuarioController::class, 'index']);
         Route::post('/usuarios', [UsuarioController::class, 'store']);
         Route::put('/usuarios/{usuario}/rol', [UsuarioController::class, 'actualizarRol']);
+        Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update']);
         Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy']);
         Route::post('/usuarios/{usuario}/invitacion', [UsuarioController::class, 'reenviarInvitacion']);
 
@@ -173,12 +182,14 @@ Route::middleware(['auth', 'rol:administrador'])
         Route::get('/resumen', [ResumeController::class, 'index']);
 
         Route::get('/cortes', [AdminCorteController::class, 'index']);
+        Route::get('/reportes-ventas', [AdminReporteVentasController::class, 'index']);
 
         Route::get('/negocio', [NegocioController::class, 'show']);
         Route::put('/negocio', [NegocioController::class, 'update']);
         Route::get('/negocios', [NegocioController::class, 'index']);
         Route::post('/negocios', [NegocioController::class, 'store']);
         Route::put('/negocios/{negocio}/activar', [NegocioController::class, 'activar']);
+        Route::delete('/negocios/{negocio}', [NegocioController::class, 'destroy'])->middleware('throttle:5,1');
 
         Route::get('/reportes', [AdminReporteController::class, 'index']);
         Route::put('/reportes/{reporte}', [AdminReporteController::class, 'update']);
@@ -214,9 +225,12 @@ Route::middleware(['auth', 'rol:gerente'])
         Route::post('/ventas/{venta}/cancelar', [DevolucionController::class, 'cancelar']);
 
         Route::get('/cortes', [GerenteCorteController::class, 'index']);
+        Route::get('/reportes-ventas', [GerenteReporteVentasController::class, 'index']);
 
         Route::get('/reportes', [GerenteReporteController::class, 'index']);
         Route::post('/reportes', [GerenteReporteController::class, 'store']);
+        Route::put('/reportes/{reporte}', [GerenteReporteController::class, 'update']);
+        Route::post('/reportes/{reporte}/escalar', [GerenteReporteController::class, 'escalar']);
     });
 
 //Cajero

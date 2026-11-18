@@ -175,5 +175,16 @@
     "Your Nexora security code": "Tu código de seguridad de Nexora",
     "Use this code to finish signing in to Nexora:": "Usa este código para terminar de iniciar sesión en Nexora:",
     "If you did not request this code, change your password: someone may know it.": "Si tú no pediste este código, cambia tu contraseña: alguien podría conocerla.",
-    "We could not send the verification code to :email. Your account was not created; please try again in a few minutes.": "No pudimos enviar el código de verificación a :email. Tu cuenta no se creó; inténtalo de nuevo en unos minutos."
+    "We could not send the verification code to :email. Your account was not created; please try again in a few minutes.": "No pudimos enviar el código de verificación a :email. Tu cuenta no se creó; inténtalo de nuevo en unos minutos.",
+    "Your account was deleted.": "Tu cuenta se eliminó.",
+    "Your Nexora email was changed": "Se cambió el correo de tu cuenta de Nexora",
+    "Hello": "Hola",
+    "The administrator of your business changed the email of your Nexora account to :email.": "El administrador de tu negocio cambió el correo de tu cuenta de Nexora a :email.",
+    "From now on you will sign in with that email. The next time you sign in we will ask you for a code sent to it.": "A partir de ahora iniciarás sesión con ese correo. La próxima vez que entres te pediremos un código que llegará ahí.",
+    "If you did not expect this change, contact your administrator.": "Si no esperabas este cambio, comunícate con tu administrador.",
+    "Confirm your new Nexora email": "Confirma tu correo nuevo de Nexora",
+    "Use this code to confirm your new email in Nexora:": "Usa este código para confirmar tu correo nuevo en Nexora:",
+    "The email of your Nexora account was changed to :email.": "El correo de tu cuenta de Nexora se cambió a :email.",
+    "From now on you will sign in with that email.": "A partir de ahora iniciarás sesión con ese correo.",
+    "If you did not make this change, reset your password right away from the sign-in page.": "Si tú no hiciste este cambio, restablece tu contraseña de inmediato desde la página de inicio de sesión."
 }

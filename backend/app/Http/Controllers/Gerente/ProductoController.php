@@ -37,8 +37,10 @@ class ProductoController extends Controller
             })
             // Categoría de ESTA sucursal (vive en inventario.id_categoria)
             ->leftJoin('categoria', 'categoria.id_categoria', '=', 'inventario.id_categoria')
+            // ¿Lo tiene otra sucursal? (entonces la foto la cambia el admin, y no se puede eliminar aquí)
+            ->selectRaw('exists (select 1 from inventario otra where otra.id_producto = producto.id_producto and otra.id_sucursal <> ?) as compartido', [$idSucursal])
             ->orderBy('producto.id_producto')
-            ->get([
+            ->addSelect([
                 'producto.*',
                 'inventario.id_inventario',
                 'inventario.existencias',
@@ -48,6 +50,7 @@ class ProductoController extends Controller
                 'inventario.estado as estado_sucursal',
                 'categoria.nombre as categoria_sucursal',
             ])
+            ->get()
             ->map(function (Producto $p) {
                 $enSucursal = $p->getAttribute('id_inventario') !== null;
 
@@ -62,6 +65,7 @@ class ProductoController extends Controller
                     'stock' => (int) ($p->getAttribute('existencias') ?? 0),
                     'stock_minimo' => (int) ($p->getAttribute('stock_minimo') ?? 5),
                     'categoria' => $p->getAttribute('categoria_sucursal'),
+                    'compartido' => (bool) $p->getAttribute('compartido'),
                 ];
             });
     }
@@ -107,10 +111,19 @@ class ProductoController extends Controller
         return response()->json($producto, 201);
     }
 
-    /** Sube o reemplaza la foto del producto (catálogo global). */
+    /**
+     * Sube o reemplaza la foto del producto. La foto es UNA por producto en todo el negocio (decisión de
+     * Kay 2026-11-17): el gerente solo la cambia si el producto es SOLO de su sucursal; si otra sucursal
+     * también lo tiene, la cambia el administrador desde "Catálogo / fotos".
+     */
     public function uploadFoto(Request $request, Producto $producto)
     {
         $this->asegurarDelNegocio($request, $producto);
+        abort_if(
+            Inventario::where('id_producto', $producto->id_producto)->where('id_sucursal', '!=', $this->idSucursal($request))->exists(),
+            422,
+            'Este producto también lo usan otras sucursales; su foto la cambia el administrador desde "Catálogo / fotos".'
+        );
 
         $request->validate([
             'foto' => ['required', 'image', 'max:2048'],

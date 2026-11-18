@@ -265,6 +265,11 @@
   .diferencia-row.sobrante { color: var(--success-text); font-weight: 700; }
   .diferencia-row.faltante { color: var(--danger-text); font-weight: 700; }
   .diferencia-row.cuadrado { color: var(--muted); font-weight: 700; }
+  /* Dinero a favor en VERDE (sobrante, cambio suficiente). El 30-oct la paleta "success" pasó a naranja
+     (rediseño de Caro, se respeta); estos indicadores usan su propio verde, el mismo que tenían antes. */
+  :root { --dinero-ok: #16a34a; --dinero-ok-bg: #dcfce7; }
+  [data-theme="dark"] { --dinero-ok: #4ade80; --dinero-ok-bg: #143621; }
+  .diferencia-row.sobrante, .cambio-row.ok { color: var(--dinero-ok); }
 
   /* ---------- TOASTS (mismos estilos que el panel de Gerente) ---------- */
   #toastContainer { position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1002; display: flex; flex-direction: column; gap: 0.6rem; }
@@ -357,6 +362,8 @@
   .cfg-switch input:checked + span::after { transform: translateX(18px); }
   .cfg-info { display: flex; justify-content: space-between; gap: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border, #e5e7eb); font-size: 0.85rem; }
   .cfg-info small { color: var(--muted, #6b7280); display: block; }
+.cfg-card.cfg-peligro { border: 1px solid var(--danger-text, #dc2626); }
+  .cfg-card.cfg-peligro h3 { color: var(--danger-text, #dc2626); }
   .sidebar #btn-configuracion { margin-top: 0.6rem; border-top: 1px solid var(--border, #e5e7eb); }
   .cfg-escudo { width: 40px; height: 40px; border-radius: 50%; background: var(--border, #e5e7eb); color: var(--muted, #6b7280); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, color 0.2s; }
   .cfg-escudo .ico { width: 1.3em; height: 1.3em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -696,12 +703,13 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
       ticketSubtotal: 'Subtotal', ticketIva: 'IVA', ticketCajero: 'Cajero',
       btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaTabla: 'Página :p de :t · :n registros', paginaProductos: 'Página :p de :t · :n productos',
       btnCancelar: 'Cancelar', btnEliminar: 'Eliminar',
-      navReportes: 'Reportes', repHeading: 'Reportes al administrador', repNuevoHeading: 'Nuevo reporte', repListaHeading: 'Mis reportes',
-      repDesc: 'Avisa al administrador de una falla, un faltante de producto, un problema con la caja o una sugerencia.',
+      navReportes: 'Reportes', repHeading: 'Reportes', repNuevoHeading: 'Nuevo reporte', repListaHeading: 'Mis reportes',
+      repDesc: 'Avisa a tu gerente de una falla, un faltante de producto, un problema con la caja o una sugerencia. Si él no puede resolverlo, se lo pasa al administrador.',
+      repEnviadoGerente: 'Reporte enviado a tu gerente', repPasadoAdmin: 'Tu gerente lo pasó al administrador', repRespondio_gerente: 'Respondió tu gerente', repRespondio_administrador: 'Respondió el administrador',
       repThFecha: 'Fecha', repThEstado: 'Estado',
       repLabelTipo: 'Tipo', repLabelAsunto: 'Asunto', repLabelDescripcion: 'Descripción',
-      repPhAsunto: 'Ej. La impresora no imprime tickets', repPhDescripcion: 'Cuéntale al administrador qué pasó, cuándo y en qué caja o producto…',
-      repBtnEnviar: 'Enviar reporte', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta del administrador',
+      repPhAsunto: 'Ej. La impresora no imprime tickets', repPhDescripcion: 'Cuenta qué pasó, cuándo y en qué caja o producto…',
+      repBtnEnviar: 'Enviar reporte', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta',
       repSinReportes: 'Aún no hay reportes.', repSinRespuesta: 'Sin respuesta todavía', repTu: 'Tú', repUsuarioEliminado: 'Usuario eliminado',
       repTipo_falla: 'Falla del sistema', repTipo_faltante: 'Faltante de producto', repTipo_caja: 'Problema con caja / dinero', repTipo_sugerencia: 'Sugerencia', repTipo_otro: 'Otro',
       repEstado_pendiente: 'Pendiente', repEstado_en_revision: 'En revisión', repEstado_resuelto: 'Resuelto',
@@ -779,12 +787,13 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
       ticketSubtotal: 'Subtotal', ticketIva: 'Tax', ticketCajero: 'Cashier',
       btnAnterior: 'Previous', btnSiguiente: 'Next', paginaTabla: 'Page :p of :t · :n records', paginaProductos: 'Page :p of :t · :n products',
       btnCancelar: 'Cancel', btnEliminar: 'Delete',
-      navReportes: 'Reports', repHeading: 'Reports to the administrator', repNuevoHeading: 'New report', repListaHeading: 'My reports',
-      repDesc: 'Let the administrator know about a failure, a missing product, a register problem or a suggestion.',
+      navReportes: 'Reports', repHeading: 'Reports', repNuevoHeading: 'New report', repListaHeading: 'My reports',
+      repDesc: 'Let your manager know about a failure, a missing product, a register problem or a suggestion. If they cannot solve it, they pass it to the administrator.',
+      repEnviadoGerente: 'Report sent to your manager', repPasadoAdmin: 'Your manager passed it to the administrator', repRespondio_gerente: 'Your manager replied', repRespondio_administrador: 'The administrator replied',
       repThFecha: 'Date', repThEstado: 'Status',
       repLabelTipo: 'Type', repLabelAsunto: 'Subject', repLabelDescripcion: 'Description',
-      repPhAsunto: 'E.g. The printer does not print receipts', repPhDescripcion: 'Tell the administrator what happened, when, and which register or product…',
-      repBtnEnviar: 'Send report', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: "Administrator's reply",
+      repPhAsunto: 'E.g. The printer does not print receipts', repPhDescripcion: 'Tell what happened, when, and which register or product…',
+      repBtnEnviar: 'Send report', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: 'Reply',
       repSinReportes: 'No reports yet.', repSinRespuesta: 'No reply yet', repTu: 'You', repUsuarioEliminado: 'Deleted user',
       repTipo_falla: 'System failure', repTipo_faltante: 'Missing product', repTipo_caja: 'Register / cash problem', repTipo_sugerencia: 'Suggestion', repTipo_otro: 'Other',
       repEstado_pendiente: 'Pending', repEstado_en_revision: 'In review', repEstado_resuelto: 'Resolved',
@@ -859,6 +868,14 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
   const CFG_TEXTOS = {
   "es": {
     "navConfiguracion": "Configuración",
+    "borrarTitulo": "Eliminar mi cuenta",
+    "borrarBoton": "Eliminar mi cuenta",
+    "borrarPass": "Tu contraseña",
+    "borrarEscribeCorreo": "Escribe tu correo ({correo}) para confirmar",
+    "borrarFaltaPass": "Escribe tu contraseña para confirmar.",
+    "borrarFaltaCorreo": "Escribe tu correo exactamente como aparece.",
+    "borrarConfirmar": "¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+    "borrarSub": "Tu cuenta se borra. Si ya tienes ventas o cortes, se desactiva y se borran tus datos personales; el historial del negocio se conserva.",
     "cfgTitulo": "Configuración",
     "cfgDesc": "Administra tu cuenta, la seguridad y la apariencia.",
     "perfilTitulo": "Perfil",
@@ -909,6 +926,14 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
   },
   "en": {
     "navConfiguracion": "Settings",
+    "borrarTitulo": "Delete my account",
+    "borrarBoton": "Delete my account",
+    "borrarPass": "Your password",
+    "borrarEscribeCorreo": "Type your email ({correo}) to confirm",
+    "borrarFaltaPass": "Type your password to confirm.",
+    "borrarFaltaCorreo": "Type your email exactly as shown.",
+    "borrarConfirmar": "Are you sure you want to delete your account? This cannot be undone.",
+    "borrarSub": "Your account is deleted. If you already have sales or cash cuts, it is deactivated and your personal data erased; the business history is kept.",
     "cfgTitulo": "Settings",
     "cfgDesc": "Manage your account, security and appearance.",
     "perfilTitulo": "Profile",
@@ -1038,6 +1063,22 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
   let cfgReqs = null;
   function cfgFuerza() {
     if (cfgReqs) cfgReqs.actualizar();
+  }
+
+  /* Eliminar mi cuenta: el servidor revisa la contraseña (y, si es el dueño, el correo escrito), borra
+     o anonimiza, cierra la sesión y responde a dónde ir (el login con el aviso "Tu cuenta se eliminó") */
+  async function cfgEliminarCuenta() {
+    const password = document.getElementById('cfgBorrarPass').value;
+    const campoCorreo = document.getElementById('cfgBorrarCorreo');
+    if (campoCorreo && campoCorreo.value.trim().toLowerCase() !== String(cfgPerfil.correo).toLowerCase()) { mostrarToast(ct('borrarFaltaCorreo'), 'error'); return; }
+    if (!password) { mostrarToast(ct('borrarFaltaPass'), 'error'); return; }
+    if (!(await confirmar(ct('borrarConfirmar'), ct('borrarBoton')))) return;
+    try {
+      const r = await cfgApi('/configuracion/cuenta', 'DELETE', { password, confirmacion: campoCorreo ? campoCorreo.value.trim() : null });
+      location.replace(r?.redirect || '/login');   // replace: "Atrás" ya no regresa al panel
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   async function cfgCambiarPass() {
@@ -1182,6 +1223,14 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
           <div class="cfg-info"><div><b>${ct('lblMoneda')}</b><small>${ct('monedaHint')}</small></div><span>${ct('monedaTxt')}</span></div>
         </div>
 
+        <div class="cfg-card cfg-peligro">
+          <h3>${ct('borrarTitulo')}</h3><p class="cfg-sub">${ct('borrarSub')}</p>
+          <div class="cfg-form">
+            <div class="cfg-campo"><label for="cfgBorrarPass">${ct('borrarPass')}</label><input type="password" id="cfgBorrarPass" autocomplete="current-password"></div>
+          </div>
+          <div class="cfg-acciones"><button class="btn btn-peligro" onclick="cfgEliminarCuenta()">${ct('borrarBoton')}</button></div>
+        </div>
+
         ${CFG_PREFS.length ? `<div class="cfg-card">
           <h3>${ct('prefTitulo')}</h3><p class="cfg-sub">${ct('prefSub')}</p>
           ${CFG_PREFS.map(cfgFilaPref).join('')}
@@ -1284,6 +1333,10 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
     layout.classList.remove('sin-animacion');
   })();
 
+  /* Si el navegador muestra el panel desde su memoria al darle "Atrás" (bfcache), se vuelve a pedir al
+     servidor: sin sesión, manda al login (complementa el middleware SinCacheConSesion) */
+  window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+
   function cerrarSesion() {
     carrito = [];
     document.getElementById('logoutForm').submit();
@@ -1333,8 +1386,8 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
           <td>${formatearFecha(r.fecha)}</td>
           <td>${t('repTipo_' + r.tipo)}</td>
           <td><strong>${esc(r.asunto)}</strong><div class="rep-desc">${esc(r.descripcion)}</div></td>
-          <td><span class="badge rep-${r.estado}">${t('repEstado_' + r.estado)}</span></td>
-          <td>${r.respuesta ? `${esc(r.respuesta)}<div class="rep-desc">${formatearFecha(r.fecha_respuesta)}</div>` : `<span class="rep-desc">${t('repSinRespuesta')}</span>`}</td>
+          <td><span class="badge rep-${r.estado}">${t('repEstado_' + r.estado)}</span>${r.fecha_escalado ? `<div class="rep-desc">${t('repPasadoAdmin')}</div>` : ''}</td>
+          <td>${r.respuesta ? `${esc(r.respuesta)}<div class="rep-desc">${r.rol_responde ? t('repRespondio_' + r.rol_responde) + ' · ' : ''}${formatearFecha(r.fecha_respuesta)}</div>` : `<span class="rep-desc">${t('repSinRespuesta')}</span>`}</td>
         </tr>`).join('')
       : `<tr><td colspan="5" style="color:var(--muted);">${t('repSinReportes')}</td></tr>`;
     paginarTabla('tablaReportes');
@@ -1349,12 +1402,13 @@ let claveProductos = '';   // búsqueda + categoría con que se pintó: si cambi
     const btn = document.getElementById('btnEnviarReporte');
     btn.disabled = true;   // evita mandar el mismo reporte dos veces con doble clic
     try {
-      await api('/cajero/reportes', 'POST', { tipo, asunto, descripcion });
+      // Si su sucursal no tiene gerente, el servidor lo manda directo al administrador (destino 'admin')
+      const nuevo = await api('/cajero/reportes', 'POST', { tipo, asunto, descripcion });
       document.getElementById('repAsunto').value = '';
       document.getElementById('repDescripcion').value = '';
       await cargarReportes();
       renderReportes();
-      mostrarToast(t('repEnviado'), 'exito');
+      mostrarToast(t(nuevo.destino === 'gerente' ? 'repEnviadoGerente' : 'repEnviado'), 'exito');
     } catch (e) {
       mostrarToast(e.message, 'error');
     } finally {

@@ -86,7 +86,7 @@
                         <label for="mensaje">{{ __('Message') }}</label>
                         <textarea id="mensaje" name="mensaje" class="help-textarea" placeholder="{{ __('Message') }}" minlength="10" maxlength="2000" required>{{ old('mensaje') }}</textarea>
 
-                        <button type="submit">{{ __('Send message') }}</button>
+                        <button type="submit"><i class="bi bi-send" aria-hidden="true"></i> {{ __('Send message') }}</button>
                     </form>
 
                     <a class="help-back" href="{{ url('/') }}">{{ __('Back to welcome page') }}</a>

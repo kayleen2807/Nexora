@@ -63,15 +63,15 @@
                         <input class="email-input" type="email" id="correo" name="correo" value="{{ old('correo', $correo) }}" required>
                         <label for="codigo">{{ __('Verification code') }}</label>
                         <input class="email-input verification-code" type="text" id="codigo" name="codigo" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
-                        <button type="submit">{{ __('Verify email') }}</button>
+                        <button type="submit"><i class="bi bi-envelope-check" aria-hidden="true"></i> {{ __('Verify email') }}</button>
                     </form>
 
                     <form class="resend-form" action="{{ route('verification.resend') }}" method="post">
                         @csrf
                         <input type="hidden" name="correo" value="{{ old('correo', $correo) }}">
-                        <button type="submit" class="link-button">{{ __('Send a new code') }}</button>
+                        <button type="submit" class="link-button"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ __('Send a new code') }}</button>
                     </form>
-                    <a class="back-link" href="{{ route('login') }}">{{ __('Back to login') }}</a>
+                    <a class="back-link" href="{{ route('login') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> {{ __('Back to login') }}</a>
                 </div>
             </section>
         </section>

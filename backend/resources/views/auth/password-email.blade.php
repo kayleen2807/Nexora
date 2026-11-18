@@ -69,11 +69,11 @@
                         @csrf
                         <label for="correo">{{ __('Email address') }}</label>
                         <input class="email-input" type="email" id="correo" name="correo" value="{{ old('correo') }}" placeholder="{{ __('Email address') }}" autocomplete="email" required autofocus>
-                        <button type="submit">{{ __('Send reset link') }}</button>
+                        <button type="submit"><i class="bi bi-send" aria-hidden="true"></i> {{ __('Send reset link') }}</button>
                     </form>
 
                     <a class="back-link" href="{{ route('login') }}">
-                        <span aria-hidden="true">←</span>
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
                         {{ __('Back to login') }}
                     </a>
                 </div>

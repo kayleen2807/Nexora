@@ -10,9 +10,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Notifications\CodigoCorreoNuevoNotification;
+use App\Notifications\CorreoCambiadoNotification;
 use App\Services\DosPasosService;
+use App\Services\EliminacionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class ConfiguracionController extends Controller
 {
@@ -114,5 +125,137 @@ class ConfiguracionController extends Controller
         // Auth::logoutOtherDevices($request->password_nueva);
 
         return response()->json(['ok' => true]);
+    }
+
+    /*
+     * Cambio del correo del DUEÑO (los empleados se lo piden al administrador). Paso 1:
+     * POST /configuracion/correo {correo, password} → manda un código de 6 dígitos al correo NUEVO.
+     * El cambio pendiente vive 10 min en la caché (sin columnas nuevas); el correo aún no cambia.
+     */
+    public function solicitarCambioCorreo(Request $request)
+    {
+        /** @var User $usuario */
+        $usuario = $request->user();
+        abort_unless($this->esDueno($usuario), 403, 'Tu correo lo cambia el administrador de tu negocio.');
+
+        $request->merge(['correo' => strtolower(trim((string) $request->input('correo')))]);
+        $datos = $request->validate([
+            'correo' => ['required', 'email', 'max:150', Rule::unique('usuario', 'correo')->ignore($usuario->id_usuario, 'id_usuario')],
+            'password' => ['required', 'string'],
+        ], [
+            'correo.required' => 'Escribe el correo nuevo.',
+            'correo.email' => 'El correo no es válido.',
+            'correo.unique' => 'Ese correo ya está registrado.',
+            'password.required' => 'Escribe tu contraseña para confirmar.',
+        ]);
+        abort_if($datos['correo'] === $usuario->correo, 422, 'Ese ya es tu correo.');
+        if (! Hash::check($datos['password'], $usuario->{self::COLUMNA_PASSWORD})) {
+            $mensaje = 'La contraseña no es correcta. Si entras con Google, crea una con "¿Olvidaste tu contraseña?" en el inicio de sesión.';
+
+            return response()->json(['message' => $mensaje, 'errors' => ['password' => [$mensaje]]], 422);
+        }
+
+        // Máximo un código por minuto (no se puede usar para llenar de correos a alguien)
+        $llave = 'cambio-correo-envio|'.$usuario->id_usuario;
+        abort_if(RateLimiter::tooManyAttempts($llave, 1), 429, 'Espera '.RateLimiter::availableIn($llave).' segundos para pedir otro código.');
+
+        $codigo = (string) random_int(100000, 999999);
+        try {
+            Notification::route('mail', $datos['correo'])
+                ->notify((new CodigoCorreoNuevoNotification($codigo))->locale($usuario->idioma ?: 'es'));
+        } catch (TransportExceptionInterface $e) {
+            report($e);
+
+            return response()->json(['message' => 'No pudimos enviar el código a '.$datos['correo'].'. Revisa que esté bien escrito e inténtalo de nuevo.'], 503);
+        }
+        RateLimiter::hit($llave, 60);
+        Cache::put($this->llaveCambioCorreo($usuario), [
+            'correo' => $datos['correo'],
+            'codigo' => Hash::make($codigo),
+            'intentos' => 0,
+        ], now()->addMinutes(CodigoCorreoNuevoNotification::MINUTOS_VIGENCIA));
+
+        return response()->json(['message' => 'Te enviamos un código a '.$datos['correo'].'.', 'correo' => $datos['correo']]);
+    }
+
+    /* Paso 2: POST /configuracion/correo/confirmar {codigo} → si es correcto, cambia el correo y avisa al anterior. */
+    public function confirmarCambioCorreo(Request $request)
+    {
+        /** @var User $usuario */
+        $usuario = $request->user();
+        abort_unless($this->esDueno($usuario), 403);
+        $request->validate(['codigo' => ['required', 'digits:6']], ['codigo.required' => 'Escribe el código.', 'codigo.digits' => 'El código tiene 6 dígitos.']);
+
+        $llave = $this->llaveCambioCorreo($usuario);
+        $pendiente = Cache::get($llave);
+        abort_if(! $pendiente, 422, 'El código venció o no has pedido uno. Vuelve a escribir el correo nuevo.');
+
+        if (! Hash::check($request->codigo, $pendiente['codigo'])) {
+            $pendiente['intentos']++;
+            // 5 intentos fallidos anulan el código (igual que la verificación del registro y los dos pasos)
+            $pendiente['intentos'] >= 5 ? Cache::forget($llave) : Cache::put($llave, $pendiente, now()->addMinutes(CodigoCorreoNuevoNotification::MINUTOS_VIGENCIA));
+            abort(422, $pendiente['intentos'] >= 5 ? 'Demasiados intentos. Pide un código nuevo.' : 'El código no es correcto.');
+        }
+
+        // Alguien pudo registrar ese correo mientras tanto
+        abort_if(User::where('correo', $pendiente['correo'])->where('id_usuario', '!=', $usuario->id_usuario)->exists(), 422, 'Ese correo ya está registrado.');
+
+        $correoViejo = $usuario->correo;
+        $usuario->forceFill(['correo' => $pendiente['correo'], 'email_verified_at' => now()])->save();
+        Cache::forget($llave);
+        DB::table('password_reset_tokens')->where('email', $correoViejo)->delete();
+
+        try {   // el aviso al correo anterior es informativo: si no sale, el cambio ya está hecho
+            Notification::route('mail', $correoViejo)
+                ->notify((new CorreoCambiadoNotification($usuario->correo, false))->locale($usuario->idioma ?: 'es'));
+        } catch (TransportExceptionInterface $e) {
+            report($e);
+        }
+
+        return response()->json(['correo' => $usuario->correo]);
+    }
+
+    private function esDueno(User $usuario): bool
+    {
+        return strtolower($usuario->rol->nombre ?? '') === 'administrador';
+    }
+
+    private function llaveCambioCorreo(User $usuario): string
+    {
+        return 'cambio-correo|'.$usuario->id_usuario;
+    }
+
+    /*
+     * DELETE /configuracion/cuenta {password, confirmacion?} — "Eliminar mi cuenta" (decisión de Kay 2026-11-17).
+     * Gerente/cajero: se borra, o se anonimiza si tiene ventas/cortes (EliminacionService). Dueño (admin):
+     * se borran TODOS sus negocios; además de la contraseña debe escribir su correo para confirmar.
+     */
+    public function eliminarCuenta(Request $request, EliminacionService $eliminacion)
+    {
+        $request->validate(['password' => ['required', 'string']], ['password.required' => 'Escribe tu contraseña para confirmar.']);
+
+        /** @var User $usuario */
+        $usuario = $request->user();
+        $esDueno = strtolower($usuario->rol->nombre ?? '') === 'administrador';
+
+        if (! Hash::check($request->password, $usuario->{self::COLUMNA_PASSWORD})) {
+            $mensaje = 'La contraseña no es correcta. Si entras con Google, crea una con "¿Olvidaste tu contraseña?" en el inicio de sesión.';
+
+            return response()->json(['message' => $mensaje, 'errors' => ['password' => [$mensaje]]], 422);
+        }
+        if ($esDueno && strtolower(trim((string) $request->input('confirmacion'))) !== $usuario->correo) {
+            $mensaje = 'Escribe tu correo exactamente como aparece para confirmar que quieres borrar tus negocios.';
+
+            return response()->json(['message' => $mensaje, 'errors' => ['confirmacion' => [$mensaje]]], 422);
+        }
+
+        $esDueno ? $eliminacion->eliminarDueno($usuario) : $eliminacion->eliminarEmpleado($usuario);
+
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        $request->session()->flash('status', __('Your account was deleted.'));
+
+        return response()->json(['redirect' => route('login')]);
     }
 }

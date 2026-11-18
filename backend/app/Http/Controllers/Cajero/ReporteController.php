@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Reporte;
 use Illuminate\Http\Request;
 
-/** El cajero envía reportes al administrador y ve SOLO los suyos (con la respuesta). */
+/** El cajero envía reportes a su gerente (o al administrador si su sucursal no tiene gerente) y ve SOLO los suyos, con la respuesta. */
 class ReporteController extends Controller
 {
     use EnviaReportes;
@@ -16,7 +16,7 @@ class ReporteController extends Controller
     {
         $idUsuario = $this->usuario($request)->id_usuario;
 
-        return Reporte::with('autor.rol', 'sucursal')
+        return Reporte::with('autor.rol', 'responde.rol', 'sucursal')
             ->where('id_usuario', $idUsuario)
             ->orderByDesc('fecha')
             ->orderByDesc('id_reporte')

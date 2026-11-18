@@ -55,14 +55,14 @@
                         @csrf
                         <label for="codigo">{{ __('Verification code') }}</label>
                         <input class="email-input verification-code" type="text" id="codigo" name="codigo" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required autofocus>
-                        <button type="submit">{{ __('Continue') }}</button>
+                        <button type="submit"><i class="bi bi-shield-check" aria-hidden="true"></i> {{ __('Continue') }}</button>
                     </form>
 
                     <form class="resend-form" action="{{ route('dos-pasos.reenviar') }}" method="post">
                         @csrf
-                        <button type="submit" class="link-button">{{ __('Send a new code') }}</button>
+                        <button type="submit" class="link-button"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ __('Send a new code') }}</button>
                     </form>
-                    <a class="back-link" href="{{ route('login') }}">{{ __('Back to login') }}</a>
+                    <a class="back-link" href="{{ route('login') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> {{ __('Back to login') }}</a>
                 </div>
             </section>
         </section>

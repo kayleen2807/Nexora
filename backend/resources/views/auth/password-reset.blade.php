@@ -87,10 +87,10 @@
                         </div>
                         <div data-coincide-con="password" data-confirmacion="password_confirmation"></div>
 
-                        <button type="submit">{{ __('Reset password') }}</button>
+                        <button type="submit"><i class="bi bi-key" aria-hidden="true"></i> {{ __('Reset password') }}</button>
                     </form>
 
-                    <a class="back-link" href="{{ route('password.request') }}">{{ __('Request a new link') }}</a>
+                    <a class="back-link" href="{{ route('password.request') }}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ __('Request a new link') }}</a>
                 </div>
             </section>
         </section>

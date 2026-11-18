@@ -7,8 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Sucursal;
 use App\Models\User;
 use App\Models\UserInvitation;
-use Illuminate\Database\QueryException;
+use App\Notifications\CorreoCambiadoNotification;
+use App\Services\EliminacionService;
+use App\Services\EmailVerificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Services\UserInvitationService;
@@ -55,6 +58,11 @@ class UsuarioController extends Controller
                 'sucursalId' => $u->id_sucursal,
                 'esYo' => $u->id_usuario === $yo,
                 'invitacionEstado' => $estado,
+                // Para el formulario "Editar" (los datos por separado)
+                'nombreSolo' => $u->nombre,
+                'apellido' => $u->apellido,
+                'correo' => $u->correo,
+                'fechaNacimiento' => $u->fecha_nacimiento?->toDateString(),
             ];
         });
     }
@@ -186,26 +194,85 @@ class UsuarioController extends Controller
         return response()->json($usuario->fresh());
     }
 
-    public function destroy(Request $request, User $usuario)
+    public function destroy(Request $request, User $usuario, EliminacionService $eliminacion)
     {
         $this->asegurarEditable($request, $usuario, 'eliminar');
 
+        // Sin historial se borra; con ventas/cortes se anonimiza (antes: 422 y no se podía) — EliminacionService
+        $resultado = $eliminacion->eliminarEmpleado($usuario);
+
+        return response()->json(['resultado' => $resultado]);
+    }
+
+    /**
+     * PUT /administrador/usuarios/{usuario} — nombre, apellido, fecha de nacimiento y correo (decisión de Kay
+     * 2026-11-17). Si cambia el correo: quien no ha aceptado la invitación la recibe en el nuevo; quien ya
+     * estaba activo debe confirmar el nuevo con el código de 6 dígitos al entrar, y se avisa al correo viejo.
+     * Todo va en una transacción con los correos: si alguno no sale, no se cambia nada.
+     */
+    public function update(Request $request, User $usuario, UserInvitationService $invitaciones, EmailVerificationService $verificacion)
+    {
+        $this->asegurarEditable($request, $usuario, 'editar');
+        $request->merge(['correo' => strtolower(trim((string) $request->input('correo')))]);
+
+        $data = $request->validate([
+            'nombre' => ['required', 'string', 'max:150'],
+            'apellido' => ['required', 'string', 'max:150'],
+            'fecha_nacimiento' => ['required', 'date', 'before_or_equal:'.now()->subYears(18)->toDateString()],
+            'correo' => ['required', 'email', 'max:150', Rule::unique('usuario', 'correo')->ignore($usuario->id_usuario, 'id_usuario')],
+        ], [
+            'nombre.required' => __('Name is required.'),
+            'apellido.required' => __('First surname is required.'),
+            'fecha_nacimiento.required' => __('Date of birth is required.'),
+            'fecha_nacimiento.date' => __('Date of birth is invalid.'),
+            'fecha_nacimiento.before_or_equal' => __('You must be at least 18 years old to register.'),
+            'correo.required' => __('Email address is required.'),
+            'correo.email' => __('Email address must be valid.'),
+            'correo.unique' => __('This email address is already registered.'),
+        ]);
+
+        $correoViejo = $usuario->correo;
+        $cambiaCorreo = $data['correo'] !== $correoViejo;
+        $activo = $usuario->email_verified_at !== null
+            || UserInvitation::where('user_id', $usuario->id_usuario)->where('status', 'accepted')->exists();
+
         try {
-            DB::transaction(function () use ($usuario) {
-                Sucursal::where('id_gerente', $usuario->id_usuario)
-                    ->update(['id_gerente' => null]);
+            DB::transaction(function () use ($usuario, $data, $cambiaCorreo, $activo, $correoViejo, $request, $invitaciones, $verificacion) {
+                $usuario->fill([
+                    'nombre' => trim($data['nombre']),
+                    'apellido' => trim($data['apellido']),
+                    'fecha_nacimiento' => $data['fecha_nacimiento'],
+                    'correo' => $data['correo'],
+                ])->save();
 
-                // user_invitations no tiene llave foránea: se limpian a mano para no dejar huérfanas
-                UserInvitation::where('user_id', $usuario->id_usuario)->delete();
+                if (! $cambiaCorreo) {
+                    return;
+                }
+                DB::table('password_reset_tokens')->where('email', $correoViejo)->delete();
 
-                $usuario->delete();
+                if (! $activo) {
+                    $invitaciones->send($usuario, $this->usuario($request));   // anula la anterior
+
+                    return;
+                }
+                // Activo: al entrar, LoginController lo manda a confirmar el correo nuevo con el código
+                $usuario->forceFill(['email_verified_at' => null])->save();
+                $verificacion->send($usuario);
+                Notification::route('mail', $correoViejo)
+                    ->notify((new CorreoCambiadoNotification($data['correo']))->locale($usuario->idioma ?: 'es'));
             });
-        } catch (QueryException $e) {
+        } catch (TransportExceptionInterface $e) {
+            report($e);
+
             return response()->json([
-                'message' => 'No se puede eliminar: el usuario tiene ventas o cortes de caja registrados.',
-            ], 422);
+                'message' => 'No se pudo enviar el correo a '.$data['correo'].'. No se guardó ningún cambio; inténtalo de nuevo.',
+            ], 503);
         }
 
-        return response()->noContent();
+        return response()->json([
+            'message' => $cambiaCorreo
+                ? ($activo ? 'Datos guardados. Le enviamos un código al correo nuevo: lo pedirá la próxima vez que inicie sesión.' : 'Datos guardados. Le enviamos la invitación al correo nuevo.')
+                : 'Datos guardados.',
+        ]);
     }
 }

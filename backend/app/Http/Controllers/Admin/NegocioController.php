@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Concerns\UsaNegocioDelUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Negocio;
+use App\Services\EliminacionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Datos del negocio del admin y sus otros negocios.
@@ -98,5 +100,28 @@ class NegocioController extends Controller
         $usuario->update(['id_negocio' => $negocio->id_negocio]);
 
         return response()->json(['id' => $negocio->id_negocio, 'nombre' => $negocio->nombre]);
+    }
+
+    /**
+     * DELETE /administrador/negocios/{negocio} {password, confirmacion} — borra el negocio con TODO lo suyo
+     * (EliminacionService). Confirmación fuerte: contraseña + escribir el nombre exacto del negocio.
+     * El único negocio del dueño no se borra aquí: para eso está "Eliminar mi cuenta".
+     */
+    public function destroy(Request $request, Negocio $negocio, EliminacionService $eliminacion)
+    {
+        $usuario = $this->usuario($request);
+        abort_if((int) $negocio->id_propietario !== $usuario->id_usuario, 404);
+
+        $request->validate(['password' => ['required', 'string']], ['password.required' => 'Escribe tu contraseña para confirmar.']);
+        abort_if(! Hash::check($request->password, $usuario->contrasena), 422,
+            'La contraseña no es correcta. Si entras con Google, crea una con "¿Olvidaste tu contraseña?" en el inicio de sesión.');
+        abort_if(trim((string) $request->input('confirmacion')) !== $negocio->nombre, 422,
+            'Escribe el nombre del negocio exactamente como aparece para confirmar.');
+        abort_if(Negocio::where('id_propietario', $usuario->id_usuario)->count() < 2, 422,
+            'Es tu único negocio. Para borrarlo, elimina tu cuenta desde Configuración.');
+
+        $eliminacion->eliminarNegocio($negocio);
+
+        return response()->json(['activo' => $usuario->refresh()->id_negocio]);
     }
 }

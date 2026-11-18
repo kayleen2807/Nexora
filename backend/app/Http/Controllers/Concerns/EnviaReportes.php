@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * Alta de reportes, igual para gerente y cajero: el reporte queda ligado a SU negocio
- * y SU sucursal (nunca se toman del formulario) y llega al administrador de ese negocio.
+ * y SU sucursal (nunca se toman del formulario). El de un cajero lo atiende el gerente de su
+ * sucursal (si la sucursal no tiene gerente, va al administrador); el de un gerente, el administrador.
  */
 trait EnviaReportes
 {
@@ -28,17 +29,24 @@ trait EnviaReportes
             'Ya enviaste muchos reportes en la última hora. Intenta más tarde.');
         RateLimiter::hit($llave, 3600);
 
+        $idSucursal = $this->idSucursal($request);
+        $esCajero = strtolower($usuario->rol->nombre ?? '') === 'cajero';
+        $destino = $esCajero && Reporte::sucursalTieneGerente($idSucursal)
+            ? Reporte::DESTINO_GERENTE
+            : Reporte::DESTINO_ADMIN;
+
         $reporte = Reporte::create([
             'fecha' => now(),
             'id_negocio' => $this->idNegocio($request),
-            'id_sucursal' => $this->idSucursal($request),
+            'id_sucursal' => $idSucursal,
             'id_usuario' => $usuario->id_usuario,
             'tipo' => $data['tipo'],
             'asunto' => trim($data['asunto']),
             'descripcion' => trim($data['descripcion']),
             'estado' => 'pendiente',
+            'destino' => $destino,
         ]);
 
-        return response()->json($reporte->load('autor.rol', 'sucursal')->aArreglo($usuario->id_usuario), 201);
+        return response()->json($reporte->load('autor.rol', 'responde.rol', 'sucursal')->aArreglo($usuario->id_usuario), 201);
     }
 }

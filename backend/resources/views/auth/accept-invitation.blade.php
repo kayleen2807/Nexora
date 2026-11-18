@@ -67,9 +67,9 @@
                         <label class="legal-check {{ old('acepta_terminos') ? '' : 'is-locked' }}" for="acepta_terminos"><input type="checkbox" id="acepta_terminos" name="acepta_terminos" value="1" {{ old('acepta_terminos') ? 'checked' : 'disabled' }} required> <span>{!! __('I accept the :link', ['link' => '<a href="' . e(route('legal.terminos')) . '" target="_blank" rel="noopener" data-requires="acepta_terminos">' . e(__('Terms and Conditions')) . '</a>']) !!}</span></label>
                         <label class="legal-check {{ old('acepta_privacidad') ? '' : 'is-locked' }}" for="acepta_privacidad"><input type="checkbox" id="acepta_privacidad" name="acepta_privacidad" value="1" {{ old('acepta_privacidad') ? 'checked' : 'disabled' }} required> <span>{!! __('I agree to the :link', ['link' => '<a href="' . e(route('legal.privacidad')) . '" target="_blank" rel="noopener" data-requires="acepta_privacidad">' . e(__('Privacy Notice')) . '</a>']) !!}</span></label>
                         <small id="legal-hint" class="legal-hint">{{ __('Open and read both links to be able to accept them.') }}</small>
-                        <button type="submit" id="invitation-submit" disabled>{{ __('Accept registration') }}</button>
+                        <button type="submit" id="invitation-submit" disabled><i class="bi bi-check2-circle" aria-hidden="true"></i> {{ __('Accept registration') }}</button>
                     </form>
-                    <a class="back-link" href="{{ route('login') }}">{{ __('Back to login') }}</a>
+                    <a class="back-link" href="{{ route('login') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> {{ __('Back to login') }}</a>
                 </div>
             </section>
         </section>
