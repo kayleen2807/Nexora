@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('password.css') }}">
     <link rel="stylesheet" href="{{ asset('css/password-flow.css') }}">
+    <script src="{{ asset('js/theme.js') }}"></script>
     <script>
         (function () {
             var saved = null;
@@ -76,13 +77,5 @@
             </section>
         </section>
     </main>
-    <script>
-        document.getElementById('theme-toggle').addEventListener('click', function () {
-            var root = document.documentElement;
-            var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            root.setAttribute('data-theme', next);
-            try { localStorage.setItem('theme', next); } catch (e) {}
-        });
-    </script>
 </body>
 </html>
