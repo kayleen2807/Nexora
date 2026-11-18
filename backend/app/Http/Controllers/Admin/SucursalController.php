@@ -16,11 +16,25 @@ class SucursalController extends Controller
 {
     use UsaNegocioDelUsuario;
 
-    /** Solo las sucursales del negocio del admin. */
+    /**
+     * Solo las sucursales del negocio del admin. `id_gerente` = el gerente que de verdad trabaja ahí:
+     * a los gerentes creados desde "Crear usuarios" o "Asignar roles" antes del 2026-11-17 no se les
+     * guardaba como encargado, y la tabla los mostraba "Sin asignar" (al guardar la sucursal los sacaba).
+     */
     public function index(Request $request){
-        return Sucursal::where('id_negocio', $this->idNegocio($request))
+        $idNegocio = $this->idNegocio($request);
+        $gerentePorSucursal = User::where('id_negocio', $idNegocio)
+            ->where('id_rol', Rol::idDe('gerente'))
+            ->whereNotNull('id_sucursal')
+            ->orderBy('id_usuario')
+            ->pluck('id_usuario', 'id_sucursal');
+
+        return Sucursal::where('id_negocio', $idNegocio)
             ->orderBy('id_sucursal')
-            ->get();
+            ->get()
+            ->each(function (Sucursal $s) use ($gerentePorSucursal) {
+                $s->id_gerente ??= $gerentePorSucursal[$s->id_sucursal] ?? null;
+            });
     }
 
     public function store(Request $request){
@@ -59,32 +73,40 @@ class SucursalController extends Controller
         $aviso = null;
 
         DB::transaction(function () use ($sucursal, $data, &$aviso) {
-            $anterior = $sucursal->id_gerente;
-            $sucursal->update($data);
+            Sucursal::bloquear($sucursal->id_sucursal);
 
             if (! array_key_exists('id_gerente', $data)) {
+                $sucursal->update($data);
+
                 return;
             }
 
-            $nuevo = $data['id_gerente'];
+            $nuevo = $data['id_gerente'] ? (int) $data['id_gerente'] : null;
 
-            // El gerente anterior deja de pertenecer a esta sucursal (no se queda "colgado")
-            if ($anterior && (int) $anterior !== (int) $nuevo) {
-                $quitado = User::where('id_usuario', $anterior)
-                    ->where('id_sucursal', $sucursal->id_sucursal)
-                    ->update(['id_sucursal' => null]);
-                if ($quitado) {
-                    $aviso = 'El gerente anterior quedó sin sucursal asignada.';
+            if ($nuevo) {
+                // Un gerente = una sucursal: si ya trabaja en OTRA, no se mueve en silencio (decisión de Kay)
+                $gerente = User::whereKey($nuevo)->lockForUpdate()->first();
+                if ($gerente->id_sucursal && (int) $gerente->id_sucursal !== (int) $sucursal->id_sucursal) {
+                    $otra = Sucursal::find($gerente->id_sucursal)?->nombre ?? 'otra sucursal';
+                    abort(422, trim($gerente->nombre.' '.$gerente->apellido).' ya es gerente de '.$otra
+                        .'. Quítalo de ahí primero (en Sucursales o en Asignar roles) y luego asígnalo aquí.');
                 }
             }
 
-            if ($nuevo) {
-                // Si el nuevo gerente encabezaba otra sucursal, esa sucursal queda sin gerente
-                Sucursal::where('id_gerente', $nuevo)
-                    ->where('id_sucursal', '!=', $sucursal->id_sucursal)
-                    ->update(['id_gerente' => null]);
+            $sucursal->update($data);
 
-                User::where('id_usuario', $nuevo)->update(['id_sucursal' => $sucursal->id_sucursal]);
+            // Una sucursal = un gerente: quien la encabezaba (o trabajaba ahí como gerente) queda sin sucursal
+            $quitados = User::where('id_sucursal', $sucursal->id_sucursal)
+                ->where('id_rol', Rol::idDe('gerente'))
+                ->when($nuevo, fn ($q) => $q->where('id_usuario', '!=', $nuevo))
+                ->update(['id_sucursal' => null]);
+            if ($quitados) {
+                $aviso = 'El gerente anterior quedó sin sucursal asignada.';
+            }
+
+            if ($nuevo) {
+                User::whereKey($nuevo)->update(['id_sucursal' => $sucursal->id_sucursal]);
+                Sucursal::ponerEncargado($sucursal->id_sucursal, $nuevo);
             }
         });
 

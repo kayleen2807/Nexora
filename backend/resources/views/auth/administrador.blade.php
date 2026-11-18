@@ -87,6 +87,9 @@
   th, td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border-light); text-align: left; font-size: 0.85rem; }
   th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; }
   td input, td select { padding: 0.35rem; border: 1px solid var(--border); border-radius: 5px; font-size: 0.82rem; background: var(--card-bg); color: var(--text); }
+  /* Catálogo: nombre editable + botón guardar en la misma celda */
+  .nombre-editable { display: flex; gap: 6px; align-items: center; }
+  .nombre-editable input { flex: 1; min-width: 140px; }
   /* Sucursales: cada campo se ajusta al ancho de su columna para que la fila no se salga de la tarjeta */
   #tablaSucursales input, #tablaSucursales select { width: 100%; min-width: 0; }
   #tablaSucursales .acciones-sucursal { white-space: nowrap; width: 1%; }
@@ -461,7 +464,7 @@
 
       <div class="seccion" id="sec-productos-admin">
         <h2 data-i18n="adminProductosHeading">Catálogo de productos</h2>
-        <p class="desc" data-i18n="adminProductosDesc">Sube o reemplaza la foto de cada producto del catálogo global.</p>
+        <p class="desc" data-i18n="adminProductosDesc">Cambia el nombre o la foto de cada producto; el cambio se ve en todas tus sucursales.</p>
         <div class="card">
           <table>
             <tr>
@@ -721,7 +724,8 @@
       inventarioHeading: 'Inventario por sucursal', inventarioDesc: 'Consulta las existencias de cualquier sucursal.',
       thProducto: 'Producto', thStock: 'Stock', sinDatos: 'Sin datos',
       navProductosAdmin: 'Catálogo / fotos',
-      adminProductosHeading: 'Catálogo de productos', adminProductosDesc: 'Sube o reemplaza la foto de cada producto del catálogo global.',
+      adminProductosHeading: 'Catálogo de productos', adminProductosDesc: 'Cambia el nombre o la foto de cada producto; el cambio se ve en todas tus sucursales.',
+      btnGuardarNombre: 'Guardar nombre', nombreProductoGuardado: 'Nombre del producto actualizado en todas tus sucursales.', alertNombreProducto: 'Escribe el nombre del producto.',
       thFoto: 'Foto', thPrecio: 'Precio', fotoActualizada: 'Foto actualizada', labelFotoProducto: 'Foto del producto',
       navVentas: 'Ventas', navReportesVentas: 'Reportes de ventas', rvHeading: 'Reportes de ventas', rvDesc: 'Ventas netas, gráficas y productos más vendidos de todas tus sucursales o de una.',
       ventasHeading: 'Ventas por sucursal', ventasDesc: 'Consulta las ventas registradas en cualquier sucursal.',
@@ -814,7 +818,8 @@
       inventarioHeading: 'Inventory by branch', inventarioDesc: 'Check the stock at any branch.',
       thProducto: 'Product', thStock: 'Stock', sinDatos: 'No data',
       navProductosAdmin: 'Catalog / photos',
-      adminProductosHeading: 'Product catalog', adminProductosDesc: 'Upload or replace the photo for each product in the global catalog.',
+      adminProductosHeading: 'Product catalog', adminProductosDesc: 'Change the name or photo of each product; the change shows in all your branches.',
+      btnGuardarNombre: 'Save name', nombreProductoGuardado: 'Product name updated in all your branches.', alertNombreProducto: 'Write the product name.',
       thFoto: 'Photo', thPrecio: 'Price', fotoActualizada: 'Photo updated', labelFotoProducto: 'Product photo',
       navVentas: 'Sales', navReportesVentas: 'Sales reports', rvHeading: 'Sales reports', rvDesc: 'Net sales, charts and best-selling products for all your branches or just one.',
       ventasHeading: 'Sales by branch', ventasDesc: 'Check the sales recorded at any branch.',
@@ -1462,7 +1467,10 @@
           ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
           : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}
         </td>
-        <td>${esc(p.nombre)}</td>
+        <td><div class="nombre-editable">
+          <input type="text" id="admNombre-${p.id}" maxlength="150" value="${esc(p.nombre)}" aria-label="${t('thProducto')}">
+          <button class="btn btn-primario btn-sm" onclick="guardarNombreProductoAdmin(${p.id})" title="${t('btnGuardarNombre')}" aria-label="${t('btnGuardarNombre')}">${ICONO_GUARDAR}</button>
+        </div></td>
         <td>${monto(p.precio)}</td>
         <td><span class="badge ${p.activo ? 'badge-gerente' : 'badge-cajero'}">${p.activo ? t('estadoActiva') : t('estadoInactiva')}</span></td>
         <td>
@@ -1473,6 +1481,26 @@
         <td><button class="btn btn-peligro btn-sm" onclick="eliminarProductoAdmin(${p.id})" title="${t('btnEliminarProducto')}" aria-label="${t('btnEliminarProducto')}">${ICONO_BASURA}</button></td>
       </tr>`).join('') || `<tr><td colspan="6" style="color:var(--muted-light);">${t('sinDatos')}</td></tr>`;
     paginarTabla('tablaProductosAdmin');
+  }
+
+  /* Cambia el nombre en el catálogo del negocio: se ve igual en TODAS las sucursales que lo tienen */
+  async function guardarNombreProductoAdmin(id) {
+    const nombre = document.getElementById('admNombre-' + id).value.trim();
+    if (!nombre) { mostrarToast(t('alertNombreProducto'), 'error'); return; }
+    try {
+      const resp = await fetch('/administrador/productos/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({ nombre }),
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok) throw new Error(data?.message || t('errorGenerico') || 'Error');
+      await Promise.all([cargarProductosAdmin(), cargarInventario()]);
+      renderProductosAdmin();
+      mostrarToast(t('nombreProductoGuardado'), 'exito');
+    } catch (e) {
+      mostrarToast(e.message, 'error');
+    }
   }
 
   /* Borra el producto de TODO el catálogo del negocio; si tiene historia el servidor lo impide (422) */
@@ -1694,7 +1722,7 @@
             <option value="inactiva" ${s.estado === 'inactiva' ? 'selected' : ''}>${t('estadoInactiva')}</option>
           </select>
         </td>
-        <td><select id="sucGer-${s.id_sucursal}">${opcionesGerente(s.id_gerente)}</select></td>
+        <td><select id="sucGer-${s.id_sucursal}">${opcionesGerente(s.id_gerente, s.id_sucursal)}</select></td>
         <td class="acciones-sucursal">
           <button class="btn btn-primario btn-sm" onclick="guardarSucursal(${s.id_sucursal})" title="${t('btnGuardar')}" aria-label="${t('btnGuardar')}">${ICONO_GUARDAR}</button>
           <button class="btn btn-peligro btn-sm" onclick="eliminarSucursal(${s.id_sucursal})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button>
@@ -1861,6 +1889,8 @@
       return;
     }
     mostrarToast(t('rolActualizado'), 'exito');
+    const datos = await res.json().catch(() => null);
+    if (datos?.aviso) mostrarToast(datos.aviso, 'exito');   // p. ej. "Sucursal Norte quedó sin gerente."
     await cargarUsuarios();
     await cargarSucursales(); // el gerente de alguna sucursal pudo cambiar
   }
@@ -2120,9 +2150,14 @@
   }
 
   /* Sekeccion de gerente  */
-  function opcionesGerente(seleccionId) {
+  /* Un gerente encabeza UNA sola sucursal: el que ya está en otra aparece deshabilitado con el nombre de esa sucursal
+     (el servidor también lo impide). */
+  function opcionesGerente(seleccionId, idSucursal) {
     const gerentes = usuarios.filter(u => u.rol === 'gerente');
-    const opciones = gerentes.map(g => `<option value="${g.id}" ${g.id === seleccionId ? 'selected' : ''}>${esc(g.nombre)}</option>`).join('');
+    const opciones = gerentes.map(g => {
+      const gerenteDeOtra = g.sucursalId && g.sucursalId !== idSucursal ? sucursales.find(s => s.id_sucursal === g.sucursalId) : null;
+      return `<option value="${g.id}" ${g.id === seleccionId ? 'selected' : ''} ${gerenteDeOtra ? 'disabled' : ''}>${esc(g.nombre)}${gerenteDeOtra ? ` (${esc(gerenteDeOtra.nombre)})` : ''}</option>`;
+    }).join('');
     return `<option value="">${t('sinAsignar')}</option>${opciones}`;
   }
 

@@ -140,19 +140,35 @@ class ProductoController extends Controller
         return response()->json(['foto' => Storage::disk('public')->url($ruta)]);
     }
 
-    /** Cambia precio, IVA y categoría SOLO en la sucursal del gerente. */
+    /**
+     * Cambia precio, IVA y categoría SOLO en la sucursal del gerente. El NOMBRE es del catálogo del negocio
+     * (decisión de Kay 2026-11-17, igual que la foto): solo lo cambia si el producto es SOLO de su sucursal;
+     * si otra sucursal también lo tiene, lo cambia el administrador desde "Catálogo / fotos".
+     */
     public function update(Request $request, Producto $producto)
     {
         $this->asegurarDelNegocio($request, $producto);
         $idSucursal = $this->idSucursal($request);
 
         $data = $request->validate([
+            'nombre' => ['sometimes', 'required', 'string', 'max:150'],
             'precio' => ['required', 'numeric', 'min:0', 'max:'.Limites::DINERO],
             'iva' => ['required', 'numeric', 'min:0', 'max:100'],
             'categoria' => ['nullable', 'string', 'max:40'],
         ], $this->mensajes());
 
         $inventario = DB::transaction(function () use ($producto, $idSucursal, $data, $request) {
+            $nombre = isset($data['nombre']) ? trim($data['nombre']) : null;
+            if ($nombre !== null && $nombre !== $producto->nombre) {
+                abort_if($nombre === '', 422, 'Escribe el nombre del producto.');
+                abort_if(
+                    Inventario::where('id_producto', $producto->id_producto)->where('id_sucursal', '!=', $idSucursal)->exists(),
+                    422,
+                    'Este producto también lo usan otras sucursales; su nombre lo cambia el administrador desde "Catálogo / fotos".'
+                );
+                $producto->update(['nombre' => $nombre]);
+            }
+
             $inventario = $this->filaDeSucursal($producto, $idSucursal);
             $inventario->fill(['precio' => $data['precio'], 'iva' => $data['iva']]);
             // Solo si el formulario la manda: un cliente viejo sin el campo no borra la categoría
@@ -206,6 +222,8 @@ class ProductoController extends Controller
             'precio.max' => 'El precio no puede ser mayor a '.Limites::dineroTexto().'.',
             'stock.max' => 'El stock no puede ser mayor a '.number_format(Limites::ENTERO).'.',
             'categoria.max' => 'La categoría no puede tener más de 40 caracteres.',
+            'nombre.required' => 'Escribe el nombre del producto.',
+            'nombre.max' => 'El nombre no puede tener más de 150 caracteres.',
         ];
     }
 

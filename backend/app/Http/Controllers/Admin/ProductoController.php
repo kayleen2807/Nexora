@@ -26,6 +26,24 @@ class ProductoController extends Controller
         ]);
     }
 
+    /** Cambia el nombre del producto en el catálogo del negocio (se ve igual en todas sus sucursales). */
+    public function update(Request $request, Producto $producto)
+    {
+        $this->asegurarDelNegocio($request, $producto);
+
+        $request->merge(['nombre' => trim((string) $request->input('nombre'))]);
+        $data = $request->validate([
+            'nombre' => ['required', 'string', 'max:150'],
+        ], [
+            'nombre.required' => 'Escribe el nombre del producto.',
+            'nombre.max' => 'El nombre no puede tener más de 150 caracteres.',
+        ]);
+
+        $producto->update(['nombre' => $data['nombre']]);
+
+        return response()->json(['id' => $producto->id_producto, 'nombre' => $producto->nombre]);
+    }
+
     /** Sube o reemplaza la foto de un producto del catálogo global. */
     public function uploadFoto(Request $request, Producto $producto)
     {

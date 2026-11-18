@@ -175,6 +175,7 @@ Route::middleware(['auth', 'rol:administrador'])
 
         Route::get('/productos', [AdminProductoController::class, 'index']);
         Route::post('/productos/{producto}/foto', [AdminProductoController::class, 'uploadFoto']);
+        Route::put('/productos/{producto}', [AdminProductoController::class, 'update']);
         Route::delete('/productos/{producto}', [AdminProductoController::class, 'destroy']);
 
         Route::get('/ventas', [VentaController::class, 'index']);

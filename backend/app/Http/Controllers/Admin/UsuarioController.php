@@ -120,6 +120,10 @@ class UsuarioController extends Controller
         // aplicación de Gmail incorrecta), se deshace todo y no queda una cuenta que nadie puede activar.
         try {
             DB::transaction(function () use ($data, $request, $invitationService) {
+                if ($data['rol'] === 'gerente') {
+                    $this->asegurarSucursalSinGerente((int) $data['id_sucursal']);
+                }
+
                 $usuario = User::create([
                     'nombre' => $data['nombre'],
                     'apellido' => $data['apellido'],
@@ -131,6 +135,11 @@ class UsuarioController extends Controller
                     'id_sucursal' => $data['id_sucursal'] ?? null,
                     'id_negocio' => $this->idNegocio($request),
                 ]);
+
+                // Queda también como encargado en la tabla de Sucursales
+                if ($data['rol'] === 'gerente') {
+                    Sucursal::ponerEncargado((int) $data['id_sucursal'], $usuario->id_usuario);
+                }
 
                 $invitationService->send($usuario, $this->usuario($request));
             });
@@ -166,6 +175,20 @@ class UsuarioController extends Controller
         return response()->json(['message' => __('Invitation sent successfully.')]);
     }
 
+    /**
+     * 422 si la sucursal ya tiene otro gerente (decisión de Kay 2026-11-17: un gerente por sucursal).
+     * Bloquea la fila de la sucursal para que dos peticiones a la vez no metan dos gerentes.
+     */
+    private function asegurarSucursalSinGerente(int $idSucursal, ?int $excepto = null): void
+    {
+        $sucursal = Sucursal::bloquear($idSucursal);
+        $gerente = Sucursal::gerenteEn($idSucursal, $excepto);
+
+        abort_if($gerente, 422, ($sucursal?->nombre ?? 'Esa sucursal').' ya tiene gerente: '
+            .trim($gerente?->nombre.' '.$gerente?->apellido).'. Una sucursal solo puede tener un gerente; '
+            .'para cambiarlo, primero pásalo a cajero o a otra sucursal en "Asignar roles", o elige otro encargado en "Sucursales".');
+    }
+
     public function actualizarRol(Request $request, User $usuario)
     {
         $this->asegurarEditable($request, $usuario, 'cambiar el rol de');
@@ -179,9 +202,18 @@ class UsuarioController extends Controller
             'id_sucursal.exists' => 'La sucursal no pertenece a tu negocio.',
         ]);
 
-        DB::transaction(function () use ($usuario, $data) {
+        $aviso = null;
+
+        DB::transaction(function () use ($usuario, $data, &$aviso) {
             $nuevoRol = self::ROLES_INVERSO[$data['rol']];
             $nuevaSucursal = $data['id_sucursal'] ?? null;
+            $eraGerente = (int) $usuario->id_rol === self::ROLES_INVERSO['gerente'];
+            $sucursalAnterior = $usuario->id_sucursal;
+
+            // Una sucursal = un gerente: no se pone a otro gerente donde ya hay uno
+            if ($nuevoRol === self::ROLES_INVERSO['gerente']) {
+                $this->asegurarSucursalSinGerente((int) $nuevaSucursal, $usuario->id_usuario);
+            }
 
             // Si deja de ser gerente o cambia de sucursal, ya no encabeza su sucursal anterior
             if ($nuevoRol !== self::ROLES_INVERSO['gerente'] || (int) $nuevaSucursal !== (int) $usuario->id_sucursal) {
@@ -189,9 +221,16 @@ class UsuarioController extends Controller
             }
 
             $usuario->update(['id_rol' => $nuevoRol, 'id_sucursal' => $nuevaSucursal]);
+
+            if ($nuevoRol === self::ROLES_INVERSO['gerente']) {
+                Sucursal::ponerEncargado((int) $nuevaSucursal, $usuario->id_usuario);
+            }
+            if ($eraGerente && $sucursalAnterior && ($nuevoRol !== self::ROLES_INVERSO['gerente'] || (int) $sucursalAnterior !== (int) $nuevaSucursal)) {
+                $aviso = (Sucursal::find($sucursalAnterior)?->nombre ?? 'Su sucursal anterior').' quedó sin gerente.';
+            }
         });
 
-        return response()->json($usuario->fresh());
+        return response()->json([...$usuario->fresh()->toArray(), 'aviso' => $aviso]);
     }
 
     public function destroy(Request $request, User $usuario, EliminacionService $eliminacion)

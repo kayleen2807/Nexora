@@ -165,6 +165,8 @@
   .filtro-cat { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.85rem; color: var(--muted); }
   .filtro-cat select { padding: 0.35rem 0.5rem; border: 1px solid var(--border); border-radius: 5px; font-size: 0.82rem; background: var(--card-bg); color: var(--text); }
   td input.cat-input { width: 140px; }
+  td input.nombre-input { width: 170px; }   /* nombre del producto (solo si es de esta sucursal) */
+  .nombre-bloqueado { cursor: help; border-bottom: 1px dotted var(--muted-light); }
 
   /* ---------- REPORTES (reglas nuevas; solo usan las variables del tema) ---------- */
   .fila-form .campo-ancho { flex: 1 1 280px; }
@@ -696,7 +698,7 @@
       productosHeading: 'Alta / baja de productos', productosDesc: 'Agrega productos, ajusta su precio e IVA o desactívalos. Los cambios solo aplican a tu sucursal.',
       labelNombre: 'Nombre', thCategoria: 'Categoría', labelCategoria: 'Categoría', filtroCategoria: 'Categoría', todasCategorias: 'Todas', sinCategoria: 'Sin categoría', labelStockInicial: 'Stock inicial', placeholderProducto: 'Producto',
       btnDarAlta: 'Dar de alta', thPrecio: 'Precio', badgeActivo: 'Activo', badgeInactivo: 'Inactivo',
-      btnDarBaja: 'Dar de baja', btnReactivar: 'Reactivar', btnEliminarProducto: 'Eliminar producto', fotoSoloAdmin: 'Otras sucursales también tienen este producto: su foto la cambia el administrador en Catálogo / fotos.', productoEliminado: 'Producto eliminado.', confirmEliminarProducto: '¿Eliminar "{nombre}"? Solo se puede si no tiene ventas, compras ni devoluciones y ninguna otra sucursal lo usa. No se puede deshacer.', alertCompletaProducto: 'Completa al menos nombre y precio.',
+      btnDarBaja: 'Dar de baja', btnReactivar: 'Reactivar', btnEliminarProducto: 'Eliminar producto', fotoSoloAdmin: 'Otras sucursales también tienen este producto: su foto la cambia el administrador en Catálogo / fotos.', nombreSoloAdmin: 'Otras sucursales también tienen este producto: su nombre lo cambia el administrador en Catálogo / fotos.', alertNombreProducto: 'Escribe el nombre del producto.', thNombre: 'Nombre', productoEliminado: 'Producto eliminado.', confirmEliminarProducto: '¿Eliminar "{nombre}"? Solo se puede si no tiene ventas, compras ni devoluciones y ninguna otra sucursal lo usa. No se puede deshacer.', alertCompletaProducto: 'Completa al menos nombre y precio.',
       historialHeading: 'Historial de ventas', historialDesc: 'Todas las ventas registradas en esta sucursal. Desde aquí puedes devolver piezas o cancelar una venta.',
       thCajero: 'Cajero', thMetodo: 'Método', badgeEfectivo: 'Efectivo', badgeTarjeta: 'Tarjeta',
       alertCompletaCompra: 'Completa producto, cantidad y costo.',
@@ -774,7 +776,7 @@
       productosHeading: 'Add / remove products', productosDesc: 'Add products, adjust their price and tax or deactivate them. Changes only apply to your branch.',
       labelNombre: 'Name', thCategoria: 'Category', labelCategoria: 'Category', filtroCategoria: 'Category', todasCategorias: 'All', sinCategoria: 'No category', labelStockInicial: 'Initial stock', placeholderProducto: 'Product',
       btnDarAlta: 'Add product', thPrecio: 'Price', badgeActivo: 'Active', badgeInactivo: 'Inactive',
-      btnDarBaja: 'Deactivate', btnReactivar: 'Reactivate', btnEliminarProducto: 'Delete product', fotoSoloAdmin: 'Other branches also have this product: its photo is changed by the administrator in Catalog / photos.', productoEliminado: 'Product deleted.', confirmEliminarProducto: 'Delete "{nombre}"? Only possible if it has no sales, purchases or returns and no other branch uses it. This cannot be undone.', alertCompletaProducto: 'Fill in at least name and price.',
+      btnDarBaja: 'Deactivate', btnReactivar: 'Reactivate', btnEliminarProducto: 'Delete product', fotoSoloAdmin: 'Other branches also have this product: its photo is changed by the administrator in Catalog / photos.', nombreSoloAdmin: 'Other branches also have this product: its name is changed by the administrator in Catalog / photos.', alertNombreProducto: 'Write the product name.', thNombre: 'Name', productoEliminado: 'Product deleted.', confirmEliminarProducto: 'Delete "{nombre}"? Only possible if it has no sales, purchases or returns and no other branch uses it. This cannot be undone.', alertCompletaProducto: 'Fill in at least name and price.',
       historialHeading: 'Sales history', historialDesc: 'All sales recorded at this branch. From here you can return items or cancel a sale.',
       thCajero: 'Cashier', thMetodo: 'Method', badgeEfectivo: 'Cash', badgeTarjeta: 'Card',
       alertCompletaCompra: 'Fill in product, quantity, and cost.',
@@ -1602,7 +1604,10 @@
             ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
             : `<span style="color:var(--muted-light);font-size:0.75rem;">—</span>`}
         </td>
-        <td>${esc(p.nombre)}</td>
+        <td>${p.compartido
+          // El nombre es del catálogo del negocio: si otra sucursal lo tiene, lo cambia el administrador
+          ? `<span class="nombre-bloqueado" title="${t('nombreSoloAdmin')}">${esc(p.nombre)}</span>`
+          : `<input type="text" class="nombre-input" id="nombre-${p.id}" maxlength="150" value="${esc(p.nombre)}" aria-label="${t('thNombre')}">`}</td>
         <td><input type="text" class="cat-input" id="cat-${p.id}" list="listaCategorias" maxlength="40" value="${escCat(p.categoria || '')}" placeholder="${t('sinCategoria')}"></td>
         <td><input type="number" id="precio-${p.id}" value="${p.precio}" step="0.01"></td>
         <td><input type="number" id="iva-${p.id}" value="${p.iva}" step="0.01"></td>
@@ -1646,9 +1651,15 @@
     const precio = parseFloat(document.getElementById('precio-' + id).value);
     const iva = parseFloat(document.getElementById('iva-' + id).value);
     const categoria = normalizarCategoria(document.getElementById('cat-' + id).value);
+    const campoNombre = document.getElementById('nombre-' + id);   // no existe si el producto es compartido
+    const datos = { precio, iva, categoria };
+    if (campoNombre) {
+      datos.nombre = campoNombre.value.trim();
+      if (!datos.nombre) { mostrarToast(t('alertNombreProducto'), 'error'); return; }
+    }
 
     try {
-      await api('/gerente/productos/' + id, 'PUT', { precio, iva, categoria });
+      await api('/gerente/productos/' + id, 'PUT', datos);
       await cargarProductos();
       renderProductos();
       mostrarToast(t('productoActualizado'), 'exito');
