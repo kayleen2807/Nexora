@@ -6,7 +6,7 @@
 
 Centraliza ventas, inventario y personal de todas tus sucursales en una sola plataforma.
 
-[![Estado](https://img.shields.io/badge/estado-en%20desarrollo-yellow?style=for-the-badge)](https://github.com/)
+[![Estado](https://img.shields.io/badge/estado-finalizado-brightgreen?style=for-the-badge)](https://github.com/)
 [![Licencia](https://img.shields.io/badge/licencia-MIT-blue?style=for-the-badge)](LICENSE.md)
 [![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/es/docs/Web/HTML)
@@ -17,8 +17,6 @@ Centraliza ventas, inventario y personal de todas tus sucursales en una sola pla
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
 </div>
-
-> ⚠️ **Proyecto en fase inicial.** Este repositorio está comenzando su desarrollo; por el momento este README describe el planteamiento del problema, el objetivo y las tecnologías que se utilizarán. El código y la documentación se irán actualizando conforme avance el proyecto.
 
 ---
 
@@ -65,7 +63,6 @@ Realiza ventas y consulta inventario dentro de su sucursal.
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" width="50" height="50" title="PHP"/>
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" width="50" height="50" title="MySQL"/>
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bootstrap/bootstrap-original.svg" width="50" height="50" title="Bootstrap"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apache/apache-original.svg" width="50" height="50" title="Apache"/>
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" width="50" height="50" title="Git"/>
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/laravel/laravel-original.svg" width="50" height="50" title="Laravel"/>
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" width="50" height="50" title="PostgreSQL"/>
@@ -78,23 +75,20 @@ Realiza ventas y consulta inventario dentro de su sucursal.
 | **JavaScript** | Interactividad: validación de formularios, actualización dinámica de inventario, alertas de éxito/error. | Frontend |
 | **Bootstrap** *(opcional)* | Framework CSS para interfaces responsivas sin diseñar todo desde cero. | Frontend |
 | **PHP** | Lógica de negocio, manejo de sesiones y roles (admin, gerente, cajero), conexión con la base de datos. | Backend |
-| **Servidor web** (Apache / Nginx) | Ejecuta PHP y sirve las páginas al navegador. | Backend |
 | **SQL** | Gestión de tablas de usuarios, inventarios, ventas y sucursales; consultas, inserciones y actualizaciones. | Datos |
 | **MySQL / MariaDB** | Almacenamiento de toda la información del sistema. | Datos |
 | **Git + GitHub** | Control de versiones y trabajo colaborativo en equipo. | Colaboración |
-| **XAMPP** *(opcional)* | Entorno local con Apache, PHP y MySQL para pruebas antes de desplegar. | Entorno local |
 
 ### Síntesis por capas
 
 - **Frontend** → HTML, CSS, JavaScript, Bootstrap.
-- **Backend** → PHP, servidor web.
+- **Backend** → PHP.
 - **Datos** → SQL, gestor de base de datos.
 - **Colaboración** → Git / GitHub.
-- **Entorno local** → XAMPP.
 
 ---
 
-## 📁 Estructura del proyecto (propuesta)
+## 📁 Estructura del proyecto
 
 ```
 Nexora/
@@ -118,13 +112,34 @@ Nexora/
 └── README.md
 ```
 
-> Esta estructura es una propuesta inicial y podrá ajustarse conforme avance el desarrollo.
-
----
-
 ## 🚧 Estado actual
 
-El proyecto se encuentra en su **etapa inicial**: se ha definido el problema, el objetivo general y las tecnologías a utilizar. Aún no se ha comenzado la implementación del código. Este README se irá actualizando con capturas de pantalla, instrucciones de instalación y avances conforme el desarrollo progrese.
+Nexora se encuentra **finalizado y funcional**. El sistema cuenta con una página de bienvenida, acceso y registro de usuarios con aceptación de términos y aviso de privacidad, paneles diferenciados por rol y un punto de venta listo para operar. Toda la interfaz está disponible en **español e inglés** y en **modo claro y oscuro**.
+
+### 🏠 Página de bienvenida
+Es lo primero que ve el usuario: presenta Nexora y ofrece accesos rápidos a *Acerca de Nexora*, *Ayuda* y un menú *Acceder* para iniciar sesión o registrarse.
+
+![Página de bienvenida de Nexora](assets/img/bienvenida.png)
+
+### 🔐 Inicio de sesión
+Acceso al sistema con correo y contraseña, opción de recordar sesión, recuperación de contraseña y acceso con Google.
+
+![Pantalla de inicio de sesión](assets/img/login.png)
+
+### 📝 Registro
+Formulario para crear una cuenta nueva con los datos del negocio y del usuario. Para registrarse es necesario aceptar los términos y condiciones y el aviso de privacidad.
+
+![Pantalla de registro](assets/img/registro.png)
+
+### 📊 Panel de gerente
+Vista general de la sucursal con empleados, productos en inventario, alertas de stock bajo y ventas del día y del mes. Desde el menú lateral se gestionan el inventario, las compras, el registro y corte de cajas, el alta y baja de productos, el historial de ventas y los reportes.
+
+![Panel de gerente](assets/img/panel-gerente.png)
+
+### 🧾 Punto de venta
+Pantalla de caja para vender: catálogo de productos con filtro por categoría y búsqueda, carrito con subtotal, IVA y total, y cobro en efectivo o con tarjeta. También permite realizar el corte de caja y consultar reportes.
+
+![Punto de venta](assets/img/punto-de-venta.png)
 
 ---
 
