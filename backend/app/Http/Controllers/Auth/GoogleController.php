@@ -42,6 +42,9 @@ class GoogleController extends Controller
         // "state" evita ataques CSRF: Google nos lo devuelve y debe coincidir con el guardado en sesión
         $state = Str::random(40);
         $request->session()->put('google_oauth_state', $state);
+        // Desde "Registrarse" (?desde=registro) Google puede CREAR la cuenta; desde "Iniciar sesión" solo entra
+        // a una que ya existe (antes también la creaba: una cuenta eliminada "revivía" como dueño al entrar con Google)
+        $request->session()->put('google_intencion', $request->query('desde') === 'registro' ? 'registro' : 'login');
 
         $query = http_build_query([
             'client_id' => config('services.google.client_id'),
@@ -67,6 +70,7 @@ class GoogleController extends Controller
         }
 
         $expectedState = $request->session()->pull('google_oauth_state');
+        $intencion = $request->session()->pull('google_intencion', 'login');
 
         if (! $expectedState || ! hash_equals($expectedState, (string) $request->query('state'))) {
             return $this->fail();
@@ -122,6 +126,11 @@ class GoogleController extends Controller
         }
 
         $usuario = User::where('correo', $correo)->first();
+
+        // Iniciar sesión con Google NO registra: sin cuenta, se avisa y no se crea nada
+        if (! $usuario && $intencion !== 'registro') {
+            return $this->fail(__('There is no Nexora account with :email. Sign up first, or ask your administrator to invite you.', ['email' => $correo]));
+        }
 
         if (! $usuario) {
             // Igual que el registro normal: toda cuenta pública nueva es "administrador"

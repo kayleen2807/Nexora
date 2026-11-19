@@ -186,5 +186,6 @@
     "Use this code to confirm your new email in Nexora:": "Usa este código para confirmar tu correo nuevo en Nexora:",
     "The email of your Nexora account was changed to :email.": "El correo de tu cuenta de Nexora se cambió a :email.",
     "From now on you will sign in with that email.": "A partir de ahora iniciarás sesión con ese correo.",
-    "If you did not make this change, reset your password right away from the sign-in page.": "Si tú no hiciste este cambio, restablece tu contraseña de inmediato desde la página de inicio de sesión."
+    "If you did not make this change, reset your password right away from the sign-in page.": "Si tú no hiciste este cambio, restablece tu contraseña de inmediato desde la página de inicio de sesión.",
+    "There is no Nexora account with :email. Sign up first, or ask your administrator to invite you.": "No hay una cuenta de Nexora con :email. Regístrate primero o pide a tu administrador que te invite."
 }

@@ -151,5 +151,6 @@
     "Use this code to confirm your new email in Nexora:": "Use this code to confirm your new email in Nexora:",
     "The email of your Nexora account was changed to :email.": "The email of your Nexora account was changed to :email.",
     "From now on you will sign in with that email.": "From now on you will sign in with that email.",
-    "If you did not make this change, reset your password right away from the sign-in page.": "If you did not make this change, reset your password right away from the sign-in page."
+    "If you did not make this change, reset your password right away from the sign-in page.": "If you did not make this change, reset your password right away from the sign-in page.",
+    "There is no Nexora account with :email. Sign up first, or ask your administrator to invite you.": "There is no Nexora account with :email. Sign up first, or ask your administrator to invite you."
 }
