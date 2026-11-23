@@ -109,6 +109,11 @@
   .btn-exito:hover { background: var(--verde-hover); }
   .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
 
+  /* ---------- BOTONES DESACTIVADOS HASTA QUE HAYA INFORMACIÓN ---------- */
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.35); }
+  .btn-primario:disabled:hover { background: var(--accent); }
+  .btn-peligro:disabled:hover { background: var(--danger-bg); }
+
   .badge { padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
   .badge-activo { background: var(--verde-bg); color: var(--verde-text); }
   .badge-completada { background: var(--success-bg); color: var(--success-text); }
@@ -385,7 +390,7 @@
             <div class="campo"><label data-i18n="labelCantidad">Cantidad</label><input type="number" id="compraCantidad" min="1" placeholder="0"></div>
             <div class="campo"><label data-i18n="labelCostoUnitario">Costo unitario</label><input type="number" id="compraCosto" min="0" step="0.01" placeholder="0.00"></div>
             <div class="campo"><label data-i18n="labelProveedor">Proveedor</label><input type="text" id="compraProveedor" data-i18n-placeholder="placeholderNombre" placeholder="Nombre"></div>
-            <button class="btn btn-primario" onclick="registrarCompra()" data-i18n="btnRegistrar">Registrar</button>
+            <button class="btn btn-primario" onclick="registrarCompra()" data-requiere="#compraProducto,#compraCantidad,#compraCosto" data-i18n="btnRegistrar">Registrar</button>
           </div>
         </div>
         <div class="card">
@@ -425,7 +430,7 @@
         <div class="card">
           <div class="fila-form">
             <div class="campo"><label data-i18n="cajaNumeroLabel">Número de caja</label><input type="number" id="cajaNumero" min="1" placeholder="3"></div>
-            <button class="btn btn-primario" onclick="agregarCaja()" data-i18n="btnAgregarCaja">Agregar caja</button>
+            <button class="btn btn-primario" onclick="agregarCaja()" data-requiere="#cajaNumero" data-i18n="btnAgregarCaja">Agregar caja</button>
           </div>
         </div>
         <div class="card">
@@ -447,7 +452,7 @@
             <div class="campo"><label data-i18n="labelStockInicial">Stock inicial</label><input type="number" id="nuevoStock" min="0" placeholder="0"></div>
             <div class="campo"><label data-i18n="labelCategoria">Categoría</label><input type="text" id="nuevoCategoria" list="listaCategorias" maxlength="40"><datalist id="listaCategorias"></datalist></div>
             <div class="campo"><label data-i18n="labelFotoProducto">Foto (opcional)</label><label class="selector-foto" for="nuevaFoto" title="Seleccionar foto" aria-label="Seleccionar foto"><svg class="icono-foto" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 8h.01"></path><path d="m3 16 5-5c.928-.893 2.072-.893 3 0l4 4"></path><path d="m14 14 1-1c.928-.893 2.072-.893 3 0l3 3"></path><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M19 2v4"></path><path d="M17 4h4"></path></svg><span>Foto</span><input type="file" id="nuevaFoto" accept="image/*"></label></div>
-            <button class="btn btn-primario" onclick="darDeAlta()" data-i18n="btnDarAlta">Dar de alta</button>
+            <button class="btn btn-primario" onclick="darDeAlta()" data-requiere="#nuevoNombre,#nuevoPrecio" data-i18n="btnDarAlta">Dar de alta</button>
           </div>
         </div>
         <div class="card">
@@ -491,10 +496,10 @@
       <div class="seccion" id="sec-configuracion"></div>
 
       <div class="seccion" id="sec-reportes">
-        <h2 data-i18n="repHeading">Reportes</h2>
+        <h2 data-i18n="repHeading">Incidentes</h2>
         <p class="desc" data-i18n="repDesc">Avisa al administrador de una falla, un faltante, un problema con la caja o una sugerencia.</p>
         <div class="card">
-          <h3 data-i18n="repNuevoHeading">Nuevo reporte</h3>
+          <h3 data-i18n="repNuevoHeading">Nuevo incidente</h3>
           <div class="fila-form">
             <div class="campo"><label for="repTipo" data-i18n="repLabelTipo">Tipo</label><select id="repTipo"></select></div>
             <div class="campo campo-ancho"><label for="repAsunto" data-i18n="repLabelAsunto">Asunto</label><input type="text" id="repAsunto" maxlength="120" data-i18n-placeholder="repPhAsunto"></div>
@@ -502,10 +507,10 @@
           <div class="fila-form">
             <div class="campo campo-ancho"><label for="repDescripcion" data-i18n="repLabelDescripcion">Descripción</label><textarea id="repDescripcion" rows="3" maxlength="1000" data-i18n-placeholder="repPhDescripcion"></textarea></div>
           </div>
-          <button class="btn btn-primario rep-btn" id="btnEnviarReporte" onclick="enviarReporte()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg><span data-i18n="repBtnEnviar">Enviar reporte</span></button>
+          <button class="btn btn-primario rep-btn" id="btnEnviarReporte" onclick="enviarReporte()" data-requiere="#repAsunto,#repDescripcion"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg><span data-i18n="repBtnEnviar">Enviar incidente</span></button>
         </div>
         <div class="card">
-          <h3 data-i18n="repListaHeading">Mis reportes</h3>
+          <h3 data-i18n="repListaHeading">Mis incidentes</h3>
           <table>
             <tr><th data-i18n="repThFecha">Fecha</th><th data-i18n="repThAutor">Enviado por</th><th data-i18n="repThTipo">Tipo</th><th data-i18n="repThAsunto">Asunto</th><th data-i18n="repThEstado">Estado</th><th data-i18n="repThRespuesta">Respuesta</th><th></th></tr>
             <tbody id="tablaReportes"></tbody>
@@ -518,6 +523,65 @@
 </div>
 
 <script>
+  /* ---------- BOTONES DESACTIVADOS HASTA QUE HAYA INFORMACIÓN ----------
+       data-requiere="#a,#b"   -> el botón queda desactivado hasta que esos campos estén llenos y válidos
+       data-cambio="#a,#b"     -> el botón queda desactivado hasta que alguno de esos campos cambie
+                                  respecto a su valor original (defaultValue / opción seleccionada al pintarse)
+       data-alguno=".clase"    -> el botón queda desactivado hasta que al menos un campo con esa clase tenga un número mayor a 0
+     Funciona también con los botones que se generan con JavaScript (tablas). */
+  (function () {
+    const lista = txt => (txt || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    const original = el => {
+      if (el.tagName === 'SELECT') {
+        const o = [...el.options].find(o => o.defaultSelected) || el.options[0];
+        return o ? o.value : '';
+      }
+      return el.defaultValue;
+    };
+
+    const lleno = el => (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value.trim() !== '';
+
+    function evaluar(btn) {
+      let ok = true;
+      for (const sel of lista(btn.dataset.requiere)) {
+        const el = document.querySelector(sel);
+        if (!el || !lleno(el) || !el.checkValidity()) { ok = false; break; }
+      }
+      if (ok && btn.dataset.alguno) {
+        ok = [...document.querySelectorAll(btn.dataset.alguno)].some(el => parseFloat(el.value) > 0);
+      }
+      if (ok && btn.dataset.cambio) {
+        const els = lista(btn.dataset.cambio).map(s => document.querySelector(s)).filter(Boolean);
+        ok = els.some(el => el.value.trim() !== original(el).trim());
+      }
+      btn.disabled = !ok;
+    }
+
+    window.refrescarBotones = function () {
+      document.querySelectorAll('[data-requiere], [data-cambio], [data-alguno]').forEach(evaluar);
+    };
+
+    document.addEventListener('input', window.refrescarBotones);
+    document.addEventListener('change', window.refrescarBotones);
+
+    function arrancarGuardia() {
+      window.refrescarBotones();
+      // Cuando el JS vuelve a pintar tablas o formularios se reevalúan los botones nuevos. Se ignoran los
+      // cambios dentro de un <button> para no reactivar un botón que el código bloqueó a propósito
+      // mientras espera al servidor.
+      let pendiente = false;
+      new MutationObserver(muts => {
+        if (muts.every(m => m.target.closest && m.target.closest('button'))) return;
+        if (pendiente) return;
+        pendiente = true;
+        requestAnimationFrame(() => { pendiente = false; window.refrescarBotones(); });
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancarGuardia);
+    else arrancarGuardia();
+  })();
+
   /* Escapa texto que viene de la BD antes de meterlo en innerHTML (evita XSS: un nombre como
      <img onerror=...> se muestra como texto y no se ejecuta). function = se puede usar en todo el script. */
   function esc(v) {
@@ -746,20 +810,20 @@
       devueltoLabel: 'devuelto', canceladaPor: 'Motivo de cancelación',
       labelFotoProducto: 'Foto del producto', thFoto: 'Foto', fotoActualizada: 'Foto actualizada',
       navConfiguracion: 'Configuración',
-      navReportes: 'Reportes', repHeading: 'Reportes', repNuevoHeading: 'Nuevo reporte para el administrador', repListaHeading: 'Reportes de la sucursal',
-      repDesc: 'Avisa al administrador de una falla, un faltante de producto, un problema con la caja o una sugerencia. Los reportes de tus cajeros llegan aquí: contéstalos o, si no puedes resolverlos, pásalos al administrador.',
-      repPendientesTitulo: 'Reportes de cajeros pendientes', repPhRespuesta: 'Respuesta para el cajero (opcional)', repGuardado: 'Reporte actualizado',
-      repBtnEscalar: 'Pasar al admin', repConfirmarEscalar: '¿Pasar este reporte al administrador? Desde ese momento lo atiende él y tú solo podrás consultarlo.', repEscalado: 'Reporte pasado al administrador',
+      navReportes: 'Incidentes', repHeading: 'Incidentes', repNuevoHeading: 'Nuevo incidente para el administrador', repListaHeading: 'Incidentes de la sucursal',
+      repDesc: 'Avisa al administrador de una falla, un faltante de producto, un problema con la caja o una sugerencia. Los incidentes de tus cajeros llegan aquí: contéstalos o, si no puedes resolverlos, pásalos al administrador.',
+      repPendientesTitulo: 'Incidentes de cajeros pendientes', repPhRespuesta: 'Respuesta para el cajero (opcional)', repGuardado: 'Incidente actualizado',
+      repBtnEscalar: 'Pasar al admin', repConfirmarEscalar: '¿Pasar este incidente al administrador? Desde ese momento lo atiende él y tú solo podrás consultarlo.', repEscalado: 'Incidente pasado al administrador',
       repConAdmin: 'Lo atiende el administrador', repPasadoEl: 'Pasado al administrador el', repRespondio_gerente: 'Respondiste tú', repRespondio_administrador: 'Respondió el administrador',
       repThFecha: 'Fecha', repThEstado: 'Estado',
       repLabelTipo: 'Tipo', repLabelAsunto: 'Asunto', repLabelDescripcion: 'Descripción',
       repPhAsunto: 'Ej. La impresora no imprime tickets', repPhDescripcion: 'Cuéntale al administrador qué pasó, cuándo y en qué caja o producto…',
-      repBtnEnviar: 'Enviar reporte', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta',
-      repSinReportes: 'Aún no hay reportes.', repSinRespuesta: 'Sin respuesta todavía', repTu: 'Tú', repUsuarioEliminado: 'Usuario eliminado',
+      repBtnEnviar: 'Enviar incidente', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta',
+      repSinReportes: 'Aún no hay incidentes.', repSinRespuesta: 'Sin respuesta todavía', repTu: 'Tú', repUsuarioEliminado: 'Usuario eliminado',
       repTipo_falla: 'Falla del sistema', repTipo_faltante: 'Faltante de producto', repTipo_caja: 'Problema con caja / dinero', repTipo_sugerencia: 'Sugerencia', repTipo_otro: 'Otro',
       repEstado_pendiente: 'Pendiente', repEstado_en_revision: 'En revisión', repEstado_resuelto: 'Resuelto',
       repRol_gerente: 'Gerente', repRol_cajero: 'Cajero',
-      repEnviado: 'Reporte enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
+      repEnviado: 'Incidente enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
       btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaDe: 'Página :p de :t · :n cortes',
       paginaTabla: 'Página :p de :t · :n registros',
     },
@@ -830,20 +894,20 @@
       devueltoLabel: 'returned', canceladaPor: 'Cancellation reason',
       labelFotoProducto: 'Product photo', thFoto: 'Photo', fotoActualizada: 'Photo updated',
       navConfiguracion: 'Settings',
-      navReportes: 'Reports', repHeading: 'Reports', repNuevoHeading: 'New report for the administrator', repListaHeading: 'Branch reports',
-      repDesc: 'Let the administrator know about a failure, a missing product, a register problem or a suggestion. Your cashiers\' reports arrive here: reply to them or, if you cannot solve them, pass them to the administrator.',
-      repPendientesTitulo: 'Pending cashier reports', repPhRespuesta: 'Reply to the cashier (optional)', repGuardado: 'Report updated',
-      repBtnEscalar: 'Pass to admin', repConfirmarEscalar: 'Pass this report to the administrator? From then on they handle it and you can only view it.', repEscalado: 'Report passed to the administrator',
+      navReportes: 'Incidents', repHeading: 'Incidents', repNuevoHeading: 'New incident for the administrator', repListaHeading: 'Branch incidents',
+      repDesc: 'Let the administrator know about a failure, a missing product, a register problem or a suggestion. Your cashiers\' incidents arrive here: reply to them or, if you cannot solve them, pass them to the administrator.',
+      repPendientesTitulo: 'Pending cashier incidents', repPhRespuesta: 'Reply to the cashier (optional)', repGuardado: 'Incident updated',
+      repBtnEscalar: 'Pass to admin', repConfirmarEscalar: 'Pass this incident to the administrator? From then on they handle it and you can only view it.', repEscalado: 'Incident passed to the administrator',
       repConAdmin: 'Handled by the administrator', repPasadoEl: 'Passed to the administrator on', repRespondio_gerente: 'You replied', repRespondio_administrador: 'The administrator replied',
       repThFecha: 'Date', repThEstado: 'Status',
       repLabelTipo: 'Type', repLabelAsunto: 'Subject', repLabelDescripcion: 'Description',
       repPhAsunto: 'E.g. The printer does not print receipts', repPhDescripcion: 'Tell the administrator what happened, when, and which register or product…',
-      repBtnEnviar: 'Send report', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: 'Reply',
-      repSinReportes: 'No reports yet.', repSinRespuesta: 'No reply yet', repTu: 'You', repUsuarioEliminado: 'Deleted user',
+      repBtnEnviar: 'Send incident', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: 'Reply',
+      repSinReportes: 'No incidents yet.', repSinRespuesta: 'No reply yet', repTu: 'You', repUsuarioEliminado: 'Deleted user',
       repTipo_falla: 'System failure', repTipo_faltante: 'Missing product', repTipo_caja: 'Register / cash problem', repTipo_sugerencia: 'Suggestion', repTipo_otro: 'Other',
       repEstado_pendiente: 'Pending', repEstado_en_revision: 'In review', repEstado_resuelto: 'Resolved',
       repRol_gerente: 'Manager', repRol_cajero: 'Cashier',
-      repEnviado: 'Report sent to the administrator', repAlertCompleta: 'Write the subject and the description.',
+      repEnviado: 'Incident sent to the administrator', repAlertCompleta: 'Write the subject and the description.',
       btnAnterior: 'Previous', btnSiguiente: 'Next', paginaDe: 'Page :p of :t · :n cash counts',
       paginaTabla: 'Page :p of :t · :n records',
     }
@@ -1023,6 +1087,9 @@
     try {
       await cfgApi('/configuracion/perfil', 'PUT', { nombre, apellido });
       cfgPerfil = Object.assign({}, cfgPerfil, { nombre, apellido });
+      document.getElementById('cfgNombre').defaultValue = nombre;
+      document.getElementById('cfgApellido').defaultValue = apellido;
+      refrescarBotones();
       cfgRefrescarCabecera();
       mostrarToast(ct('perfilGuardado'), 'exito');
     } catch (e) { mostrarToast(e.message, 'error'); }
@@ -1071,6 +1138,7 @@
       await cfgApi('/configuracion/password', 'PUT', { password_actual: actual, password_nueva: nueva, password_nueva_confirmation: confirmar });
       ['cfgPassActual', 'cfgPassNueva', 'cfgPassConfirmar'].forEach(id => { document.getElementById(id).value = ''; });
       cfgFuerza();
+      refrescarBotones();
       mostrarToast(ct('passCambiada'), 'exito');
     } catch (e) { mostrarToast(e.message, 'error'); }
   }
@@ -1139,7 +1207,7 @@
             <div class="cfg-campo"><label for="cfgApellido">${ct('lblApellido')}</label><input type="text" id="cfgApellido" maxlength="80" value="${esc(cfgPerfil.apellido)}"></div>
             <div class="cfg-campo"><label for="cfgCorreo">${ct('lblCorreo')}</label><input type="email" id="cfgCorreo" value="${esc(cfgPerfil.correo)}" disabled><small>${ct('correoHint')}</small></div>
           </div>
-          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgGuardarPerfil()">${ct('guardarCambios')}</button></div>
+          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgGuardarPerfil()" data-requiere="#cfgNombre" data-cambio="#cfgNombre,#cfgApellido">${ct('guardarCambios')}</button></div>
         </div>
 
         <div class="cfg-card">
@@ -1151,7 +1219,7 @@
             <div class="cfg-campo" id="cfgRequisitos" style="grid-column: 1 / -1;"></div>
             <div class="cfg-campo" id="cfgCoincide" style="grid-column: 1 / -1;"></div>
           </div>
-          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgCambiarPass()">${ct('cambiarPass')}</button></div>
+          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgCambiarPass()" data-requiere="#cfgPassActual,#cfgPassNueva,#cfgPassConfirmar">${ct('cambiarPass')}</button></div>
         </div>
 
         <div class="cfg-card">
@@ -1185,7 +1253,7 @@
           <div class="cfg-form">
             <div class="cfg-campo"><label for="cfgBorrarPass">${ct('borrarPass')}</label><input type="password" id="cfgBorrarPass" autocomplete="current-password"></div>
           </div>
-          <div class="cfg-acciones"><button class="btn btn-peligro" onclick="cfgEliminarCuenta()">${ct('borrarBoton')}</button></div>
+          <div class="cfg-acciones"><button class="btn btn-peligro" onclick="cfgEliminarCuenta()" data-requiere="#cfgBorrarPass">${ct('borrarBoton')}</button></div>
         </div>
 
       </div>`;
@@ -1329,7 +1397,7 @@
     if (id === 'configuracion') renderConfiguracion();
   }
 
-  /* ---------- REPORTES AL ADMINISTRADOR ---------- */
+  /* ---------- REPORTES (INCIDENTES) AL ADMINISTRADOR ---------- */
   const TIPOS_REPORTE = ['falla', 'faltante', 'caja', 'sugerencia', 'otro'];
   const ESTADOS_REPORTE = ['pendiente', 'en_revision', 'resuelto'];
   const ICONO_ESCALAR = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>';
@@ -1343,7 +1411,7 @@
     } catch (e) { mostrarToast(e.message, 'error'); }
   }
 
-  /* Globo rojo junto a "Reportes" en el menú: reportes de cajeros que esperan al gerente */
+  /* Globo rojo junto a "Incidentes" en el menú: incidentes de cajeros que esperan al gerente */
   function pintarContadorReportes() {
     const btn = document.getElementById('btn-reportes');
     if (!btn) return;
@@ -1378,7 +1446,7 @@
             ? `<textarea class="rep-respuesta" id="repRespuesta-${r.id}" maxlength="500" placeholder="${t('repPhRespuesta')}">${esc(r.respuesta ?? '')}</textarea>${r.fecha_respuesta ? `<div class="rep-desc">${quienResponde(r)}${formatearFecha(r.fecha_respuesta)}</div>` : ''}`
             : (r.respuesta ? `${esc(r.respuesta)}<div class="rep-desc">${quienResponde(r)}${formatearFecha(r.fecha_respuesta)}</div>` : `<span class="rep-desc">${t('repSinRespuesta')}</span>`)}</td>
           <td>${r.puede_atender ? `<div class="rep-acciones">
-            <button class="btn btn-primario btn-sm" onclick="guardarReporte(${r.id})">${ICONO_GUARDAR}${t('btnGuardar')}</button>
+            <button class="btn btn-primario btn-sm" onclick="guardarReporte(${r.id})" data-cambio="#repEstado-${r.id},#repRespuesta-${r.id}">${ICONO_GUARDAR}${t('btnGuardar')}</button>
             ${r.estado !== 'resuelto' ? `<button class="btn btn-escalar btn-sm" onclick="escalarReporte(${r.id})">${ICONO_ESCALAR}${t('repBtnEscalar')}</button>` : ''}
           </div>` : ''}</td>
         </tr>`).join('')
@@ -1386,7 +1454,7 @@
     paginarTabla('tablaReportes');
   }
 
-  /* Atender un reporte de cajero: estado + respuesta (el cajero la ve en su panel) */
+  /* Atender un incidente de cajero: estado + respuesta (el cajero la ve en su panel) */
   async function guardarReporte(id) {
     const estado = document.getElementById('repEstado-' + id).value;
     const respuesta = document.getElementById('repRespuesta-' + id).value.trim();
@@ -1416,7 +1484,7 @@
     if (!asunto || !descripcion) { mostrarToast(t('repAlertCompleta'), 'error'); return; }
 
     const btn = document.getElementById('btnEnviarReporte');
-    btn.disabled = true;   // evita mandar el mismo reporte dos veces con doble clic
+    btn.disabled = true;   // evita mandar el mismo incidente dos veces con doble clic
     try {
       await api('/gerente/reportes', 'POST', { tipo, asunto, descripcion });
       document.getElementById('repAsunto').value = '';
@@ -1428,6 +1496,7 @@
       mostrarToast(e.message, 'error');
     } finally {
       btn.disabled = false;
+      refrescarBotones();
     }
   }
 
@@ -1462,7 +1531,7 @@
         <td>${esc(p.nombre)}</td>
         <td>${p.stock}</td>
         <td><input type="number" id="ajuste-${p.id}" placeholder="+/-"></td>
-        <td><button class="btn btn-primario btn-sm" onclick="ajustarStock(${p.id})">${t('btnAplicar')}</button></td>
+        <td><button class="btn btn-primario btn-sm" onclick="ajustarStock(${p.id})" data-requiere="#ajuste-${p.id}">${t('btnAplicar')}</button></td>
       </tr>`).join('');
     paginarTabla('tablaInventario');
   }
@@ -1499,6 +1568,7 @@
         <td>${monto(c.costo)}</td><td>${monto(c.total)}</td><td>${esc(c.proveedor || '—')}</td>
       </tr>`).join('') || `<tr><td colspan="7" style="color:var(--muted-light);">${t('sinCompras')}</td></tr>`;
     paginarTabla('tablaCompras');
+    refrescarBotones();
   }
 
   async function registrarCompra() {
@@ -1582,6 +1652,7 @@
     try {
       await api('/gerente/cajas', 'POST', { numero });
       document.getElementById('cajaNumero').value = '';
+      refrescarBotones();
       await cargarCajas();
       renderCajas();
       mostrarToast(t('cajaAgregada'), 'exito');
@@ -1633,7 +1704,7 @@
         <td><input type="number" id="iva-${p.id}" value="${p.iva}" step="0.01"></td>
         <td id="final-${p.id}">${monto((p.precio * (1 + p.iva / 100)))}</td>
         <td><button class="btn btn-sm ${p.activo ? 'btn-exito' : 'btn-peligro'}" onclick="toggleActivo(${p.id})" title="${p.activo ? t('btnDarBaja') : t('btnReactivar')}" aria-label="${p.activo ? t('btnDarBaja') : t('btnReactivar')}">${ICONO_POWER}</button></td>
-        <td><button class="btn btn-primario btn-sm" onclick="guardarProducto(${p.id})" title="${t('btnGuardar')}" aria-label="${t('btnGuardar')}">${ICONO_GUARDAR}</button></td>
+        <td><button class="btn btn-primario btn-sm" onclick="guardarProducto(${p.id})" data-requiere="#precio-${p.id}${p.compartido ? '' : `,#nombre-${p.id}`}" data-cambio="#nombre-${p.id},#cat-${p.id},#precio-${p.id},#iva-${p.id}" title="${t('btnGuardar')}" aria-label="${t('btnGuardar')}">${ICONO_GUARDAR}</button></td>
         <td>
           ${p.compartido
             // Lo tienen otras sucursales: la foto es de todo el negocio y la cambia el administrador
@@ -1753,6 +1824,7 @@
       document.getElementById('nuevoStock').value = '';
       document.getElementById('nuevoCategoria').value = '';
       fotoInput.value = '';
+      refrescarBotones();
       await cargarProductos();
       renderProductos();
       mostrarToast(t('productoAgregadoPendiente'), 'exito');
@@ -1796,7 +1868,7 @@
       <tr>
         <td>${esc(i.producto)}</td><td>${i.cantidad}</td><td>${i.devuelto}</td><td>${monto(i.precio_unitario)}</td>
         <td>${!cancelada && i.disponible > 0
-          ? `<input type="number" id="dev-${i.id_detalle}" min="0" max="${i.disponible}" placeholder="0">`
+          ? `<input type="number" class="dev-input" id="dev-${i.id_detalle}" min="0" max="${i.disponible}" placeholder="0">`
           : '—'}</td>
       </tr>`).join('');
 
@@ -1814,8 +1886,8 @@
       ? `<p class="desc">${t('canceladaPor')}: ${esc(v.motivo_cancelacion ?? '—')}</p>`
       : `<div class="fila-form">
           <div class="campo"><label>${t('labelMotivo')}</label><input type="text" id="devMotivo" maxlength="255" placeholder="${t('placeholderMotivo')}"></div>
-          ${pendiente ? `<button class="btn btn-primario" onclick="devolverPiezas(${v.folio})">${t('btnDevolverSel')}</button>` : ''}
-          <button class="btn btn-peligro" onclick="cancelarVenta(${v.folio})">${t('btnCancelarVenta')}</button>
+          ${pendiente ? `<button class="btn btn-primario" onclick="devolverPiezas(${v.folio})" data-requiere="#devMotivo" data-alguno=".dev-input">${t('btnDevolverSel')}</button>` : ''}
+          <button class="btn btn-peligro" onclick="cancelarVenta(${v.folio})" data-requiere="#devMotivo">${t('btnCancelarVenta')}</button>
         </div>`;
 
     return `
