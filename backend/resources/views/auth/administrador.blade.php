@@ -262,7 +262,11 @@
   .layout.menu-oculto .sidebar .contador-menu { position: absolute; top: 3px; right: 4px; margin: 0; padding: 0 5px; }   /* globo de reportes (admin) */
   .layout.sin-animacion, .layout.sin-animacion .txt-menu { transition: none; }   /* al cargar la página */
   @media (prefers-reduced-motion: reduce) { .layout, .sidebar .txt-menu { transition: none; } }
-  #btnCrearUsuario:disabled { opacity: 0.65; cursor: wait; }
+
+  /* ---------- BOTONES DESACTIVADOS HASTA QUE HAYA INFORMACIÓN ---------- */
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.35); }
+  .btn-primario:disabled:hover { background: var(--accent); }
+  .btn-peligro:disabled:hover { background: var(--danger-bg); }
 
   /* Mis negocios (tarjeta "Mi negocio") */
   .negocios-desc { font-size: 0.8rem; color: var(--muted); margin: -0.6rem 0 0.9rem; }
@@ -387,7 +391,7 @@
                 <option value="inactiva" data-i18n="estadoInactiva">Inactiva</option>
               </select>
             </div>
-            <button class="btn btn-primario" onclick="agregarSucursal()" data-i18n="btnAgregar">Agregar</button>
+            <button class="btn btn-primario" onclick="agregarSucursal()" data-requiere="#sucNombre,#sucDireccion" data-i18n="btnAgregar">Agregar</button>
           </div>
         </div>
         <div class="card">
@@ -431,7 +435,7 @@
           </div>
 
           <div class="form-acciones">
-            <button class="btn btn-primario" id="btnCrearUsuario" onclick="crearUsuario()"><span id="icoCrearUsuario"></span><span data-i18n="btnCrearUsuario">Crear usuario</span></button>
+            <button class="btn btn-primario" id="btnCrearUsuario" onclick="crearUsuario()" data-requiere="#usrNombre,#usrApellido,#usrNacimiento,#usrCorreo,#usrSucursal"><span id="icoCrearUsuario"></span><span data-i18n="btnCrearUsuario">Crear usuario</span></button>
           </div>
         </div>
       </div>
@@ -452,7 +456,7 @@
             <div class="campo"><label data-i18n="labelNombreEmpresa">Nombre / empresa</label><input type="text" id="provNombre" placeholder="Distribuidora XYZ"></div>
             <div class="campo"><label data-i18n="labelContacto">Contacto</label><input type="text" id="provContacto" data-i18n-placeholder="placeholderContacto" placeholder="Nombre del contacto"></div>
             <div class="campo"><label data-i18n="labelTelefono">Teléfono</label><input type="text" id="provTelefono" placeholder="312 000 0000"></div>
-            <button class="btn btn-primario" onclick="agregarProveedor()" data-i18n="btnAgregar">Agregar</button>
+            <button class="btn btn-primario" onclick="agregarProveedor()" data-requiere="#provNombre" data-i18n="btnAgregar">Agregar</button>
           </div>
         </div>
         <div class="card">
@@ -548,8 +552,8 @@
       </div>
 
       <div class="seccion" id="sec-reportes">
-        <h2 data-i18n="repHeading">Reportes de tu equipo</h2>
-        <p class="desc" data-i18n="repDesc">Reportes que te envían tus gerentes y cajeros. Cambia el estado y, si quieres, contéstales con una nota.</p>
+        <h2 data-i18n="repHeading">Incidentes de tu equipo</h2>
+        <p class="desc" data-i18n="repDesc">Incidentes que te envían tus gerentes y cajeros. Cambia el estado y, si quieres, contéstales con una nota.</p>
         <div class="filtros-rep">
           <select id="repFiltroEstado" onchange="renderReportes()"></select>
           <select id="repFiltroTipo" onchange="renderReportes()"></select>
@@ -582,21 +586,21 @@
           <h3 data-i18n="miNegocioHeading">Mi negocio</h3>
           <div class="fila-form" style="margin-bottom:0;">
             <div class="campo"><label for="negocioNombre" data-i18n="labelNombreNegocio">Nombre del negocio</label><input type="text" id="negocioNombre" maxlength="150" style="min-width:260px;"></div>
-            <button class="btn btn-primario" onclick="guardarNegocio()"><span id="icoGuardarNegocio" class="ico-texto"></span><span data-i18n="btnGuardar">Guardar</span></button>
+            <button class="btn btn-primario" onclick="guardarNegocio()" data-requiere="#negocioNombre" data-cambio="#negocioNombre"><span id="icoGuardarNegocio" class="ico-texto"></span><span data-i18n="btnGuardar">Guardar</span></button>
           </div>
 
           <hr class="form-separador">
 
           <!-- Un mismo dueño puede tener varios negocios; cada uno con sus sucursales, productos y empleados -->
-          <h3 data-i18n="misNegociosHeading">Tus negocios</h3>
+          <h3 data-i18n="misNegociosHeading">Administrar mis negocios</h3>
           <p class="negocios-desc" data-i18n="misNegociosDesc">Cada negocio tiene sus propias sucursales, productos y empleados. Cambia de negocio para administrar otro.</p>
           <div class="fila-form">
             <div class="campo"><label for="negocioActivo" data-i18n="labelNegocioActivo">Negocio activo</label><select id="negocioActivo" style="min-width:260px;"></select></div>
-            <button class="btn btn-primario" onclick="cambiarNegocio()"><span id="icoCambiarNegocio" class="ico-texto"></span><span data-i18n="btnCambiarNegocio">Cambiar</span></button>
+            <button class="btn btn-primario" onclick="cambiarNegocio()" data-cambio="#negocioActivo"><span id="icoCambiarNegocio" class="ico-texto"></span><span data-i18n="btnCambiarNegocio">Cambiar</span></button>
           </div>
           <div class="fila-form" style="margin-bottom:0;">
             <div class="campo"><label for="nuevoNegocio" data-i18n="labelNuevoNegocio">Nuevo negocio</label><input type="text" id="nuevoNegocio" maxlength="150" data-i18n-placeholder="placeholderNuevoNegocio" placeholder="Ej. Papelería Sol" style="min-width:260px;"></div>
-            <button class="btn btn-primario" onclick="crearNegocio()"><span id="icoCrearNegocio" class="ico-texto"></span><span data-i18n="btnCrearNegocio">Crear negocio</span></button>
+            <button class="btn btn-primario" onclick="crearNegocio()" data-requiere="#nuevoNegocio"><span id="icoCrearNegocio" class="ico-texto"></span><span data-i18n="btnCrearNegocio">Crear negocio</span></button>
           </div>
 
           <!-- Borra el negocio ACTIVO con todo lo suyo: contraseña + escribir su nombre exacto -->
@@ -606,7 +610,7 @@
             <div class="fila-form" style="margin-bottom:0;">
               <div class="campo"><label for="borrarNegocioNombre" id="lblBorrarNegocioNombre"></label><input type="text" id="borrarNegocioNombre" autocomplete="off" style="min-width:220px;"></div>
               <div class="campo"><label for="borrarNegocioPass" data-i18n="labelTuContrasena">Tu contraseña</label><input type="password" id="borrarNegocioPass" autocomplete="current-password"></div>
-              <button class="btn btn-peligro" onclick="eliminarNegocio()"><span id="icoEliminarNegocio" class="ico-texto"></span><span data-i18n="btnEliminarNegocio">Eliminar negocio</span></button>
+              <button class="btn btn-peligro" onclick="eliminarNegocio()" data-requiere="#borrarNegocioNombre,#borrarNegocioPass"><span id="icoEliminarNegocio" class="ico-texto"></span><span data-i18n="btnEliminarNegocio">Eliminar negocio</span></button>
             </div>
           </details>
         </div>
@@ -617,6 +621,61 @@
 </div>
 
 <script>
+  /* ---------- BOTONES DESACTIVADOS HASTA QUE HAYA INFORMACIÓN ----------
+       data-requiere="#a,#b"  -> el botón queda desactivado hasta que esos campos estén llenos y válidos
+       data-cambio="#a,#b"    -> el botón queda desactivado hasta que alguno de esos campos cambie
+                                 respecto a su valor original (defaultValue / opción seleccionada al pintarse)
+     Funciona también con los botones que se generan con JavaScript (tablas). */
+  (function () {
+    const lista = txt => (txt || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    const original = el => {
+      if (el.tagName === 'SELECT') {
+        const o = [...el.options].find(o => o.defaultSelected) || el.options[0];
+        return o ? o.value : '';
+      }
+      return el.defaultValue;
+    };
+
+    const lleno = el => (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value.trim() !== '';
+
+    function evaluar(btn) {
+      let ok = true;
+      for (const sel of lista(btn.dataset.requiere)) {
+        const el = document.querySelector(sel);
+        if (!el || !lleno(el) || !el.checkValidity()) { ok = false; break; }
+      }
+      if (ok && btn.dataset.cambio) {
+        const els = lista(btn.dataset.cambio).map(s => document.querySelector(s)).filter(Boolean);
+        ok = els.some(el => el.value.trim() !== original(el).trim());
+      }
+      btn.disabled = !ok;
+    }
+
+    window.refrescarBotones = function () {
+      document.querySelectorAll('[data-requiere], [data-cambio]').forEach(evaluar);
+    };
+
+    document.addEventListener('input', window.refrescarBotones);
+    document.addEventListener('change', window.refrescarBotones);
+
+    function arrancarGuardia() {
+      window.refrescarBotones();
+      // Cuando el JS vuelve a pintar tablas o formularios se reevalúan los botones nuevos. Se ignoran los
+      // cambios dentro de un <button> (p. ej. el texto "Enviando…") para no reactivar un botón que el
+      // código bloqueó a propósito mientras espera al servidor.
+      let pendiente = false;
+      new MutationObserver(muts => {
+        if (muts.every(m => m.target.closest && m.target.closest('button'))) return;
+        if (pendiente) return;
+        pendiente = true;
+        requestAnimationFrame(() => { pendiente = false; window.refrescarBotones(); });
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancarGuardia);
+    else arrancarGuardia();
+  })();
+
   /* Escapa texto que viene de la BD antes de meterlo en innerHTML (evita XSS: un nombre como
      <img onerror=...> se muestra como texto y no se ejecuta). function = se puede usar en todo el script. */
   function esc(v) {
@@ -781,23 +840,23 @@
       statSucursales: 'Sucursales', statUsuarios: 'Usuarios totales', statGerentes: 'Gerentes', statCajeros: 'Cajeros',
       statProductos: 'Productos', statVentasHoy: 'Ventas de hoy', statVentasMes: 'Ventas del mes', statStockBajo: 'Stock bajo',
       labelEstado: 'Estado', thEstado: 'Estado', estadoActiva: 'Activa', estadoInactiva: 'Inactiva',
-      navReportes: 'Reportes', repHeading: 'Reportes de tu equipo',
-      repDesc: 'Reportes de tus gerentes y los que ellos te pasan de sus cajeros (también los de cajeros de una sucursal sin gerente). Cambia el estado y, si quieres, contéstales con una nota.',
+      navReportes: 'Incidentes', repHeading: 'Incidentes de tu equipo',
+      repDesc: 'Incidentes de tus gerentes y los que ellos te pasan de sus cajeros (también los de cajeros de una sucursal sin gerente). Cambia el estado y, si quieres, contéstales con una nota.',
       repPasadoPor: 'Te lo pasó el gerente', repRespuestaGerente: 'Respuesta del gerente; si escribes otra, la reemplaza',
       repTodosEstados: 'Todos los estados', repTodosTipos: 'Todos los tipos', repTodasSucursales: 'Todas las sucursales',
-      repContador: ':n pendientes', repPendientesTitulo: 'Reportes pendientes', repThFecha: 'Fecha', repThSucursal: 'Sucursal', repThEstado: 'Estado',
-      repPhRespuesta: 'Respuesta para quien lo envió (opcional)', repRespondido: 'Respondido el', repGuardado: 'Reporte actualizado',
+      repContador: ':n pendientes', repPendientesTitulo: 'Incidentes pendientes', repThFecha: 'Fecha', repThSucursal: 'Sucursal', repThEstado: 'Estado',
+      repPhRespuesta: 'Respuesta para quien lo envió (opcional)', repRespondido: 'Respondido el', repGuardado: 'Incidente actualizado',
       repLabelTipo: 'Tipo', repLabelAsunto: 'Asunto', repLabelDescripcion: 'Descripción',
       repPhAsunto: 'Ej. La impresora no imprime tickets', repPhDescripcion: 'Cuéntale al administrador qué pasó, cuándo y en qué caja o producto…',
-      repBtnEnviar: 'Enviar reporte', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta del administrador',
-      repSinReportes: 'Aún no hay reportes.', repSinRespuesta: 'Sin respuesta todavía', repTu: 'Tú', repUsuarioEliminado: 'Usuario eliminado',
+      repBtnEnviar: 'Enviar incidente', repThAutor: 'Enviado por', repThTipo: 'Tipo', repThAsunto: 'Asunto', repThRespuesta: 'Respuesta del administrador',
+      repSinReportes: 'Aún no hay incidentes.', repSinRespuesta: 'Sin respuesta todavía', repTu: 'Tú', repUsuarioEliminado: 'Usuario eliminado',
       repTipo_falla: 'Falla del sistema', repTipo_faltante: 'Faltante de producto', repTipo_caja: 'Problema con caja / dinero', repTipo_sugerencia: 'Sugerencia', repTipo_otro: 'Otro',
       repEstado_pendiente: 'Pendiente', repEstado_en_revision: 'En revisión', repEstado_resuelto: 'Resuelto',
       repRol_gerente: 'Gerente', repRol_cajero: 'Cajero',
-      repEnviado: 'Reporte enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
+      repEnviado: 'Incidente enviado al administrador', repAlertCompleta: 'Escribe el asunto y la descripción.',
       btnAnterior: 'Anterior', btnSiguiente: 'Siguiente', paginaDe: 'Página :p de :t · :n cortes',
       paginaTabla: 'Página :p de :t · :n registros',
-      misNegociosHeading: 'Tus negocios', misNegociosDesc: 'Cada negocio tiene sus propias sucursales, productos y empleados. Cambia de negocio para administrar otro.',
+      misNegociosHeading: 'Administrar mis negocios', misNegociosDesc: 'Cada negocio tiene sus propias sucursales, productos y empleados. Cambia de negocio para administrar otro.',
       labelNegocioActivo: 'Negocio activo', btnCambiarNegocio: 'Cambiar', labelNuevoNegocio: 'Nuevo negocio',
       placeholderNuevoNegocio: 'Ej. Papelería Sol', btnCrearNegocio: 'Crear negocio',
       yaEnEseNegocio: 'Ya estás trabajando en ese negocio.', alertNombreNuevoNegocio: 'Escribe el nombre del nuevo negocio.',
@@ -884,23 +943,23 @@
       statSucursales: 'Branches', statUsuarios: 'Total users', statGerentes: 'Managers', statCajeros: 'Cashiers',
       statProductos: 'Products', statVentasHoy: "Today's sales", statVentasMes: 'Monthly sales', statStockBajo: 'Low stock',
       labelEstado: 'Status', thEstado: 'Status', estadoActiva: 'Active', estadoInactiva: 'Inactive',
-      navReportes: 'Reports', repHeading: 'Reports from your team',
-      repDesc: 'Reports from your managers and the cashier reports they pass to you (also those from cashiers of a branch with no manager). Change the status and, if you want, reply with a note.',
+      navReportes: 'Incidents', repHeading: 'Incidents from your team',
+      repDesc: 'Incidents from your managers and the cashier incidents they pass to you (also those from cashiers of a branch with no manager). Change the status and, if you want, reply with a note.',
       repPasadoPor: 'Passed to you by the manager', repRespuestaGerente: 'Manager\'s reply; if you write another one, it replaces it',
       repTodosEstados: 'All statuses', repTodosTipos: 'All types', repTodasSucursales: 'All branches',
-      repContador: ':n pending', repPendientesTitulo: 'Pending reports', repThFecha: 'Date', repThSucursal: 'Branch', repThEstado: 'Status',
-      repPhRespuesta: 'Reply to the sender (optional)', repRespondido: 'Replied on', repGuardado: 'Report updated',
+      repContador: ':n pending', repPendientesTitulo: 'Pending incidents', repThFecha: 'Date', repThSucursal: 'Branch', repThEstado: 'Status',
+      repPhRespuesta: 'Reply to the sender (optional)', repRespondido: 'Replied on', repGuardado: 'Incident updated',
       repLabelTipo: 'Type', repLabelAsunto: 'Subject', repLabelDescripcion: 'Description',
       repPhAsunto: 'E.g. The printer does not print receipts', repPhDescripcion: 'Tell the administrator what happened, when, and which register or product…',
-      repBtnEnviar: 'Send report', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: "Administrator's reply",
-      repSinReportes: 'No reports yet.', repSinRespuesta: 'No reply yet', repTu: 'You', repUsuarioEliminado: 'Deleted user',
+      repBtnEnviar: 'Send incident', repThAutor: 'Sent by', repThTipo: 'Type', repThAsunto: 'Subject', repThRespuesta: "Administrator's reply",
+      repSinReportes: 'No incidents yet.', repSinRespuesta: 'No reply yet', repTu: 'You', repUsuarioEliminado: 'Deleted user',
       repTipo_falla: 'System failure', repTipo_faltante: 'Missing product', repTipo_caja: 'Register / cash problem', repTipo_sugerencia: 'Suggestion', repTipo_otro: 'Other',
       repEstado_pendiente: 'Pending', repEstado_en_revision: 'In review', repEstado_resuelto: 'Resolved',
       repRol_gerente: 'Manager', repRol_cajero: 'Cashier',
-      repEnviado: 'Report sent to the administrator', repAlertCompleta: 'Write the subject and the description.',
+      repEnviado: 'Incident sent to the administrator', repAlertCompleta: 'Write the subject and the description.',
       btnAnterior: 'Previous', btnSiguiente: 'Next', paginaDe: 'Page :p of :t · :n cash counts',
       paginaTabla: 'Page :p of :t · :n records',
-      misNegociosHeading: 'Your businesses', misNegociosDesc: 'Each business has its own branches, products and staff. Switch businesses to manage another one.',
+      misNegociosHeading: 'Manage my businesses', misNegociosDesc: 'Each business has its own branches, products and staff. Switch businesses to manage another one.',
       labelNegocioActivo: 'Active business', btnCambiarNegocio: 'Switch', labelNuevoNegocio: 'New business',
       placeholderNuevoNegocio: 'e.g. Sun Stationery', btnCrearNegocio: 'Create business',
       yaEnEseNegocio: 'You are already working in that business.', alertNombreNuevoNegocio: 'Enter the name of the new business.',
@@ -1202,6 +1261,9 @@
     try {
       await cfgApi('/configuracion/perfil', 'PUT', { nombre, apellido });
       cfgPerfil = Object.assign({}, cfgPerfil, { nombre, apellido });
+      document.getElementById('cfgNombre').defaultValue = nombre;
+      document.getElementById('cfgApellido').defaultValue = apellido;
+      refrescarBotones();
       cfgRefrescarCabecera();
       mostrarToast(ct('perfilGuardado'), 'exito');
     } catch (e) { mostrarToast(e.message, 'error'); }
@@ -1250,6 +1312,7 @@
       await cfgApi('/configuracion/password', 'PUT', { password_actual: actual, password_nueva: nueva, password_nueva_confirmation: confirmar });
       ['cfgPassActual', 'cfgPassNueva', 'cfgPassConfirmar'].forEach(id => { document.getElementById(id).value = ''; });
       cfgFuerza();
+      refrescarBotones();
       mostrarToast(ct('passCambiada'), 'exito');
     } catch (e) { mostrarToast(e.message, 'error'); }
   }
@@ -1319,18 +1382,18 @@
             <div class="cfg-campo"><label for="cfgApellido">${ct('lblApellido')}</label><input type="text" id="cfgApellido" maxlength="80" value="${esc(cfgPerfil.apellido)}"></div>
             <div class="cfg-campo"><label for="cfgCorreo">${ct('lblCorreo')}</label><input type="email" id="cfgCorreo" value="${esc(cfgPerfil.correo)}" disabled><small>${ct('correoHint')}</small></div>
           </div>
-          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgGuardarPerfil()">${ct('guardarCambios')}</button><button type="button" class="btn" onclick="cfgMostrarCambioCorreo()">${ct('cambiarCorreo')}</button></div>
+          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgGuardarPerfil()" data-requiere="#cfgNombre" data-cambio="#cfgNombre,#cfgApellido">${ct('guardarCambios')}</button><button type="button" class="btn" onclick="cfgMostrarCambioCorreo()">${ct('cambiarCorreo')}</button></div>
           <!-- Cambiar correo: 1) correo nuevo + contraseña → código al correo nuevo; 2) el código confirma el cambio -->
           <div id="cfgCambioCorreo" class="cfg-cambio-correo" hidden>
             <div class="cfg-form">
               <div class="cfg-campo"><label for="cfgCorreoNuevo">${ct('correoNuevo')}</label><input type="email" id="cfgCorreoNuevo" maxlength="150" autocomplete="email"></div>
               <div class="cfg-campo"><label for="cfgCorreoPass">${ct('borrarPass')}</label><input type="password" id="cfgCorreoPass" autocomplete="current-password"></div>
             </div>
-            <div class="cfg-acciones"><button type="button" class="btn btn-primario" onclick="cfgPedirCodigoCorreo()">${ct('enviarCodigo')}</button></div>
+            <div class="cfg-acciones"><button type="button" class="btn btn-primario" onclick="cfgPedirCodigoCorreo()" data-requiere="#cfgCorreoNuevo,#cfgCorreoPass">${ct('enviarCodigo')}</button></div>
             <div id="cfgPasoCodigo" hidden>
               <p class="cfg-sub" id="cfgCodigoAviso"></p>
               <div class="cfg-form"><div class="cfg-campo"><label for="cfgCodigoCorreo">${ct('codigo6')}</label><input id="cfgCodigoCorreo" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div></div>
-              <div class="cfg-acciones"><button type="button" class="btn btn-primario" onclick="cfgConfirmarCorreo()">${ct('confirmarCorreo')}</button></div>
+              <div class="cfg-acciones"><button type="button" class="btn btn-primario" onclick="cfgConfirmarCorreo()" data-requiere="#cfgCodigoCorreo">${ct('confirmarCorreo')}</button></div>
             </div>
           </div>
         </div>
@@ -1344,7 +1407,7 @@
             <div class="cfg-campo" id="cfgRequisitos" style="grid-column: 1 / -1;"></div>
             <div class="cfg-campo" id="cfgCoincide" style="grid-column: 1 / -1;"></div>
           </div>
-          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgCambiarPass()">${ct('cambiarPass')}</button></div>
+          <div class="cfg-acciones"><button class="btn btn-primario" onclick="cfgCambiarPass()" data-requiere="#cfgPassActual,#cfgPassNueva,#cfgPassConfirmar">${ct('cambiarPass')}</button></div>
         </div>
 
         <div class="cfg-card">
@@ -1379,7 +1442,7 @@
             <div class="cfg-campo"><label for="cfgBorrarCorreo">${ct('borrarEscribeCorreo').replace('{correo}', esc(cfgPerfil.correo))}</label><input type="email" id="cfgBorrarCorreo" autocomplete="off"></div>
             <div class="cfg-campo"><label for="cfgBorrarPass">${ct('borrarPass')}</label><input type="password" id="cfgBorrarPass" autocomplete="current-password"></div>
           </div>
-          <div class="cfg-acciones"><button class="btn btn-peligro" onclick="cfgEliminarCuenta()">${ct('borrarBoton')}</button></div>
+          <div class="cfg-acciones"><button class="btn btn-peligro" onclick="cfgEliminarCuenta()" data-requiere="#cfgBorrarCorreo,#cfgBorrarPass">${ct('borrarBoton')}</button></div>
         </div>
 
       </div>`;
@@ -1520,7 +1583,7 @@
         </td>
         <td><div class="nombre-editable">
           <input type="text" id="admNombre-${p.id}" maxlength="150" value="${esc(p.nombre)}" aria-label="${t('thProducto')}">
-          <button class="btn btn-primario btn-sm" onclick="guardarNombreProductoAdmin(${p.id})" title="${t('btnGuardarNombre')}" aria-label="${t('btnGuardarNombre')}">${ICONO_GUARDAR}</button>
+          <button class="btn btn-primario btn-sm" onclick="guardarNombreProductoAdmin(${p.id})" data-requiere="#admNombre-${p.id}" data-cambio="#admNombre-${p.id}" title="${t('btnGuardarNombre')}" aria-label="${t('btnGuardarNombre')}">${ICONO_GUARDAR}</button>
         </div>${p.autorizacion === 'pendiente' ? `<span class="badge aut-pendiente" style="display:inline-block;margin-top:4px;cursor:pointer;" onclick="mostrarSeccion('autorizaciones')">${t('autCatalogoPendiente')}</span>` : ''}</td>
         <td>${monto(p.precio)}</td>
         <td><span class="badge ${p.activo ? 'badge-gerente' : 'badge-cajero'}">${p.activo ? t('estadoActiva') : t('estadoInactiva')}</span></td>
@@ -1675,8 +1738,9 @@
 
     document.getElementById('icoGuardarNegocio').innerHTML = ICONO_GUARDAR;
     const input = document.getElementById('negocioNombre');
-    if (negocio && document.activeElement !== input) input.value = negocio.nombre;
+    if (negocio && document.activeElement !== input) input.defaultValue = input.value = negocio.nombre;
     renderMisNegocios();
+    refrescarBotones();
   }
 
   /* TUS NEGOCIOS: selector del negocio activo (conserva lo elegido al volver a pintar) */
@@ -1757,6 +1821,8 @@
     if (!res.ok) { mostrarToast(data?.message ?? t('errorGenerico'), 'error'); return; }
 
     negocio = data;
+    document.getElementById('negocioNombre').defaultValue = data.nombre;
+    refrescarBotones();
     const activo = misNegocios.find(n => n.activo);
     if (activo) { activo.nombre = data.nombre; renderMisNegocios(); }
     document.getElementById('topbarNegocio').textContent = data.nombre;
@@ -1778,7 +1844,7 @@
         </td>
         <td><select id="sucGer-${s.id_sucursal}">${opcionesGerente(s.id_gerente, s.id_sucursal)}</select></td>
         <td class="acciones-sucursal">
-          <button class="btn btn-primario btn-sm" onclick="guardarSucursal(${s.id_sucursal})" title="${t('btnGuardar')}" aria-label="${t('btnGuardar')}">${ICONO_GUARDAR}</button>
+          <button class="btn btn-primario btn-sm" onclick="guardarSucursal(${s.id_sucursal})" data-requiere="#sucN-${s.id_sucursal}" data-cambio="#sucN-${s.id_sucursal},#sucD-${s.id_sucursal},#sucC-${s.id_sucursal},#sucE-${s.id_sucursal},#sucGer-${s.id_sucursal}" title="${t('btnGuardar')}" aria-label="${t('btnGuardar')}">${ICONO_GUARDAR}</button>
           <button class="btn btn-peligro btn-sm" onclick="eliminarSucursal(${s.id_sucursal})" title="${t('btnEliminar')}" aria-label="${t('btnEliminar')}">${ICONO_BASURA}</button>
         </td>
       </tr>`).join('');
@@ -1812,6 +1878,7 @@
     document.getElementById('sucDireccion').value = '';
     document.getElementById('sucContacto').value = '';
     await cargarSucursales();
+    refrescarBotones();
     mostrarToast(t('sucursalAgregada'), 'exito');
   }
 
@@ -1892,7 +1959,7 @@
         <td>
           <select id="sucRol-${u.id}"><option value="">${t('sinAsignar')}</option>${opcionesSucursal(u.sucursalId)}</select>
         </td>
-        <td><button class="btn btn-primario btn-sm" onclick="guardarRol(${u.id})">${t('btnGuardar')}</button></td>
+        <td><button class="btn btn-primario btn-sm" onclick="guardarRol(${u.id})" data-requiere="#sucRol-${u.id}" data-cambio="#rol-${u.id},#sucRol-${u.id}">${t('btnGuardar')}</button></td>
       </tr>`;
     }).join('');
     paginarTabla('tablaRoles');
@@ -1976,7 +2043,7 @@
         <p class="ayuda">${t('ayudaCambioCorreo')}</p>
         <div class="form-acciones">
           <button class="btn" onclick="editarUsuario(${u.id})">${t('btnCancelar')}</button>
-          <button class="btn btn-primario" id="btnGuardarUsuario-${u.id}" onclick="guardarEdicionUsuario(${u.id})">${ICONO_GUARDAR} <span>${t('btnGuardar')}</span></button>
+          <button class="btn btn-primario" id="btnGuardarUsuario-${u.id}" onclick="guardarEdicionUsuario(${u.id})" data-requiere="#edNombre-${u.id},#edApellido-${u.id},#edNacimiento-${u.id},#edCorreo-${u.id}" data-cambio="#edNombre-${u.id},#edApellido-${u.id},#edNacimiento-${u.id},#edCorreo-${u.id}">${ICONO_GUARDAR} <span>${t('btnGuardar')}</span></button>
         </div>
       </td></tr>`;
       const estadoClase = estadoInvitacion === 'accepted' ? 'badge-invitacion-aceptada' : estadoInvitacion === 'expired' ? 'badge-invitacion-vencida' : estadoInvitacion === 'verified' ? 'badge-invitacion-verificada' : 'badge-invitacion-pendiente';
@@ -2107,6 +2174,7 @@
     } finally {
       boton.disabled = false;
       textoBoton.textContent = t('btnCrearUsuario');
+      refrescarBotones();
     }
   }
 
@@ -2371,7 +2439,7 @@
             <textarea class="rep-respuesta" id="repRespuesta-${r.id}" maxlength="500" placeholder="${t('repPhRespuesta')}">${esc(r.respuesta ?? '')}</textarea>
             ${r.fecha_respuesta ? `<div class="rep-desc">${r.rol_responde === 'gerente' ? t('repRespuestaGerente') + ' · ' : ''}${t('repRespondido')} ${fechaReporte(r.fecha_respuesta)}</div>` : ''}
           </td>
-          <td><button class="btn btn-primario btn-sm" onclick="guardarReporte(${r.id})"><span class="ico-texto">${ICONO_GUARDAR}</span>${t('btnGuardar')}</button></td>
+          <td><button class="btn btn-primario btn-sm" onclick="guardarReporte(${r.id})" data-cambio="#repEstado-${r.id},#repRespuesta-${r.id}"><span class="ico-texto">${ICONO_GUARDAR}</span>${t('btnGuardar')}</button></td>
         </tr>`).join('')
       : `<tr><td colspan="8" style="color:var(--muted-light);">${t('repSinReportes')}</td></tr>`;
     paginarTabla('tablaReportes', [fEstado, fTipo, fSucursal].join('|'));
